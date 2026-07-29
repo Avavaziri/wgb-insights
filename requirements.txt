@@ -1,0 +1,19 @@
+# Pinned to the versions the system was built and verified against (Python 3.12).
+pandas==3.0.5
+numpy==2.5.1
+openpyxl==3.1.5
+pandera==0.32.1
+statsmodels==0.14.6
+scikit-learn==1.9.0
+scipy==1.18.0
+plotly==6.9.0
+kaleido==1.3.0
+fastapi==0.141.1
+uvicorn[standard]==0.52.0
+python-multipart==0.0.32
+PyYAML==6.0.3
+httpx==0.28.1
+pytest==9.1.1
+ruff==0.16.0
+mypy==2.3.0
+types-PyYAML==6.0.12.20250915

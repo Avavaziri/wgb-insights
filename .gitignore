@@ -25,6 +25,9 @@ frontend/.env*.local
 .env.local
 *.local.yaml
 
+# Local tooling
+.claude/
+
 # OS / editor noise
 .DS_Store
 Thumbs.db

@@ -1,0 +1,7 @@
+block,r2,r2_adj,r2_cv,n_params,adj_increment,cv_increment,f_p_vs_prev,in_sample_only,formula
+size,0.2566,0.2564,0.2786,2,0.2564,0.2786,,False,log_rate ~ np.log(press_hrs)
+run_features,0.274,0.2733,0.2965,5,0.0168,0.0179,0.0,True,log_rate ~ np.log(press_hrs) + np.log1p(quantity) + np.log1p(impressions) + plates
+product,0.3209,0.3157,0.2867,32,0.0424,-0.0098,0.0,True,log_rate ~ np.log(press_hrs) + np.log1p(quantity) + np.log1p(impressions) + plates + C(product_type)
+customer,0.5256,0.5161,0.4899,81,0.2005,0.2032,0.0,False,log_rate ~ np.log(press_hrs) + np.log1p(quantity) + np.log1p(impressions) + plates + C(product_type) + C(customer_id)
+rep,0.526,0.5164,0.4902,82,0.0002,0.0002,0.0881,False,log_rate ~ np.log(press_hrs) + np.log1p(quantity) + np.log1p(impressions) + plates + C(product_type) + C(customer_id) + C(rep)
+year,0.5337,0.5239,0.4978,85,0.0076,0.0077,0.0,True,log_rate ~ np.log(press_hrs) + np.log1p(quantity) + np.log1p(impressions) + plates + C(product_type) + C(customer_id) + C(rep) + C(year)

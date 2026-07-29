@@ -1,0 +1,11 @@
+customer,rep,industry,last_order,days_since,own_median_interval,interval_cv,forecastable,gap_ratio,historic_contribution_gbp,contribution_per_constraint_hr,override_rate,risk_band,reason_code,expected_next_order
+CID_013,REP_007,B2B,2024-02-13,828.0,69.0,0.5912677919499397,True,12.0,166140.0,1010.0,0.76,high,overdue_vs_own_cadence,2024-04-22
+CID_026,REP_001,Magazine Publisher,2026-04-22,29.0,15.0,0.5926309280135239,True,1.9333333333333333,177046.0,869.0,0.808,elevated,overdue_vs_own_cadence,2026-05-07
+CID_003,REP_001,Educational Publisher,2026-03-25,57.0,8.0,1.0770308174104346,False,7.125,671814.0,515.0,0.378,watch (irregular),irregular_cadence,
+CID_034,REP_006,Publisher,2024-06-06,714.0,8.0,0.8907575459059712,False,89.25,196446.0,513.0,0.944,watch (irregular),irregular_cadence,
+CID_016,REP_003,Print Management,2026-04-01,50.0,15.0,1.1641614094934958,False,3.3333333333333335,176234.0,1101.0,0.483,watch (irregular),irregular_cadence,
+CID_042,REP_004,Councils,2025-12-01,171.0,44.0,0.9625508549856665,False,3.8863636363636362,135869.0,551.0,0.812,watch (irregular),irregular_cadence,
+CID_033,REP_007,Print Management,2026-02-06,104.0,18.0,1.332927285800213,False,5.777777777777778,133581.0,622.0,0.441,watch (irregular),irregular_cadence,
+CID_031,REP_001,Educational Publisher,2026-03-10,72.0,17.5,1.235963717110546,False,4.114285714285714,133504.0,527.0,0.239,watch (irregular),irregular_cadence,
+CID_045,REP_001,Magazine Publisher,2025-11-26,176.0,8.0,0.9683851832725693,False,22.0,129117.0,980.0,0.951,watch (irregular),irregular_cadence,
+CID_050,REP_006,B2B,2026-02-19,91.0,24.0,1.1360841259912393,False,3.7916666666666665,113136.0,1064.0,0.281,watch (irregular),irregular_cadence,

@@ -30,12 +30,17 @@ PARTIAL = "#D9D9D9"
 
 _LAYOUT: dict[str, Any] = {
     "font": {"family": "Arial, Helvetica, sans-serif", "color": INK, "size": 16},
-    "title": {"font": {"family": "Arial Black, Arial, sans-serif", "size": 24}, "x": 0.02},
+    # title pinned to the container top so paper-space subtitle
+    # annotations (y ~ 1.04) never collide with it
+    "title": {
+        "font": {"family": "Arial Black, Arial, sans-serif", "size": 24},
+        "x": 0.02, "y": 0.98, "yref": "container", "yanchor": "top",
+    },
     "paper_bgcolor": "#FFFFFF",
     "plot_bgcolor": "#FFFFFF",
     "xaxis": {"gridcolor": GRID, "zerolinecolor": GRID, "linecolor": INK},
     "yaxis": {"gridcolor": GRID, "zerolinecolor": GRID, "linecolor": INK},
-    "margin": {"l": 80, "r": 60, "t": 90, "b": 70},
+    "margin": {"l": 80, "r": 60, "t": 130, "b": 70},
     "showlegend": False,
 }
 
@@ -177,11 +182,12 @@ def rate_curve(pr: PipelineResult) -> go.Figure:
     sens = th["window_sensitivity"]["crossover_hrs"]
 
     fig = _fig("Contribution per press-hour declines with job size — no optimal size exists")
-    # Plotly quirk: on a log axis, shape/line/annotation x-coords are
-    # log10-space — raw values would blow the axis out to 10^4.6
+    # Plotly log-axis quirk (verified by rendering): SHAPES take raw data
+    # coords, ANNOTATIONS take log10 coords. Mixing them up either blows
+    # the axis out to 10^50 or parks the marker at 0.6h.
     log10 = np.log10
     fig.add_shape(  # bootstrap CI band on the crossover
-        type="rect", x0=log10(ci_lo), x1=log10(ci_hi), y0=0, y1=1, yref="paper",
+        type="rect", x0=ci_lo, x1=ci_hi, y0=0, y1=1, yref="paper",
         fillcolor=YELLOW, opacity=0.45, line={"width": 0},
     )
     fig.add_trace(
@@ -190,7 +196,7 @@ def rate_curve(pr: PipelineResult) -> go.Figure:
     )
     fig.add_hline(y=bench, line={"color": MUTED, "width": 2, "dash": "dash"})
     fig.add_shape(
-        type="line", x0=log10(xover), x1=log10(xover), y0=0, y1=1, yref="paper",
+        type="line", x0=xover, x1=xover, y0=0, y1=1, yref="paper",
         line={"color": INK, "width": 2, "dash": "dot"},
     )
     fig.add_annotation(x=log10(xover), y=1.02, yref="paper", showarrow=False,
@@ -198,7 +204,7 @@ def rate_curve(pr: PipelineResult) -> go.Figure:
                             f"(windows {sens.min():.1f}-{sens.max():.1f}, "
                             f"95% CI {ci_lo:.1f}-{ci_hi:.1f})",
                        font={"size": 15})
-    fig.add_annotation(x=log10(curve["size_hrs"].max()), y=bench, xanchor="right",
+    fig.add_annotation(x=0.99, xref="paper", y=bench, xanchor="right",
                        yanchor="bottom", showarrow=False,
                        text=f"factory average {bench:,.0f} GBP/hr",
                        font={"size": 15, "color": MUTED})
@@ -286,18 +292,23 @@ def bh_family(pr: PipelineResult) -> go.Figure:
                 "color": [YELLOW if not p else INK for p in t["passes_bh"]],
                 "line": {"color": INK, "width": 1.5},
             },
-            text=[f"  adj p = {p:.3g}{'' if ok else '  — FAILS'}"
-                  for p, ok in zip(t["p_adj"], t["passes_bh"], strict=False)],
-            textposition="middle right", textfont={"size": 14},
+            text=[f"adj p = {p:.3g}{'' if ok else ' — FAILS'}  "
+                  if p > 0.001 else f"  adj p = {p:.3g}"
+                  for p, ok in zip(t["p_adj"], t["passes_bh"], strict=True)],
+            # near-1 points hug the right edge — label those leftwards
+            textposition=[
+                "middle left" if p > 0.001 else "middle right" for p in t["p_adj"]
+            ],
+            textfont={"size": 14},
         )
     )
-    alpha_log = float(np.log10(0.05))
-    fig.add_shape(type="line", x0=alpha_log, x1=alpha_log, y0=0, y1=1, yref="paper",
+    # shapes: raw data coords; annotations: log10 coords (Plotly log-axis quirk)
+    fig.add_shape(type="line", x0=0.05, x1=0.05, y0=0, y1=1, yref="paper",
                   line={"color": MUTED, "width": 2, "dash": "dash"})
-    fig.add_annotation(x=alpha_log, y=1.04, yref="paper", showarrow=False,
+    fig.add_annotation(x=float(np.log10(0.05)), y=1.04, yref="paper", showarrow=False,
                        text="alpha = 0.05", font={"size": 14, "color": MUTED})
     fig.update_xaxes(title="Benjamini-Hochberg adjusted p (log scale)", type="log",
-                     range=[-62, 1.3], exponentformat="power", dtick=10)
+                     range=[-62, 4], exponentformat="power", dtick=10)
     fig.update_yaxes(autorange="reversed")
     return fig
 

@@ -104,6 +104,12 @@ def build_frame() -> pd.DataFrame:
     manadj = np.round(rng.normal(0, 80, N_ROWS), 2)
     manadj[rng.random(N_ROWS) < 0.35] = 0.0  # ~65% overridden, like the real data
     mupnett = np.round(labmup + manadj, 2)  # identity 2 holds exactly
+    # real export has null manadj/mupnett (64) and null Puchases (12) —
+    # plant both so ingest/pricing null-handling is exercised
+    null_adj = rng.choice(N_ROWS, 5, replace=False)
+    manadj[null_adj] = np.nan
+    mupnett[null_adj] = np.nan
+    purchases[rng.choice(N_ROWS, 2, replace=False)] = np.nan
 
     with np.errstate(divide="ignore", invalid="ignore"):
         va24 = np.where(press_hrs > 0, va_amount / press_hrs * 24, 0.0)  # identity 1

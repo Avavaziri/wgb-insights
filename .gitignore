@@ -1,0 +1,33 @@
+# Real commercially sensitive data — NEVER committed (public repo)
+data/raw/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.venv/
+venv/
+
+# Logs (structured validation/gap reports)
+logs/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env*.local
+
+# Secrets
+.env
+.env.local
+*.local.yaml
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

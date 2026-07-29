@@ -1,0 +1,57 @@
+# Hypothesis register (§5.8) — every hypothesis tested, including the ones
+# that came back negative. Outcomes/evidence are attached at runtime by
+# checks.attach_register; this file records what was asked and how.
+hypotheses:
+  - id: margin_by_customer
+    hypothesis: Margin (contribution per constraint-hour) varies by customer identity
+    test: Customer block CV-R2 increment + nested F in the §5.2 decomposition
+
+  - id: margin_by_product
+    hypothesis: Margin varies by product type
+    test: Canonicalised product block in the decomposition (post-cleaning figure only)
+
+  - id: margin_by_rep
+    hypothesis: Margin varies by sales rep
+    test: Rep block added last in the decomposition; naive-vs-controlled pair
+
+  - id: margin_by_size
+    hypothesis: Margin per constraint-hour falls with job size
+    test: Spearman + monotonicity report + rolling rate curve vs benchmark
+
+  - id: margin_by_run_features
+    hypothesis: Run-length economics (quantity, impressions, plates) explain the size effect
+    test: Run-features block between size and product in the decomposition
+
+  - id: override_affects_margin
+    hypothesis: Manually overridden jobs earn different margin (B7)
+    test: Override dummy with controls, cluster-robust; adjudicated exclusion —
+      selection-biased regardless of significance
+
+  - id: overrides_learnable
+    hypothesis: The override a human applies is predictable at quote time
+    test: Ridge + GroupKFold on customer vs zero/customer-mean/global-mean baselines,
+      hard-capped effort
+
+  - id: rush_costs_margin
+    hypothesis: Short-notice jobs earn less per constraint-hour
+    test: Bottom-percentile dwell within size band, full controls, cluster-robust
+
+  - id: rush_cost_depends_on_load
+    hypothesis: The rush penalty grows when the factory is busy (A5)
+    test: Rush x weekly-load interaction + simple slopes
+
+  - id: revenue_concentrated
+    hypothesis: Revenue is dangerously concentrated in few customers (B10)
+    test: Gini, top-N shares, HHI over customer revenue
+
+  - id: reorder_forecastable
+    hypothesis: Reorder timing is forecastable per account
+    test: Interval CV on distinct order dates vs regularity gate
+
+  - id: growth_volume_driven
+    hypothesis: Revenue growth comes from more jobs (volume)
+    test: CAGR decomposition into jobs x revenue-per-job (exact in logs)
+
+  - id: optimal_job_size_exists
+    hypothesis: There is an optimal (interior) job size for margin
+    test: Monotonicity report BEFORE banding; curve max location

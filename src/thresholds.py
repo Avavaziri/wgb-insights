@@ -163,9 +163,14 @@ def capacity_share_above(data: pd.DataFrame, crossover_hrs: float) -> dict[str, 
     counterfactual GBP figure — capacity data doesn't exist."""
     above = data[data["press_hrs"] > crossover_hrs]
     total_hrs = float(data["press_hrs"].sum())
+    above_hrs = float(above["press_hrs"].sum())
     return {
-        "share_of_constraint_hours": float(above["press_hrs"].sum()) / total_hrs,
-        "pooled_rate_above": float(above["va_amount_gbp"].sum() / above["press_hrs"].sum()),
+        # NaN crossover (curve never crosses) → empty 'above' → NaN share,
+        # never a fake zero
+        "share_of_constraint_hours": above_hrs / total_hrs if len(above) else float("nan"),
+        "pooled_rate_above": (
+            float(above["va_amount_gbp"].sum()) / above_hrs if above_hrs else float("nan")
+        ),
         "benchmark": benchmark_rate(data),
         "n_jobs_above": float(len(above)),
     }

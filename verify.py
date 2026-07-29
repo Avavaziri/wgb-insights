@@ -17,10 +17,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from src.churn import cadence_stats, compare_fixed_rule, regularity_gate
 from src.clean import CleanResult, clean, constraint_frame
 from src.config import load_config
 from src.decomposition import nested_decomposition
 from src.ingest import ValidationReport, load_raw
+from src.pricing import override_effect, override_scale
+from src.rush import rush_effect, rush_load_interaction
 from src.thresholds import (
     benchmark_rate,
     capacity_share_above,
@@ -30,6 +33,7 @@ from src.thresholds import (
     rolling_rate_curve,
     window_sensitivity,
 )
+from src.trend import concentration, growth_attribution, yearly_trend
 
 RAW_DIR = Path(__file__).parent / "data" / "raw"
 
@@ -98,9 +102,6 @@ def build_rows(
         share = rev / float(cfg["company_turnover_gbp"])
         return f"{share:.1%} (mean of {years})", abs(share - 0.54) < 0.05
 
-    def stub() -> tuple[str, bool | None]:
-        raise Stub
-
     # --- constraint-frame analyses (decomposition + thresholds), computed once
     cf = constraint_frame(jobs, cfg)
     dcfg = cfg["decomposition"]
@@ -127,6 +128,76 @@ def build_rows(
     )
     share = capacity_share_above(cf, xover)
 
+    # --- pricing / rush / churn / trend
+    tol = float(cfg["clean"]["override_tolerance_gbp"])
+    seed = int(cfg["seeds"]["global"])
+    scale = override_scale(cf, tol)
+    ov_effect = override_effect(cf, tol, seed=seed)
+    rcfg = cfg["rush"]
+    r_effect = rush_effect(cf, float(rcfg["dwell_percentile"]), int(rcfg["size_bands"]), seed=seed)
+    r_inter = rush_load_interaction(
+        cf, float(rcfg["dwell_percentile"]), int(rcfg["size_bands"]),
+        int(rcfg["load_bins"]), seed=seed,
+    )["interaction"]
+    ccfg = cfg["churn"]
+    cadence = cadence_stats(jobs)
+    gate = regularity_gate(cadence, float(ccfg["cv_max"]), int(ccfg["min_orders"]))
+    churn_cmp = compare_fixed_rule(
+        jobs, int(ccfg["fixed_rule_days"]), float(ccfg["gap_multiplier"]),
+        float(ccfg["cv_max"]), int(ccfg["min_orders"]),
+    )
+    conc = concentration(jobs)
+    growth = growth_attribution(yearly_trend(jobs))
+
+    def override_row() -> tuple[str, bool | None]:
+        r, up, down = scale["override_rate"], scale["n_up"], scale["n_down"]
+        net = scale["net_gbp_per_year"]
+        got = f"{r:.0%} / {up} up vs {down} down / {net / 1000:+.0f}k/yr"
+        return got, (
+            abs(r - 0.61) < 0.03
+            and abs(up - 1551) < 80
+            and abs(down - 1005) < 80
+            and abs(net - 98_000) < 15_000
+        )
+
+    def override_effect_row() -> tuple[str, bool | None]:
+        pct, p = ov_effect.pct_effect or 0.0, ov_effect.p_value
+        return f"{pct:+.1f}%, raw p = {p:.3f}", abs(pct - 11.2) < 5 and 0.005 < p < 0.15
+
+    def rush_row() -> tuple[str, bool | None]:
+        # §9's p ~ 2e-5 is only reproducible with nonrobust SEs, which
+        # §2.3 forbids — with cluster-robust SEs the honest p is ~0.04.
+        # Effect size must match; p must clear 0.05 clustered.
+        pct, p = r_effect.pct_effect or 0.0, r_effect.p_value
+        return f"{pct:+.1f}%, cluster-robust p = {p:.3f}", (
+            abs(pct - (-5.0)) < 2.5 and p < 0.05
+        )
+
+    def interaction_row() -> tuple[str, bool | None]:
+        p = r_inter.p_value
+        return f"p = {p:.2f}", p > 0.1
+
+    def gini_row() -> tuple[str, bool | None]:
+        g, t1, t10 = conc["gini"], conc["top_1_share"], conc["top_10_share"]
+        got = f"{g:.2f} / {t1:.0%} / {t10:.0%}"
+        return got, abs(g - 0.36) < 0.06 and abs(t1 - 0.11) < 0.03 and abs(t10 - 0.46) < 0.06
+
+    def churn_gate_row() -> tuple[str, bool | None]:
+        med_cv = float(cadence["cv"].median())
+        n_fc = int(gate.sum())
+        got = f"median CV {med_cv:.2f}; {n_fc}/{len(cadence)} forecastable"
+        return got, abs(med_cv - 0.95) < 0.15 and abs(n_fc - 12) <= 3
+
+    def churn_cmp_row() -> tuple[str, bool | None]:
+        nf, np_ = churn_cmp["n_fixed"], churn_cmp["n_personalised"]
+        got = f"{nf} vs {np_}, sets differ = {churn_cmp['sets_differ']}"
+        return got, abs(nf - 8) <= 3 and abs(np_ - 11) <= 3 and churn_cmp["sets_differ"]
+
+    def growth_row() -> tuple[str, bool | None]:
+        cagr, dm = growth["revenue_cagr"], growth["va_margin_change_pts"]
+        got = f"{cagr:.1%} / {dm:+.1f}pts"
+        return got, abs(cagr - 0.087) < 0.015 and abs(dm - 2.4) < 1.5
+
     def decomp_cv() -> tuple[str, bool | None]:
         # §9 marks this expected-to-shift (post-cleaning, run-features added)
         # → INFO with direction, never PASS/FAIL
@@ -151,7 +222,10 @@ def build_rows(
 
     def bench_xover() -> tuple[str, bool | None]:
         lo, hi = sens["crossover_hrs"].min(), sens["crossover_hrs"].max()
-        got = f"GBP {bench:.0f}/hr / {xover:.1f}h (win {lo:.1f}-{hi:.1f}, CI {ci_lo:.1f}-{ci_hi:.1f})"
+        got = (
+            f"GBP {bench:.0f}/hr / {xover:.1f}h "
+            f"(win {lo:.1f}-{hi:.1f}, CI {ci_lo:.1f}-{ci_hi:.1f})"
+        )
         return got, abs(bench - 766) < 77 and abs(xover - 4.4) < 1.5
 
     def above_share() -> tuple[str, bool | None]:
@@ -174,14 +248,15 @@ def build_rows(
         Row("Spearman size vs rate", "~ -0.58; interior optimum False", spearman),
         Row("Benchmark rate / crossover", "~ GBP 766/hr / ~ 4.4h (range + CI)", bench_xover),
         Row("Above-crossover share", "~69% of constraint-hours @ ~GBP 667/hr", above_share),
-        Row("Override rate / direction / net", "~61% / 1551 up vs 1005 down / ~ +98k/yr", stub),
-        Row("Override effect", "~ +11.2%, raw p ~ 0.049 -> fails BH", stub),
-        Row("Rush main effect", "~ -5.0%, p ~ 2e-5", stub),
-        Row("Rush x load interaction", "not significant, p ~ 0.54", stub),
-        Row("Gini / top-1 / top-10", "~0.36 / 11% / 46%", stub),
-        Row("Interval CV median; forecastable", "~0.95; ~12/50", stub),
-        Row("Fixed vs personalised churn flags", "8 vs 11, different sets", stub),
-        Row("Rev CAGR / VA margin change 23->25", "~8.7% / +2.4pts", stub),
+        Row("Override rate / direction / net", "~61% / 1551 up vs 1005 down / ~ +98k/yr",
+            override_row),
+        Row("Override effect", "~ +11.2%, raw p ~ 0.049 -> fails BH", override_effect_row),
+        Row("Rush main effect", "~ -5.0%, p ~ 2e-5", rush_row),
+        Row("Rush x load interaction", "not significant, p ~ 0.54", interaction_row),
+        Row("Gini / top-1 / top-10", "~0.36 / 11% / 46%", gini_row),
+        Row("Interval CV median; forecastable", "~0.95; ~12/50", churn_gate_row),
+        Row("Fixed vs personalised churn flags", "8 vs 11, different sets", churn_cmp_row),
+        Row("Rev CAGR / VA margin change 23->25", "~8.7% / +2.4pts", growth_row),
     ]
 
 

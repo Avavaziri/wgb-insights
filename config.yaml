@@ -17,7 +17,11 @@ fx:
 clean:
   dwell_outlier_days: 400          # dwell = Ship date − SalesIn; beyond this excluded, count reported
   rate_floor_gbp_per_hr: 1.0       # floor before log(contribution per constraint-hour)
-  override_tolerance_gbp: 0.005    # |manadj| above this = overridden (guards float noise)
+  # |manadj| above this = a real override. The |manadj| distribution is
+  # bimodal: q39 ~ GBP 0.57 (automated rounding noise) vs q50 ~ GBP 8.90
+  # (human adjustments) — GBP 1 sits inside the gap. Sensitivity across
+  # 0.5/1/2/5 reported by override_scale.
+  override_tolerance_gbp: 1.0
   unmapped_product_max_share: 0.01 # assert: unmapped product categories below this share
 
 # §3.4 canonicalisation — charting rollup threshold; canonical value kept in data

@@ -1,0 +1,87 @@
+# wgb-insights configuration — every analytical parameter lives here, not in code.
+# §10: no hardcoded analytical constants in src/; thresholds derived, parameters here.
+
+seeds:
+  global: 42        # logged in every report; reruns reproducible
+  cv: 42            # KFold(shuffle=True, random_state=seeds.cv)
+  bootstrap: 42     # crossover CI resampling
+
+company_turnover_gbp: 15_000_000   # stated annual turnover; sample share computed, never hardcoded
+
+# FX — keys off `Currency`, NEVER `Region` (Ireland has Stg jobs, NI has Euro jobs).
+# Conversion: gbp = euro_amount / eur_per_gbp. Monthly overrides win over default.
+fx:
+  default_eur_per_gbp: 1.17
+  monthly: {}        # e.g. "2024-03": 1.169 — populate if monthly rates are sourced
+
+clean:
+  dwell_outlier_days: 400          # dwell = Ship date − SalesIn; beyond this excluded, count reported
+  rate_floor_gbp_per_hr: 1.0       # floor before log(contribution per constraint-hour)
+  override_tolerance_gbp: 0.005    # |manadj| above this = overridden (guards float noise)
+  unmapped_product_max_share: 0.01 # assert: unmapped product categories below this share
+
+# §3.4 canonicalisation — charting rollup threshold; canonical value kept in data
+product_type_map:
+  "Brochures / Price LIst": "Brochures / Price List"
+  "Leaflets to A4/ Price Lists": "Leaflets / Price Lists"
+  "Leaflets to A4 /Price Lists": "Leaflets / Price Lists"
+  "Leaflets to A4": "Leaflets / Price Lists"
+  "Books/Educational Books": "Educational Books"
+  "Certficates": "Certificates"
+  "Miscellaneous -ask advice": "Miscellaneous"
+  "Miscellaneous-ask advice": "Miscellaneous"
+  "Signage (large)": "Signage"
+  "Banners Printed": "Banners"
+  "Tent Cards/Swatch Cards": "Tent Cards"
+  "Menu (Takeaway/throwaway)": "Menu"
+  "Menu (Cafe/Restaurant)": "Menu"
+  "Diaries / Yearbooks": "Diaries"
+  "Postage": "Fulfilment / Postage"
+  "Postage/Mailing": "Fulfilment / Postage"
+  "Pack and Postage": "Fulfilment / Postage"
+  "Pack and Distribution": "Fulfilment / Postage"
+  "Fulfilment - other": "Fulfilment / Postage"
+long_tail_min_jobs: 15
+
+decomposition:
+  # blocks in adjudicated config order; run in this order only (reverse run cut for budget)
+  blocks: [size, run_features, product, customer, rep, year]
+  cv_folds: 5
+  in_sample_only_cv_increment: 0.02   # §2.4: F-p<0.001 but CV-R² gain below this → in_sample_only
+  in_sample_only_f_p: 0.001
+
+thresholds:
+  rolling_window: 500       # jobs per pooled-rate window, size-sorted
+  rolling_step: 50
+  window_sensitivity: [250, 500, 750, 1000]
+  n_boot: 500               # ≥500 draws for crossover bootstrap CI
+  breakpoints_k: 4
+  breakpoints_min_group: 200
+  cart_max_leaves: 4
+  cart_min_samples_leaf: 200
+
+rush:
+  dwell_percentile: 0.20            # bottom-percentile dwell WITHIN size band
+  percentile_sensitivity: [0.15, 0.20, 0.25, 0.30]
+  size_bands: 4
+  load_bins: 3                      # weekly booked hours quantiles — RELATIVE load only
+
+churn:
+  cv_max: 0.75              # regularity gate: forecastable only below this interval CV
+  gap_multiplier: 1.5       # at-risk when gap > multiplier × own median interval
+  fixed_rule_days: 90       # the naive rule personalised thresholds are compared against
+  min_orders: 4             # cadence stats need at least this many distinct order dates
+
+pricing:
+  model_family: ridge       # one family, defaults only, hard cap 0.25 day
+  group_kfold_folds: 5      # grouped on customer — plain KFold is a defect
+
+# fixed headline family for the single BH pass in checks.py (§5.8) — order matters for the register
+bh_family:
+  - customer_block
+  - run_features_block
+  - product_block
+  - size_effect
+  - rush_main_effect
+  - rush_load_interaction
+  - override_effect

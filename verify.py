@@ -17,9 +17,19 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from src.clean import CleanResult, clean
+from src.clean import CleanResult, clean, constraint_frame
 from src.config import load_config
+from src.decomposition import nested_decomposition
 from src.ingest import ValidationReport, load_raw
+from src.thresholds import (
+    benchmark_rate,
+    capacity_share_above,
+    crossover_ci,
+    crossover_point,
+    monotonicity_report,
+    rolling_rate_curve,
+    window_sensitivity,
+)
 
 RAW_DIR = Path(__file__).parent / "data" / "raw"
 
@@ -91,6 +101,65 @@ def build_rows(
     def stub() -> tuple[str, bool | None]:
         raise Stub
 
+    # --- constraint-frame analyses (decomposition + thresholds), computed once
+    cf = constraint_frame(jobs, cfg)
+    dcfg = cfg["decomposition"]
+    decomp = nested_decomposition(
+        cf,
+        "log_rate",
+        dcfg["blocks"],
+        cluster_on="customer_id",
+        cv_folds=int(dcfg["cv_folds"]),
+        seed=int(cfg["seeds"]["cv"]),
+        in_sample_only_f_p=float(dcfg["in_sample_only_f_p"]),
+        in_sample_only_cv_increment=float(dcfg["in_sample_only_cv_increment"]),
+    ).set_index("block")
+    tcfg = cfg["thresholds"]
+    window, step = int(tcfg["rolling_window"]), int(tcfg["rolling_step"])
+    mono = monotonicity_report(cf, window=window, step=step)
+    bench = benchmark_rate(cf)
+    curve = rolling_rate_curve(cf, window, step)
+    xover = crossover_point(curve, bench)
+    sens = window_sensitivity(cf, [int(w) for w in tcfg["window_sensitivity"]], step=step)
+    ci_lo, ci_hi = crossover_ci(
+        cf, n_boot=int(tcfg["n_boot"]), seed=int(cfg["seeds"]["bootstrap"]),
+        window=window, step=step,
+    )
+    share = capacity_share_above(cf, xover)
+
+    def decomp_cv() -> tuple[str, bool | None]:
+        # §9 marks this expected-to-shift (post-cleaning, run-features added)
+        # → INFO with direction, never PASS/FAIL
+        vals = " / ".join(f"{decomp.loc[b, 'r2_cv']:.3f}" for b in dcfg["blocks"])
+        return f"{'/'.join(dcfg['blocks'])}: {vals}", None
+
+    def rep_f() -> tuple[str, bool | None]:
+        p = float(decomp.loc["rep", "f_p_vs_prev"])
+        return f"p = {p:.3f}", p > 0.01  # null result expected
+
+    def product_block() -> tuple[str, bool | None]:
+        p = float(decomp.loc["product", "f_p_vs_prev"])
+        inc = float(decomp.loc["product", "cv_increment"])
+        iso = bool(decomp.loc["product", "in_sample_only"])
+        return f"p = {p:.1e}, CV inc = {inc:+.3f}, in_sample_only = {iso}", iso
+
+    def spearman() -> tuple[str, bool | None]:
+        rho, interior = mono["spearman_rho"], mono["interior_optimum"]
+        return f"rho = {rho:.3f}; interior optimum {interior}", (
+            abs(rho - (-0.58)) < 0.12 and not interior
+        )
+
+    def bench_xover() -> tuple[str, bool | None]:
+        lo, hi = sens["crossover_hrs"].min(), sens["crossover_hrs"].max()
+        got = f"GBP {bench:.0f}/hr / {xover:.1f}h (win {lo:.1f}-{hi:.1f}, CI {ci_lo:.1f}-{ci_hi:.1f})"
+        return got, abs(bench - 766) < 77 and abs(xover - 4.4) < 1.5
+
+    def above_share() -> tuple[str, bool | None]:
+        s, r = share["share_of_constraint_hours"], share["pooled_rate_above"]
+        return f"{s:.0%} of constraint-hours @ GBP {r:.0f}/hr", (
+            abs(s - 0.69) < 0.07 and abs(r - 667) < 67
+        )
+
     return [
         Row("Rows / customers / reps", "6355 / 50 / 9", counts),
         Row("SalesIn range", "2023-01-03 -> 2026-05-21", salesin_range),
@@ -99,12 +168,12 @@ def build_rows(
         Row("Press hrs = 0 rows", "1354 Digital + 144 Litho", press_hrs_zero),
         Row("Partial period", "2026 flagged", partial_period),
         Row("Sample share of turnover", "~54%", sample_share),
-        Row("Decomp CV R2 size/+prod/+cust/+rep", "~.262/.269/.471/.471 (pre-clean)", stub),
-        Row("Rep block nested F", "p ~ 0.13 (null)", stub),
-        Row("Product block", "in-sample p<<, CV inc ~ +0.007 -> in_sample_only", stub),
-        Row("Spearman size vs rate", "~ -0.58; interior optimum False", stub),
-        Row("Benchmark rate / crossover", "~ GBP 766/hr / ~ 4.4h (range + CI)", stub),
-        Row("Above-crossover share", "~69% of constraint-hours @ ~GBP 667/hr", stub),
+        Row("Decomp CV R2 (cumulative)", "~.262/.269/.471/.471 pre-clean baseline", decomp_cv),
+        Row("Rep block nested F", "p ~ 0.13 (null)", rep_f),
+        Row("Product block", "in-sample p<<, small CV inc -> in_sample_only", product_block),
+        Row("Spearman size vs rate", "~ -0.58; interior optimum False", spearman),
+        Row("Benchmark rate / crossover", "~ GBP 766/hr / ~ 4.4h (range + CI)", bench_xover),
+        Row("Above-crossover share", "~69% of constraint-hours @ ~GBP 667/hr", above_share),
         Row("Override rate / direction / net", "~61% / 1551 up vs 1005 down / ~ +98k/yr", stub),
         Row("Override effect", "~ +11.2%, raw p ~ 0.049 -> fails BH", stub),
         Row("Rush main effect", "~ -5.0%, p ~ 2e-5", stub),

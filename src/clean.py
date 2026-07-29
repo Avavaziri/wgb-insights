@@ -62,6 +62,23 @@ class CleanResult:
     report: CleanReport
 
 
+def constraint_frame(jobs: pd.DataFrame, config: dict[str, Any]) -> pd.DataFrame:
+    """Rows valid for contribution-per-constraint-hour analysis: Litho with
+    press hours, closed jobs only (§3.3 traps 7-8). Adds log_rate, the
+    §5.2 target: log(rate) clipped at the config floor — clipping keeps
+    negative-contribution jobs in the frame instead of dropping them.
+
+    Digital/Outwork/Wide Format carry no press hours; constraint analysis
+    is Litho-only and every output surface must say so.
+    """
+    floor = float(config["clean"]["rate_floor_gbp_per_hr"])
+    frame = jobs[
+        (jobs["work_type"] == "Litho") & (jobs["press_hrs"] > 0) & jobs["is_closed"]
+    ].copy()
+    frame["log_rate"] = np.log(frame["rate_gbp_per_hr"].clip(lower=floor))
+    return frame
+
+
 def _fx_rate(row_month: pd.Series, fx_cfg: dict[str, Any]) -> pd.Series:
     """Per-row eur_per_gbp: monthly override if configured, else default."""
     monthly: dict[str, float] = fx_cfg.get("monthly") or {}

@@ -91,18 +91,24 @@ def _parse_formula(formula: str) -> tuple[str, str | None, list[str], list[str]]
             numeric.append(term)  # keep the transform expression
         elif re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", term):
             numeric.append(term)
+        elif re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*:[A-Za-z_][A-Za-z0-9_]*", term):
+            numeric.append(term)  # numeric x numeric interaction
         else:
             raise ValueError(f"Unsupported formula term for CV parsing: {term!r}")
     return target, target_tf, numeric, categorical
 
 
 def _apply_term(data: pd.DataFrame, term: str) -> pd.Series:
-    """Evaluate a numeric term (`col`, `np.log(col)`, `np.log1p(col)`)."""
+    """Evaluate a numeric term (`col`, `np.log(col)`, `np.log1p(col)`,
+    `a:b` numeric interaction)."""
     m = _TERM_RE.match(term)
     if m and m.group("col1"):
         col = m.group("col1").strip()
         fn = np.log if m.group(1) == "log" else np.log1p
         return pd.Series(fn(data[col].to_numpy(dtype=float)), index=data.index, name=term)
+    if ":" in term:
+        left, right = term.split(":", 1)
+        return (data[left].astype(float) * data[right].astype(float)).rename(term)
     return data[term].astype(float)
 
 

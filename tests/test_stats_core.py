@@ -64,6 +64,10 @@ class TestFormulaParsing:
         assert num == ["np.log(size)", "qty"]
         assert cat == ["product", "customer"]
 
+    def test_numeric_interaction_supported(self) -> None:
+        _, _, num, _ = _parse_formula("y ~ a + b + a:b")
+        assert "a:b" in num
+
     def test_unsupported_term_raises(self) -> None:
         with pytest.raises(ValueError, match="Unsupported"):
             _parse_formula("y ~ x1 * x2")

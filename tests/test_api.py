@@ -1,0 +1,128 @@
+"""One contract test per endpoint against the synthetic fixture (§8).
+
+The TestClient boots state from data/sample/sample.xlsx when data/raw is
+absent; in a checkout WITH real data present, state.active() would use
+it — so tests pin the fixture explicitly via POST /datasets first.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+
+from api.main import app
+
+FIXTURE = Path(__file__).resolve().parents[1] / "data" / "sample" / "sample.xlsx"
+
+
+@pytest.fixture(scope="module")
+def client() -> TestClient:
+    c = TestClient(app)
+    with open(FIXTURE, "rb") as fh:
+        resp = c.post(
+            "/datasets",
+            files={"file": ("sample.xlsx", fh,
+                            "application/vnd.openxmlformats-officedocument"
+                            ".spreadsheetml.sheet")},
+        )
+    assert resp.status_code == 200, resp.text
+    return c
+
+
+class TestDatasets:
+    def test_upload_refreshes_everything(self, client: TestClient) -> None:
+        with open(FIXTURE, "rb") as fh:
+            resp = client.post("/datasets", files={"file": ("again.xlsx", fh, "x")})
+        body = resp.json()
+        assert body["validation"]["n_rows"] == 400
+        assert body["clean_report"]["n_quarantined_credits"] == 12
+        assert len(body["gaps"]) == 5
+
+    def test_garbage_rejected_422(self, client: TestClient) -> None:
+        import openpyxl
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Master Plain (Anon)"
+        ws.append(["Wrong", "Columns"])
+        import io
+
+        buf = io.BytesIO()
+        wb.save(buf)
+        resp = client.post("/datasets", files={"file": ("bad.xlsx", buf.getvalue(), "x")})
+        assert resp.status_code == 422
+        assert "missing expected columns" in resp.json()["detail"]
+
+    def test_no_bare_numbers_in_effect_reports(self, client: TestClient) -> None:
+        # the structural guarantee: every effect carries CI, p, n together
+        body = client.get("/rush").json()
+        e = body["main_effect"]
+        for field in ("coef", "ci_low", "ci_high", "p_value", "n_obs", "se_type"):
+            assert field in e
+
+
+class TestEndpoints:
+    def test_overview(self, client: TestClient) -> None:
+        body = client.get("/overview").json()
+        assert body["as_of"]  # derived from max(SalesIn), never today
+        assert body["partial_year"] == 2026
+        assert len(body["hypothesis_register"]) == 13
+        assert "extrapolat" in body["scale_caveat"]
+
+    def test_decomposition(self, client: TestClient) -> None:
+        body = client.get("/decomposition").json()
+        blocks = [r["block"] for r in body["rows"]]
+        assert blocks[:2] == ["size", "run_features"]
+        first = body["rows"][0]
+        assert {"r2", "r2_adj", "r2_cv", "n_params"} <= set(first)  # no bare R2
+        assert body["rows"][0]["f_p_vs_prev"] is None  # first block: nothing to test
+
+    def test_pricing_caution_wrapped(self, client: TestClient) -> None:
+        body = client.get("/pricing").json()
+        assert "selection-biased" in body["override_effect"]["caution"]
+        assert body["model"]["finding"]
+        assert "rate_by_tolerance_gbp" in body["scale"]
+
+    def test_thresholds(self, client: TestClient) -> None:
+        body = client.get("/thresholds").json()
+        assert body["monotonicity"]["interior_optimum"] in (True, False)
+        assert "Litho-only" in body["litho_only_note"]
+        assert "no counterfactual" in body["capacity_statement"].lower()
+
+    def test_rush_interaction_inconclusive_wrapped(self, client: TestClient) -> None:
+        body = client.get("/rush").json()
+        assert body["bh_status"] in ("headline", "not_headline")
+        assert "queueing theory" in body["interaction"]["inconclusive"]
+
+    def test_churn_gate_and_null_dates(self, client: TestClient) -> None:
+        body = client.get("/churn").json()
+        assert "never an invented date" in body["gate"]
+        for row in body["rows"]:
+            if not row["forecastable"]:
+                assert row["expected_next_order"] is None
+
+    def test_call_list_csv(self, client: TestClient) -> None:
+        resp = client.get("/call-list.csv")
+        header = resp.text.splitlines()[0].split(",")
+        assert header == [
+            "customer", "rep", "industry", "last_order", "days_since",
+            "own_median_interval", "interval_cv", "forecastable", "gap_ratio",
+            "historic_contribution_gbp", "contribution_per_constraint_hr",
+            "override_rate", "risk_band", "reason_code", "expected_next_order",
+        ]
+
+    def test_register(self, client: TestClient) -> None:
+        body = client.get("/register").json()
+        assert len(body["bh_table"]) == 7
+        outcomes = {e["id"]: e["outcome"] for e in body["entries"]}
+        assert outcomes["optimal_job_size_exists"] == "rejected"  # negative = deliverable
+
+    def test_charts_render_and_404(self, client: TestClient) -> None:
+        names = client.get("/charts").json()
+        assert "rate_curve" in names and "bh_family" in names
+        fig = json.loads(client.get("/charts/rate_curve").text)
+        assert "data" in fig and "layout" in fig
+        assert client.get("/charts/nonsense").status_code == 404

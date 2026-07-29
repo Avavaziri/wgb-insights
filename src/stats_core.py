@@ -278,8 +278,19 @@ def mannwhitney_reported(
 def nested_f_test(restricted: Any, full: Any) -> tuple[float, float]:
     """F-test of a restricted model against its superset. Returns (F, p).
 
+    The classic F compares residual sums of squares, which is invalid on
+    cluster-robust results objects — so both models are refit nonrobust
+    here for the block test. Cluster-robust SEs still govern effect
+    inference (§2.3); this F only asks whether a block moves the fit.
+
     §2.4 caveat applies downstream: in-sample F significance without a
     CV-R² increment is flagged in_sample_only by the caller.
     """
-    f_stat, p_value, _ = full.compare_f_test(restricted)
+    restricted_ols = restricted.model.fit()
+    full_ols = full.model.fit()
+    if full_ols.df_model <= restricted_ols.df_model:
+        # added block is collinear with what's already in the model
+        # (e.g. a rep owning exactly one customer) — nothing to test
+        return 0.0, 1.0
+    f_stat, p_value, _ = full_ols.compare_f_test(restricted_ols)
     return float(f_stat), float(p_value)

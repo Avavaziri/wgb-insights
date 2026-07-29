@@ -177,8 +177,11 @@ def rate_curve(pr: PipelineResult) -> go.Figure:
     sens = th["window_sensitivity"]["crossover_hrs"]
 
     fig = _fig("Contribution per press-hour declines with job size — no optimal size exists")
+    # Plotly quirk: on a log axis, shape/line/annotation x-coords are
+    # log10-space — raw values would blow the axis out to 10^4.6
+    log10 = np.log10
     fig.add_shape(  # bootstrap CI band on the crossover
-        type="rect", x0=ci_lo, x1=ci_hi, y0=0, y1=1, yref="paper",
+        type="rect", x0=log10(ci_lo), x1=log10(ci_hi), y0=0, y1=1, yref="paper",
         fillcolor=YELLOW, opacity=0.45, line={"width": 0},
     )
     fig.add_trace(
@@ -186,14 +189,18 @@ def rate_curve(pr: PipelineResult) -> go.Figure:
                    line={"color": INK, "width": 3}, name="pooled rate")
     )
     fig.add_hline(y=bench, line={"color": MUTED, "width": 2, "dash": "dash"})
-    fig.add_vline(x=xover, line={"color": INK, "width": 2, "dash": "dot"})
-    fig.add_annotation(x=xover, y=1.02, yref="paper", showarrow=False,
+    fig.add_shape(
+        type="line", x0=log10(xover), x1=log10(xover), y0=0, y1=1, yref="paper",
+        line={"color": INK, "width": 2, "dash": "dot"},
+    )
+    fig.add_annotation(x=log10(xover), y=1.02, yref="paper", showarrow=False,
                        text=f"crossover {xover:.1f}h "
                             f"(windows {sens.min():.1f}-{sens.max():.1f}, "
                             f"95% CI {ci_lo:.1f}-{ci_hi:.1f})",
                        font={"size": 15})
-    fig.add_annotation(x=curve["size_hrs"].max(), y=bench, xanchor="right", yanchor="bottom",
-                       showarrow=False, text=f"factory average {bench:,.0f} GBP/hr",
+    fig.add_annotation(x=log10(curve["size_hrs"].max()), y=bench, xanchor="right",
+                       yanchor="bottom", showarrow=False,
+                       text=f"factory average {bench:,.0f} GBP/hr",
                        font={"size": 15, "color": MUTED})
     fig.update_xaxes(title="Job size (press hours, log scale)", type="log")
     fig.update_yaxes(title="Contribution per constraint-hour (GBP)", rangemode="tozero")
@@ -284,11 +291,13 @@ def bh_family(pr: PipelineResult) -> go.Figure:
             textposition="middle right", textfont={"size": 14},
         )
     )
-    fig.add_vline(x=0.05, line={"color": MUTED, "width": 2, "dash": "dash"})
-    fig.add_annotation(x=0.05, y=1.04, yref="paper", showarrow=False, text="alpha = 0.05",
-                       font={"size": 14, "color": MUTED})
+    alpha_log = float(np.log10(0.05))
+    fig.add_shape(type="line", x0=alpha_log, x1=alpha_log, y0=0, y1=1, yref="paper",
+                  line={"color": MUTED, "width": 2, "dash": "dash"})
+    fig.add_annotation(x=alpha_log, y=1.04, yref="paper", showarrow=False,
+                       text="alpha = 0.05", font={"size": 14, "color": MUTED})
     fig.update_xaxes(title="Benjamini-Hochberg adjusted p (log scale)", type="log",
-                     range=[-62, 1.3])
+                     range=[-62, 1.3], exponentformat="power", dtick=10)
     fig.update_yaxes(autorange="reversed")
     return fig
 

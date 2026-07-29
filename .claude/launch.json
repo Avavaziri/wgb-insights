@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "C:\\Users\\arghavan.vaziri\\.anaconda\\envs\\nodejs\\pnpm.cmd",
+      "runtimeArgs": ["--dir", "frontend", "dev"],
+      "port": 3000
+    }
+  ]
+}

@@ -1,6 +1,20 @@
 import PlotlyChart from "@/components/PlotlyChart";
 import { ApiDown } from "@/components/ApiGuard";
-import { Inconclusive, NotHeadlineBanner, StatTile } from "@/components/banners";
+import { Inconclusive, NotHeadlineBanner } from "@/components/banners";
+import {
+  Callout,
+  KpiRow,
+  PageHeader,
+  Readout,
+  Section,
+  Kpi,
+  Table,
+  TableFrame,
+  Td,
+  Th,
+  Tr,
+} from "@/components/ui";
+import { ciPctFromLog, dp, gbp, num, pctPoints, pval, seLabel } from "@/lib/format";
 import { ApiDownError, getChart, getJson } from "@/lib/api";
 import type { Rush, Thresholds } from "@/lib/types";
 
@@ -27,103 +41,169 @@ export default async function ConstraintPage() {
 
   return (
     <>
-      <h1 className="text-4xl font-black tracking-tight">
-        Job size &amp; the constraint
-      </h1>
-      <p className="max-w-3xl text-neutral-700">
-        Press hours are the capacity-constrained resource; the margin metric is
-        contribution per constraint-hour (throughput accounting).{" "}
-        {th.litho_only_note}
-      </p>
+      <PageHeader
+        eyebrow="Size & the constraint"
+        title="Big jobs fill the press. Small jobs pay for it."
+        lede={
+          <>
+            Press hours are the capacity-constrained resource, so the margin
+            metric is contribution per constraint-hour — throughput accounting,
+            not gross margin percentage. {th.litho_only_note}
+          </>
+        }
+      />
 
-      <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatTile
-          label="Monotonicity verdict"
+      <KpiRow>
+        <Kpi
+          label="Shape of the curve"
           value={mono.interior_optimum ? "Interior optimum" : "Monotonic decline"}
-          detail={`Spearman ρ ${Number(mono.spearman_rho).toFixed(2)}, n ${mono.n} — checked BEFORE any banding`}
+          detail={`Spearman ρ ${Number(mono.spearman_rho).toFixed(2)} on n ${num(Number(mono.n))} — tested before any banding, so the bins can't manufacture the shape`}
         />
-        <StatTile
-          label="Factory average"
-          value={`£${Math.round(th.benchmark_rate_gbp_per_hr)}/hr`}
-          detail="hour-weighted — the internal benchmark"
+        <Kpi
+          label="Factory benchmark"
+          value={`${gbp(th.benchmark_rate_gbp_per_hr)}/hr`}
+          detail="hour-weighted mean rate — the internal line every job is judged against"
         />
-        <StatTile
+        <Kpi
           label="Crossover threshold"
           value={`${th.crossover_hrs.toFixed(1)}h`}
-          detail={`windows ${th.crossover_window_range[0].toFixed(1)}–${th.crossover_window_range[1].toFixed(1)}h · 95% CI ${th.crossover_ci95[0].toFixed(1)}–${th.crossover_ci95[1].toFixed(1)}h`}
+          detail={`window range ${th.crossover_window_range[0].toFixed(1)}–${th.crossover_window_range[1].toFixed(1)}h · bootstrap 95% CI ${th.crossover_ci95[0].toFixed(1)}–${th.crossover_ci95[1].toFixed(1)}h`}
         />
-        <StatTile
-          label="Above the crossover"
-          value={`${Math.round(th.capacity_share.share_of_constraint_hours * 100)}% of hours`}
-          detail={`at £${Math.round(th.capacity_share.pooled_rate_above)}/hr`}
+        <Kpi
+          label="Hours above the crossover"
+          value={`${Math.round(th.capacity_share.share_of_constraint_hours * 100)}%`}
+          detail={`of constraint-hours, earning ${gbp(th.capacity_share.pooled_rate_above)}/hr`}
         />
-      </section>
+      </KpiRow>
 
-      <PlotlyChart figure={curveFig} />
-      <PlotlyChart figure={capacityFig} />
-      <p className="max-w-3xl text-sm text-neutral-600">{th.capacity_statement}</p>
+      <PlotlyChart
+        figure={curveFig}
+        caption="Read the crossover as a range, not a line: the point estimate, the window-sensitivity range and the bootstrap CI are all reported above because a single number here would be false precision."
+      />
 
-      <section className="space-y-3">
-        <h2 className="text-2xl font-black">Short-notice (rush) jobs</h2>
+      {/* The statement also appears inside the figure; it is repeated as a
+          caption because chart annotations are invisible to a screen reader. */}
+      <PlotlyChart figure={capacityFig} caption={th.capacity_statement} />
+
+      <Section
+        kicker="Short-notice work"
+        title="Rush jobs, and why this isn't on the headline slide"
+        note="Rush is proxied by bottom-percentile dwell time within a size band — no scheduling data exists in this extract. The effect is negative and reasonably sized, and it still failed the multiplicity correction. It is reported here in full rather than quietly dropped."
+      >
         {rush.bh_status === "not_headline" && (
           <NotHeadlineBanner text={rush.bh_note} />
         )}
-        <p className="max-w-3xl text-sm text-neutral-700">
-          Rush = bottom-percentile dwell within size band (a proxy — no
-          scheduling data exists). Effect on contribution per constraint-hour
-          with full controls: {me.pct_effect?.toFixed(1)}% [
-          {((Math.exp(me.ci_low) - 1) * 100).toFixed(1)},{" "}
-          {((Math.exp(me.ci_high) - 1) * 100).toFixed(1)}]%, raw p ={" "}
-          {me.p_value.toFixed(3)}, BH-adjusted p = {me.p_value_adj?.toFixed(3)},
-          n = {me.n_obs.toLocaleString()}, {me.se_type}.
-        </p>
-        <div className="overflow-x-auto border border-neutral-300">
-          <table className="w-full text-left text-sm">
+
+        {/* The commercial reading, stated next to the statistic so the two
+            are never separated. Ink ground, not yellow: this is a statement,
+            not a caution, and the page already spends its yellow above. */}
+        <Callout label="What this does not say" tone="settled">
+          Nothing here argues for declining short-notice work. Most of the cost
+          base is fixed, so an hour running at a lower contribution rate still
+          beats an idle hour — the finding is an argument for pricing and
+          sequencing the premium, not for turning the job away. Declining would
+          only pay if the constraint were genuinely binding and a rush job
+          displaced a better-rate one, and this extract carries no capacity
+          data to establish when that happens.
+        </Callout>
+
+        <Readout
+          items={[
+            {
+              label: "Effect on rate",
+              value: pctPoints(me.pct_effect),
+            },
+            {
+              label: "95% CI",
+              value: ciPctFromLog(me.ci_low, me.ci_high),
+            },
+            { label: "p (raw)", value: pval(me.p_value) },
+            {
+              label: "p (BH-adjusted)",
+              value: pval(me.p_value_adj),
+            },
+            { label: "Jobs", value: num(me.n_obs) },
+            {
+              label: "Std. errors",
+              value: seLabel(me.se_type),
+              tone: "mono",
+            },
+          ]}
+        />
+
+        <TableFrame caption="Sensitivity to where the rush cut-off is drawn. The sign is stable across every percentile; the significance is not, which is the honest reading.">
+          <Table>
             <thead>
-              <tr className="border-b-2 border-black font-black uppercase">
-                <th className="p-2">Flag percentile</th>
-                <th className="p-2">Effect</th>
-                <th className="p-2">raw p</th>
-                <th className="p-2">n flagged</th>
+              <tr>
+                <Th>Flag percentile</Th>
+                <Th align="right">Effect on rate</Th>
+                <Th align="right">raw p</Th>
+                <Th align="right">n flagged</Th>
               </tr>
             </thead>
             <tbody>
               {rush.percentile_sensitivity.map((r) => (
-                <tr key={r.percentile} className="border-b border-neutral-200">
-                  <td className="p-2">{(r.percentile * 100).toFixed(0)}%</td>
-                  <td className="p-2">{r.pct_effect.toFixed(1)}%</td>
-                  <td className="p-2">{r.p_value.toFixed(3)}</td>
-                  <td className="p-2">{r.n_rush}</td>
-                </tr>
+                <Tr key={r.percentile}>
+                  <Td num>{(r.percentile * 100).toFixed(0)}%</Td>
+                  <Td align="right" num className="font-semibold">
+                    {r.pct_effect.toFixed(1)}%
+                  </Td>
+                  <Td align="right" num muted>
+                    {pval(r.p_value)}
+                  </Td>
+                  <Td align="right" num muted>
+                    {num(r.n_rush)}
+                  </Td>
+                </Tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </Table>
+        </TableFrame>
+
         <Inconclusive
           title="Does the rush penalty depend on how busy the factory is?"
           note={rush.interaction.inconclusive}
         >
-          <p className="text-sm">
-            Interaction term: coef {rush.interaction.interaction.coef.toFixed(3)},
-            p = {rush.interaction.interaction.p_value.toFixed(2)}, n ={" "}
-            {rush.interaction.interaction.n_obs.toLocaleString()}. Simple slopes
-            by relative load bin:{" "}
-            {rush.interaction.simple_slopes
-              .map(
-                (s) =>
-                  `bin ${s.load_bin}: ${Number(s.pct_effect).toFixed(1)}% (p ${Number(s.p_value).toFixed(2)})`,
-              )
-              .join(" · ")}
-          </p>
+          <Readout
+            items={[
+              {
+                label: "Interaction coef",
+                value: dp(rush.interaction.interaction.coef),
+              },
+              {
+                label: "p",
+                value: pval(rush.interaction.interaction.p_value),
+              },
+              {
+                label: "Jobs",
+                value: num(rush.interaction.interaction.n_obs),
+              },
+            ]}
+          />
+          <div className="flex flex-wrap gap-2">
+            {rush.interaction.simple_slopes.map((s) => (
+              <span
+                key={String(s.load_bin)}
+                className="num border border-line bg-surface-2 px-3 py-1.5 text-[13px]"
+              >
+                <span className="text-ink-3">load bin {String(s.load_bin)}</span>{" "}
+                <span className="font-semibold">
+                  {Number(s.pct_effect).toFixed(1)}%
+                </span>{" "}
+                <span className="text-ink-3">p {pval(Number(s.p_value))}</span>
+              </span>
+            ))}
+          </div>
         </Inconclusive>
-      </section>
+      </Section>
 
-      <section className="space-y-3">
-        <h2 className="text-2xl font-black">
-          The correction that demoted our own finding
-        </h2>
+      <Section
+        kicker="Multiplicity"
+        title="The correction that demoted our own finding"
+        note="One Benjamini-Hochberg pass over a family fixed in config before the tests were run, applied once. Anything that fails is stripped of headline status automatically and excluded from the exported slide set — including the rush effect above."
+      >
         <PlotlyChart figure={bhFig} />
-      </section>
+      </Section>
     </>
   );
 }

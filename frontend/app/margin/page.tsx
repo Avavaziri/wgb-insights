@@ -1,8 +1,24 @@
 import PlotlyChart from "@/components/PlotlyChart";
 import { ApiDown } from "@/components/ApiGuard";
 import { InSampleOnlyBadge } from "@/components/banners";
+import {
+  PageHeader,
+  Readout,
+  Section,
+  Table,
+  TableFrame,
+  Td,
+  Th,
+  Tr,
+} from "@/components/ui";
+import { dp, num, pval } from "@/lib/format";
 import { ApiDownError, getChart, getJson } from "@/lib/api";
 import type { Decomposition } from "@/lib/types";
+
+/** The palette is three colours, so direction is carried by weight and
+    the sign, never by red/green. A rounded zero gets no emphasis at all. */
+const cvTone = (x: number): string =>
+  Number(x.toFixed(3)) === 0 ? "text-muted" : "font-semibold";
 
 export default async function MarginPage() {
   let data: Decomposition;
@@ -16,69 +32,106 @@ export default async function MarginPage() {
     if (e instanceof ApiDownError) return <ApiDown message={e.message} />;
     throw e;
   }
+  const rp = data.rep_pair;
 
   return (
     <>
-      <h1 className="text-4xl font-black tracking-tight">Where margin lives</h1>
-      <p className="max-w-3xl text-neutral-700">
-        Nested decomposition of {data.target}. Each block enters cumulatively;
-        the question is who moves <em>out-of-sample</em> R² — in-sample
-        significance without predictive gain is flagged, not celebrated.
-      </p>
+      <PageHeader
+        eyebrow="Where margin lives"
+        title="Who actually moves contribution per constraint-hour?"
+        lede={
+          <>
+            A nested decomposition of <code>{data.target}</code>. Each block
+            enters cumulatively, and the question is not who is significant but
+            who moves <em>out-of-sample</em> R². In-sample gain without
+            predictive gain is flagged, not celebrated.
+          </>
+        }
+      />
 
-      <div className="overflow-x-auto border border-neutral-300">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b-2 border-black font-black uppercase">
-              <th className="p-2">Block (cumulative)</th>
-              <th className="p-2">R²</th>
-              <th className="p-2">adj R²</th>
-              <th className="p-2">CV R²</th>
-              <th className="p-2">CV increment</th>
-              <th className="p-2">params</th>
-              <th className="p-2">nested F p</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.rows.map((r) => (
-              <tr
-                key={r.block}
-                className={`border-b border-neutral-200 ${
-                  r.block === "customer" ? "bg-[#FFE600]/40 font-bold" : ""
-                }`}
-              >
-                <td className="p-2">
-                  + {r.block}
-                  {r.in_sample_only && <InSampleOnlyBadge />}
-                </td>
-                <td className="p-2">{r.r2.toFixed(3)}</td>
-                <td className="p-2">{r.r2_adj.toFixed(3)}</td>
-                <td className="p-2">{r.r2_cv.toFixed(3)}</td>
-                <td className="p-2">{r.cv_increment >= 0 ? "+" : ""}{r.cv_increment.toFixed(3)}</td>
-                <td className="p-2">{r.n_params}</td>
-                <td className="p-2">
-                  {r.f_p_vs_prev === null ? "—" : r.f_p_vs_prev.toExponential(1)}
-                </td>
+      <Section
+        kicker="Nested decomposition"
+        title="Blocks in order, judged on cross-validated fit"
+        note={data.order_note}
+      >
+        <TableFrame caption="CV increment is the change in out-of-sample R² when the block is added. The in-sample-only marker records a block that clears the nested F-test decisively while moving out-of-sample R² by less than the increment set in config — statistically present, predictively negligible. Thresholds live in config.yaml, so they are described here rather than restated.">
+          <Table>
+            <thead>
+              <tr>
+                <Th>Block (cumulative)</Th>
+                <Th align="right">R²</Th>
+                <Th align="right">adj R²</Th>
+                <Th align="right">CV R²</Th>
+                <Th align="right">CV increment</Th>
+                <Th align="right">params</Th>
+                <Th align="right">nested F p</Th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p className="text-sm text-neutral-500">{data.order_note}</p>
+            </thead>
+            <tbody>
+              {data.rows.map((r) => (
+                <Tr key={r.block} highlight={r.block === "customer"}>
+                  <Td className="font-medium">
+                    <span className="text-ink-4">+ </span>
+                    {r.block}
+                    {r.in_sample_only && <InSampleOnlyBadge />}
+                  </Td>
+                  <Td align="right" num muted>
+                    {dp(r.r2)}
+                  </Td>
+                  <Td align="right" num muted>
+                    {dp(r.r2_adj)}
+                  </Td>
+                  <Td align="right" num className="font-semibold">
+                    {dp(r.r2_cv)}
+                  </Td>
+                  {/* Colour keys off the rounded value that is actually
+                      displayed, so a +0.000 is never shown in "gain" green. */}
+                  <Td align="right" num className={cvTone(r.cv_increment)}>
+                    {r.cv_increment >= 0 ? "+" : ""}
+                    {r.cv_increment.toFixed(3)}
+                  </Td>
+                  <Td align="right" num muted>
+                    {r.n_params}
+                  </Td>
+                  <Td align="right" num muted>
+                    {r.f_p_vs_prev === null ? "—" : pval(r.f_p_vs_prev)}
+                  </Td>
+                </Tr>
+              ))}
+            </tbody>
+          </Table>
+        </TableFrame>
+      </Section>
 
-      <section className="space-y-3">
-        <h2 className="text-2xl font-black">The rep dashboard this data refuses to build</h2>
+      <Section
+        kicker="Negative result"
+        title="The rep dashboard this data refuses to build"
+        note="A naive rep-only model looks like a performance story. Once size, run features, product, customer and year are in first, the rep block adds nothing — the apparent effect was which accounts each rep carries."
+      >
         <PlotlyChart figure={repFig} />
-        <p className="max-w-3xl text-sm text-neutral-700">
-          Naive model ({data.rep_pair.naive.formula}): CV R²{" "}
-          {data.rep_pair.naive.r2_cv.toFixed(3)} on {data.rep_pair.naive.n_obs}{" "}
-          jobs. Controlled (rep added after size, run features, product,
-          customer, year): F p = {data.rep_pair.controlled_f_p.toFixed(2)}, CV
-          gain {data.rep_pair.controlled_cv_increment >= 0 ? "+" : ""}
-          {data.rep_pair.controlled_cv_increment.toFixed(3)}.{" "}
-          <span className="font-bold">{data.rep_pair.conclusion}</span>
+        <Readout
+          items={[
+            { label: "Naive model", value: `CV R² ${dp(rp.naive.r2_cv)}` },
+            { label: "Naive formula", value: rp.naive.formula, tone: "mono" },
+            { label: "Jobs", value: num(rp.naive.n_obs) },
+            {
+              label: "Controlled nested F p",
+              value: pval(rp.controlled_f_p),
+            },
+            {
+              label: "Controlled CV gain",
+              value: `${rp.controlled_cv_increment >= 0 ? "+" : ""}${rp.controlled_cv_increment.toFixed(3)}`,
+            },
+            {
+              label: "adj R² gain",
+              value: `${rp.controlled_adj_increment >= 0 ? "+" : ""}${rp.controlled_adj_increment.toFixed(3)}`,
+            },
+          ]}
+        />
+        <p className="measure text-[15px] font-medium leading-relaxed">
+          {rp.conclusion}
         </p>
-      </section>
+      </Section>
     </>
   );
 }

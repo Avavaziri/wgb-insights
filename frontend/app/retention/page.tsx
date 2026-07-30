@@ -1,14 +1,26 @@
 import PlotlyChart from "@/components/PlotlyChart";
 import { ApiDown } from "@/components/ApiGuard";
-import { StatTile } from "@/components/banners";
+import {
+  Chip,
+  Panel,
+  KpiRow,
+  PageHeader,
+  Section,
+  Kpi,
+  Table,
+  Td,
+  Th,
+  Tr,
+} from "@/components/ui";
+import { dp, num } from "@/lib/format";
 import { API_BASE, ApiDownError, getChart, getJson } from "@/lib/api";
 import type { Churn } from "@/lib/types";
 
-const BAND_STYLE: Record<string, string> = {
-  high: "bg-black text-[#FFE600]",
-  elevated: "bg-[#FFE600]",
-  "watch (irregular)": "bg-neutral-200",
-  normal: "",
+// Yellow means "act on this"; ink means "recorded, no action".
+const BAND_TONE: Record<string, "now" | "done" | undefined> = {
+  high: "now",
+  elevated: "now",
+  "watch (irregular)": "done",
 };
 
 export default async function RetentionPage() {
@@ -24,95 +36,129 @@ export default async function RetentionPage() {
     throw e;
   }
   const nForecastable = data.rows.filter((r) => r.forecastable).length;
-  const flagged = data.rows.filter((r) => r.at_risk_personalised).length;
+  const rows = data.rows
+    .slice()
+    .sort((a, b) => (b.gap_ratio ?? 0) - (a.gap_ratio ?? 0));
 
   return (
     <>
-      <h1 className="text-4xl font-black tracking-tight">Retention risk</h1>
-      <p className="max-w-3xl text-neutral-700">{data.gate}</p>
+      <PageHeader
+        eyebrow="Retention risk"
+        title="A call list, and a refusal to invent dates."
+        lede={data.gate}
+      />
 
-      <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatTile
+      <KpiRow>
+        <Kpi
           label="Accounts"
-          value={`${data.rows.length}`}
+          value={num(data.rows.length)}
           detail={`as of ${data.as_of} — from the data, not the clock`}
         />
-        <StatTile
+        <Kpi
           label="Forecastable"
-          value={`${nForecastable}`}
-          detail="regular enough for a predicted next order"
+          value={num(nForecastable)}
+          detail="ordering regularly enough for a predicted next order; the rest get no date at all"
         />
-        <StatTile
+        <Kpi
+          accent
           label="Personalised at-risk"
-          value={`${flagged}`}
-          detail="silent beyond own median × (1 + 1.5 × own CV)"
+          value={num(data.comparison.n_personalised)}
+          detail="silent beyond own median interval × (1 + 1.5 × own CV)"
         />
-        <StatTile
-          label="Fixed 90-day rule"
-          value={`${data.comparison.n_fixed}`}
-          detail={`different set: misses ${data.comparison.only_personalised.length} the personalised rule catches`}
+        <Kpi
+          label={`Fixed ${data.comparison.fixed_days}-day rule`}
+          value={num(data.comparison.n_fixed)}
+          detail={
+            `a different set — it misses ${data.comparison.only_personalised.length} accounts the personalised rule catches` +
+            (data.comparison.only_fixed.length > 0
+              ? `, and flags ${data.comparison.only_fixed.length} that are simply slow-cycle`
+              : "")
+          }
         />
-      </section>
+      </KpiRow>
 
-      <PlotlyChart figure={cmpFig} />
+      <PlotlyChart
+        figure={cmpFig}
+        caption={`The two rules are not interchangeable: ${data.comparison.n_fixed} accounts satisfy both, and the personalised rule adds ${data.comparison.only_personalised.length} that a single company-wide number of days never reaches.`}
+      />
 
-      <a
-        href={`${API_BASE}/call-list.csv`}
-        className="inline-block border-2 border-black bg-[#FFE600] px-4 py-2 font-bold hover:bg-black hover:text-[#FFE600]"
-        download="call_list.csv"
+      <Section
+        kicker="Actionable output"
+        title="Ranked call list"
+        note="Ordered by how far past its own normal cadence each account is. An account with no reliable cadence is shown, flagged, and given no predicted date — the system does not fill that gap with a guess."
       >
-        Download ranked call list (CSV)
-      </a>
+        <a
+          href={`${API_BASE}/call-list.csv`}
+          download="call_list.csv"
+          className="stamp inline-flex items-center gap-2 border border-rule bg-surface px-4 py-2.5 text-[11px] transition-colors hover:bg-yellow"
+        >
+          <svg aria-hidden viewBox="0 0 16 16" className="size-4 text-ink-3">
+            <path
+              d="M8 1v9m0 0L4.5 6.5M8 10l3.5-3.5M2 13h12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
+          Download ranked call list (CSV)
+        </a>
 
-      <div className="overflow-x-auto border border-neutral-300">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b-2 border-black font-black uppercase">
-              <th className="p-2">Customer</th>
-              <th className="p-2">Orders</th>
-              <th className="p-2">Median interval</th>
-              <th className="p-2">Interval CV</th>
-              <th className="p-2">Days silent</th>
-              <th className="p-2">Risk</th>
-              <th className="p-2">Reason</th>
-              <th className="p-2">Expected next order</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.rows
-              .slice()
-              .sort((a, b) => (b.gap_ratio ?? 0) - (a.gap_ratio ?? 0))
-              .map((r) => (
-                <tr key={r.customer} className="border-b border-neutral-200">
-                  <td className="p-2 font-medium">{r.customer}</td>
-                  <td className="p-2">{r.n_orders}</td>
-                  <td className="p-2">
-                    {r.median_interval === null ? "—" : `${r.median_interval.toFixed(0)}d`}
-                  </td>
-                  <td className="p-2">
-                    {r.interval_cv === null ? "—" : r.interval_cv.toFixed(2)}
-                  </td>
-                  <td className="p-2">{r.gap_days.toFixed(0)}</td>
-                  <td className="p-2">
-                    <span
-                      className={`px-1.5 py-0.5 text-xs font-black uppercase ${BAND_STYLE[r.risk_band] ?? ""}`}
-                    >
-                      {r.risk_band}
-                    </span>
-                  </td>
-                  <td className="p-2 text-neutral-600">{r.reason_code}</td>
-                  <td className="p-2">
-                    {r.expected_next_order ?? (
-                      <span className="text-neutral-400">
-                        not forecastable — no date invented
-                      </span>
-                    )}
-                  </td>
+        <Panel>
+          <div className="max-h-[36rem] overflow-auto">
+            <Table>
+              <thead className="sticky top-0 z-10">
+                <tr>
+                  <Th className="bg-surface-2">Customer</Th>
+                  <Th align="right">Orders</Th>
+                  <Th align="right">Median interval</Th>
+                  <Th align="right">Interval CV</Th>
+                  <Th align="right">Days silent</Th>
+                  <Th>Risk</Th>
+                  <Th>Reason</Th>
+                  <Th>Expected next order</Th>
                 </tr>
-              ))}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <Tr key={r.customer}>
+                    <Td className="font-medium">{r.customer}</Td>
+                    <Td align="right" num muted>
+                      {r.n_orders}
+                    </Td>
+                    <Td align="right" num muted>
+                      {r.median_interval === null
+                        ? "—"
+                        : `${r.median_interval.toFixed(0)}d`}
+                    </Td>
+                    <Td align="right" num muted>
+                      {dp(r.interval_cv, 2)}
+                    </Td>
+                    <Td align="right" num className="font-semibold">
+                      {r.gap_days.toFixed(0)}
+                    </Td>
+                    <Td>
+                      {BAND_TONE[r.risk_band] ? (
+                        <Chip tone={BAND_TONE[r.risk_band]}>{r.risk_band}</Chip>
+                      ) : (
+                        <span className="text-[13px] text-muted">
+                          {r.risk_band}
+                        </span>
+                      )}
+                    </Td>
+                    <Td muted className="font-mono text-[12.5px]">
+                      {r.reason_code}
+                    </Td>
+                    <Td num className={r.expected_next_order ? "" : "text-muted"}>
+                      {r.expected_next_order ?? "not forecastable — no date invented"}
+                    </Td>
+                  </Tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        </Panel>
+      </Section>
     </>
   );
 }

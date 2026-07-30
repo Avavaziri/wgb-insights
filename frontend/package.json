@@ -2,13 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "sharp",
-      "unrs-resolver",
-      "es5-ext"
-    ]
-  },
+  "packageManager": "pnpm@11.18.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

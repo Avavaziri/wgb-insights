@@ -1,26 +1,152 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* W&G Baird web design system (~/.claude/wgb-web-design-system.md), derived
+   from the 360 Jobs dashboard stylesheet — the reference implementation.
+   Not the deck system: that one is Arial Black on true black. Type here is
+   Inter only, weights carrying the hierarchy, matching the Tender Assistant
+   app rather than the design system's Fraunces — see layout.tsx.
+
+   THREE COLOURS ONLY: yellow, charcoal, white. True black is reserved for
+   the brand marks — the masthead bar and the wordmark — so the identity
+   stays exact while the interface reads softer. Everything else is --ink.
+   The two greys are functional exceptions: hairlines and caption text.
+   Text on yellow is always ink; text on ink is white; never yellow text on
+   white. There is no red. Flat: no shadows, gradients or opacity tricks,
+   and radius stays 0 everywhere.
+
+   Deliberately single-theme, like the reference: the Plotly figures are
+   rendered in Python on a light paper and double as the slide assets. */
+@theme {
+  --color-yellow: #ffe600;
+  --color-black: #000000; /* brand marks only: masthead bar, wordmark */
+  --color-ink: #3f454d; /* everything else — 9.7:1 on white, 7.6:1 on yellow */
+  --color-canvas: #f7f7f5; /* page ground */
+  --color-white: #ffffff;
+  --color-line: #d9d9d9; /* hairlines and inactive tracks only */
+  --color-muted: #555555; /* captions and helper text only */
+  --color-hover: #f4f4f4; /* table row hover — deliberately not yellow */
+
+  /* next/font supplies the two --font-*-src variables on <html>. */
+  --font-body: var(--font-body-src), Inter, Arial, Helvetica, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  --radius-none: 0;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Sentence case at normal tracking; uppercase is for eyebrows, labels and
+     chips only, never headings and never button labels. */
+  h1,
+  h2,
+  h3 {
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin: 0;
+  }
+
+  /* Figures: bold and tabular, so a column of numbers lines up and a
+     changing value never reflows its neighbours. */
+  .display {
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Heading rail — a 4px yellow bar to the left of a section heading. The
+     web system forbids a thin accent rule *under* a title; this is the
+     Tender Assistant's device instead, and it reads as structure. */
+  .rail {
+    border-left: 4px solid var(--color-yellow);
+    padding-left: 12px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  /* Any figure that changes gets tabular numerals, or digits jitter as
+     values update and columns stop lining up. */
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .measure {
+    max-width: 68ch;
+  }
+
+  a:not(.plain) {
+    color: var(--color-ink);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  a:not(.plain):hover {
+    background: var(--color-yellow);
+    text-decoration: none;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--color-hover);
+    padding: 0.05em 0.3em;
+  }
+
+  summary {
+    list-style: none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  /* On yellow a yellow ring is invisible — inverted per-element in the
+     components themselves, never across a whole dark region (that bug hid
+     keyboard focus against the masthead once already). */
+  :focus-visible {
+    outline: 3px solid var(--color-yellow);
+    outline-offset: 1px;
+  }
+
+  ::selection {
+    background: var(--color-yellow);
+    color: var(--color-ink);
+  }
+
+  /* --- Progressive disclosure -------------------------------------------
+     The board view shows conclusions; the qualification appears on hover or
+     keyboard focus. Both states are composed from Tailwind utilities on the
+     element itself (see REVEAL / WIPE in components/ui.tsx) rather than
+     custom classes here, for two reasons learned the hard way:
+
+       · A custom class in @layer base and a group-* variant in @layer
+         utilities are a cascade trap — and worse, mixing `transform:
+         scaleX(0)` in base with Tailwind's `scale-x-100` (which sets the
+         separate `scale` property) does not override at all, it composes.
+         The two transforms multiplied out to zero and the rule never drew.
+       · One property per state, one layer, so the collapsed and expanded
+         rules are the same declaration and the cascade is unambiguous.
+
+     The detail stays in the DOM and in the accessibility tree — collapsed
+     with max-height, never display:none — so a screen reader still reads
+     the caveat that a mouse user has to hover for. */
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
 }

@@ -1,12 +1,16 @@
-// Shared error boundary for pages: shows a start-the-API hint instead
-// of a stack trace when the backend isn't running.
+// Shared error boundary for pages: shows a start-the-API hint instead of
+// a stack trace when the backend isn't running. The UI holds no fallback
+// numbers on purpose — if Python is down there is nothing to render.
 
 export function ApiDown({ message }: { message: string }) {
   return (
-    <div className="border-4 border-black p-8 text-center">
-      <p className="text-2xl font-black">API not reachable</p>
-      <p className="mt-2 text-neutral-600">{message}</p>
-      <pre className="mx-auto mt-4 w-fit bg-black px-4 py-2 text-left text-[#FFE600]">
+    <div className="mx-auto max-w-xl border border-rule bg-surface p-8 text-center">
+      <p className="text-[1.3rem] font-semibold">API not reachable</p>
+      <p className="mt-2 text-[14.5px] leading-relaxed text-ink-2">{message}</p>
+      <p className="mt-4 text-[13px] text-ink-3">
+        Python owns every number here, so nothing renders without it:
+      </p>
+      <pre className="mx-auto mt-3 w-fit bg-ink px-4 py-3 text-left font-mono text-[13px] leading-relaxed text-white">
         conda activate wgb-insights{"\n"}make api
       </pre>
     </div>

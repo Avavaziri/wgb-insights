@@ -64,7 +64,7 @@ def validate_override_identity(data: pd.DataFrame) -> None:
     err = float((complete["mupnett"] - (complete["labmup"] + complete["manadj"])).abs().max())
     if err >= IDENTITY_TOL:
         raise OverrideIdentityError(
-            f"mupnett != labmup + manadj (max err {err:.2e}) — "
+            f"mupnett != labmup + manadj (max err {err:.2e}): "
             "override analysis refuses to report on this file"
         )
 

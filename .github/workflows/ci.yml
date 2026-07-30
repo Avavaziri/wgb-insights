@@ -5,7 +5,7 @@ on:
     branches: [main]
   pull_request:
 
-# Cancel superseded runs on the same ref — a stale run blocking a merge is
+# Cancel superseded runs on the same ref. A stale run blocking a merge is
 # noise, not a signal.
 concurrency:
   group: ci-${{ github.ref }}
@@ -41,7 +41,7 @@ jobs:
           fi
 
   python:
-    name: Python — lint, types, tests
+    name: Python lint, types and tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -61,7 +61,7 @@ jobs:
         run: pytest
 
   frontend:
-    name: Frontend — lint, types, build
+    name: Frontend lint, types and build
     runs-on: ubuntu-latest
     defaults:
       run:

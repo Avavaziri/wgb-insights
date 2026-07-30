@@ -111,7 +111,7 @@ def decomposition_table(pr: PipelineResult) -> go.Figure:
                     [f"{v:.3f}" for v in d["r2_cv"]],
                     [f"{v:+.3f}" for v in d["cv_increment"]],
                     [str(int(v)) for v in d["n_params"]],
-                    ["—"] + [f"{v:.2g}" for v in d["f_p_vs_prev"][1:]],
+                    ["-"] + [f"{v:.2g}" for v in d["f_p_vs_prev"][1:]],
                 ],
                 "fill_color": [
                     [YELLOW if f else "#FFFFFF" for f in d["in_sample_only"]]
@@ -131,7 +131,7 @@ def decomposition_table(pr: PipelineResult) -> go.Figure:
 def rep_confounding(pr: PipelineResult) -> go.Figure:
     """Asset 3: what a naive rep dashboard shows vs what survives controls."""
     naive = pr.rep_pair["naive"]
-    fig = _fig("The rep league table the data invites — and refuses")
+    fig = _fig("The rep league table the data invites, and refuses")
     fig.add_bar(
         x=["Naive: rate ~ rep alone", "Controlled: rep added last"],
         y=[max(naive.r2_cv, 0.0), max(pr.rep_pair["controlled_cv_increment"], 0.0)],
@@ -144,7 +144,7 @@ def rep_confounding(pr: PipelineResult) -> go.Figure:
         textposition="outside", textfont={"size": 15},
     )
     fig.add_annotation(
-        text="Rep differences are customer-mix, not salesmanship — a rep dashboard "
+        text="Rep differences are customer-mix, not salesmanship: a rep dashboard "
              "built on this data would mislead.",
         xref="paper", yref="paper", x=0.02, y=1.06, showarrow=False,
         font={"size": 15, "color": MUTED}, align="left",
@@ -171,7 +171,7 @@ def override_scale(pr: PipelineResult) -> go.Figure:
         f">{t:g} GBP: {r:.0%}" for t, r in s["rate_by_tolerance_gbp"].items()
     )
     fig.add_annotation(
-        text=f"Override = |manadj| > {s['tolerance_gbp']:g} GBP. Sensitivity — {sens}",
+        text=f"Override = |manadj| > {s['tolerance_gbp']:g} GBP. Sensitivity: {sens}",
         xref="paper", yref="paper", x=0.02, y=1.06, showarrow=False,
         font={"size": 14, "color": MUTED}, align="left",
     )
@@ -189,7 +189,7 @@ def rate_curve(pr: PipelineResult) -> go.Figure:
     xover = th["crossover_hrs"]
     sens = th["window_sensitivity"]["crossover_hrs"]
 
-    fig = _fig("Contribution per press-hour declines with job size — no optimal size exists")
+    fig = _fig("Contribution per press-hour declines with job size: no optimal size exists")
     # Plotly log-axis quirk (verified by rendering): SHAPES take raw data
     # coords, ANNOTATIONS take log10 coords. Mixing them up either blows
     # the axis out to 10^50 or parks the marker at 0.6h.
@@ -245,7 +245,7 @@ def capacity_share(pr: PipelineResult) -> go.Figure:
     )
     fig.add_annotation(
         text=f"Benchmark (hour-weighted factory average): {cs['benchmark']:,.0f} GBP/hr. "
-             "Descriptive only — without capacity data, no displaced-work GBP figure "
+             "Descriptive only: without capacity data, no displaced-work GBP figure "
              "is defensible.",
         xref="paper", yref="paper", x=0.02, y=1.06, showarrow=False,
         font={"size": 14, "color": MUTED}, align="left",
@@ -300,7 +300,7 @@ def bh_family(pr: PipelineResult) -> go.Figure:
                 "color": [YELLOW if not p else INK for p in t["passes_bh"]],
                 "line": {"color": INK, "width": 1.5},
             },
-            text=[f"adj p = {p:.3g}{'' if ok else ' — FAILS'}  "
+            text=[f"adj p = {p:.3g}{'' if ok else ' (FAILS)'}  "
                   if p > 0.001 else f"  adj p = {p:.3g}"
                   for p, ok in zip(t["p_adj"], t["passes_bh"], strict=True)],
             # near-1 points hug the right edge — label those leftwards

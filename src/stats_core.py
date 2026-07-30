@@ -175,7 +175,7 @@ def fit_reported(
     numbers always describe the same specification.
     """
     if seed is None:
-        raise ValueError("seed is required — reproducibility is a §8 requirement")
+        raise ValueError("seed is required: reproducibility is a §8 requirement")
     model = smf.ols(formula, data=data)
     if cluster_on is not None:
         n_clusters: int | None = int(data[cluster_on].nunique())

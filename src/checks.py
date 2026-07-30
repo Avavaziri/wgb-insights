@@ -160,7 +160,7 @@ def attach_register(
             "outcome": "rejected",
             "status": "register_only",
             "evidence": f"nested F p = {block('rep')['f_p']:.2f}, CV increment "
-                        f"{block('rep')['cv_increment']:+.3f} — nothing survives controls",
+                        f"{block('rep')['cv_increment']:+.3f}; nothing survives controls",
         },
         "margin_by_size": {
             "outcome": "supported",
@@ -185,7 +185,7 @@ def attach_register(
             "evidence": (
                 f"raw p = {bh.loc['override_effect', 'p_raw']:.3f}, BH-adjusted "
                 f"p = {bh.loc['override_effect', 'p_adj']:.3f} "
-                f"({'passes' if bh.loc['override_effect', 'passes_bh'] else 'fails'} BH) — "
+                f"({'passes' if bh.loc['override_effect', 'passes_bh'] else 'fails'} BH), "
                 "but overrides are applied to selected jobs; correlational either way. "
                 "Shown under caution banner only, never exported."
             ),
@@ -200,7 +200,7 @@ def attach_register(
                 f"{pricing_model.r2_cv_baseline_zero:.3f} / customer-mean "
                 f"{pricing_model.r2_cv_baseline_customer_mean:.3f} / global "
                 f"{pricing_model.r2_cv_baseline_global_mean:.3f}; direction AUC "
-                f"{pricing_model.auc_direction:.2f} — "
+                f"{pricing_model.auc_direction:.2f}: "
                 + (
                     "learnable from quote-time features"
                     if pricing_model.beats_all_baselines
@@ -225,7 +225,7 @@ def attach_register(
             "outcome": "inconclusive",
             "status": "appendix_only",
             "evidence": (
-                f"interaction p = {interaction_report.p_value:.2f} — consistent with "
+                f"interaction p = {interaction_report.p_value:.2f}, consistent with "
                 "queueing theory (Kingman/VUT), not established by this data"
             ),
         },
@@ -235,7 +235,7 @@ def attach_register(
             "evidence": (
                 f"Gini = {concentration_stats['gini']:.2f}, top-1 "
                 f"{concentration_stats['top_1_share']:.0%}, top-10 "
-                f"{concentration_stats['top_10_share']:.0%} — not a material risk"
+                f"{concentration_stats['top_10_share']:.0%}; not a material risk"
             ),
         },
         "reorder_forecastable": {
@@ -243,7 +243,7 @@ def attach_register(
             "status": "headline",
             "evidence": (
                 f"median interval CV = {median_cv:.2f}; {n_forecastable}/"
-                f"{len(cadence)} accounts below the {churn_config['cv_max']} gate — "
+                f"{len(cadence)} accounts below the {churn_config['cv_max']} gate; "
                 "prediction restricted to those; the rest get risk bands with reasons"
             ),
         },
@@ -253,14 +253,14 @@ def attach_register(
             "evidence": (
                 f"revenue CAGR {growth['revenue_cagr']:.1%} = jobs "
                 f"{growth['jobs_cagr']:+.1%} x value-per-job "
-                f"{growth['revenue_per_job_cagr']:+.1%} — growth is value per job"
+                f"{growth['revenue_per_job_cagr']:+.1%}; growth is value per job"
             ),
         },
         "optimal_job_size_exists": {
             "outcome": "rejected",
             "status": "headline",  # the rejection itself is the headline
             "evidence": (
-                "monotonic decline (see margin_by_size) — no interior optimum; "
+                "monotonic decline (see margin_by_size); no interior optimum, "
                 "'crossover threshold' is the only defensible framing"
             ),
         },

@@ -140,7 +140,7 @@ def load_raw(path: Path) -> tuple[pd.DataFrame, ValidationReport]:
     if id1_err >= IDENTITY_TOL:
         raise IngestError(
             f"{path.name}: identity VA/24 == VA Amount/Press hrs*24 broken "
-            f"(max err {id1_err:.2e}) — file is not the understood schema"
+            f"(max err {id1_err:.2e}): file is not the understood schema"
         )
 
     # Identity 2 — mupnett == labmup + manadj, on complete rows (manadj is

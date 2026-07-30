@@ -25,14 +25,14 @@ def gap_report(jobs: pd.DataFrame, company_turnover_gbp: float) -> list[dict[str
         },
         {
             "gap": "No departmental labour split (Labour is one combined figure)",
-            "blocks": "Measuring idle downstream labour — any labour-intensity ratio is a "
+            "blocks": "Measuring idle downstream labour; any labour-intensity ratio is a "
                       "proxy, labelled as such",
             "would_enable": "Line balancing; labour intensity by job type",
         },
         {
             "gap": "No cost-to-serve per order (estimating/admin/make-ready not charged "
                    "per job)",
-            "blocks": "Any 'favour small jobs' conclusion — contribution flatters them",
+            "blocks": "Any 'favour small jobs' conclusion; contribution flatters them",
             "would_enable": "True per-order profitability",
         },
         {
@@ -44,6 +44,6 @@ def gap_report(jobs: pd.DataFrame, company_turnover_gbp: float) -> list[dict[str
         {
             "gap": f"Sample is ~{share:.0%} of stated turnover",
             "blocks": "Extrapolation to company totals",
-            "would_enable": "—",
+            "would_enable": "-",
         },
     ]

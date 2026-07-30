@@ -1,4 +1,4 @@
-# Hypothesis register (§5.8) — every hypothesis tested, including the ones
+# Hypothesis register (§5.8): every hypothesis tested, including the ones
 # that came back negative. Outcomes/evidence are attached at runtime by
 # checks.attach_register; this file records what was asked and how.
 hypotheses:
@@ -24,8 +24,8 @@ hypotheses:
 
   - id: override_affects_margin
     hypothesis: Manually overridden jobs earn different margin (B7)
-    test: Override dummy with controls, cluster-robust; adjudicated exclusion —
-      selection-biased regardless of significance
+    test: Override dummy with controls, cluster-robust; adjudicated exclusion
+      on selection-bias grounds regardless of significance
 
   - id: overrides_learnable
     hypothesis: The override a human applies is predictable at quote time

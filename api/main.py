@@ -100,7 +100,7 @@ def overview() -> schemas.OverviewResponse:
         growth={k: v for k, v in pr.trend_growth.items()},
         sample_share_of_turnover=share,
         scale_caveat=(
-            f"This sample is ~{share:.0%} of stated turnover — no figure here "
+            f"This sample is ~{share:.0%} of stated turnover, so no figure here "
             "extrapolates to company totals."
         ),
         validation=_validation(pr),
@@ -131,7 +131,7 @@ def decomposition() -> schemas.DecompositionResponse:
             controlled_f_p=float(pr.rep_pair["controlled_f_p"]),
             controlled_cv_increment=float(pr.rep_pair["controlled_cv_increment"]),
             controlled_adj_increment=float(pr.rep_pair["controlled_adj_increment"]),
-            conclusion="Rep differences are customer mix — nothing survives controls.",
+            conclusion="Rep differences are customer mix; nothing survives controls.",
         ),
         order_note=(
             "Blocks enter in config order; increments are order-dependent "
@@ -149,7 +149,7 @@ def pricing() -> schemas.PricingResponse:
         model=schemas.OverrideModelSchema(
             **dataclasses.asdict(m) | {"top_features": list(m.top_features)},
             finding=(
-                "Overrides are NOT learnable from quote-time features — the "
+                "Overrides are NOT learnable from quote-time features, because the "
                 "estimators use information the system doesn't capture. That is "
                 "a data gap, not a modelling failure."
                 if not m.beats_all_baselines
@@ -161,7 +161,7 @@ def pricing() -> schemas.PricingResponse:
                 "Correlational and selection-biased: overrides are applied to "
                 "jobs chosen by humans. Survives BH under cluster-robust SEs "
                 "but remains excluded from headlines and asset export by "
-                "adjudication — the bias, not the p-value, is the problem."
+                "adjudication: the bias, not the p-value, is the problem."
             ),
             effect=_effect(pr.pricing_effect),
         ),
@@ -184,7 +184,7 @@ def thresholds() -> schemas.ThresholdsResponse:
         capacity_statement=(
             f"{cs['share_of_constraint_hours']:.0%} of constraint-hours run at "
             f"{cs['pooled_rate_above']:,.0f} GBP/hr vs the factory's own average "
-            f"of {cs['benchmark']:,.0f} GBP/hr. Descriptive only — no "
+            f"of {cs['benchmark']:,.0f} GBP/hr. Descriptive only: no "
             "counterfactual GBP figure is defensible without capacity data."
         ),
         litho_only_note=(
@@ -207,7 +207,7 @@ def rush() -> schemas.RushResponse:
             "Passes the family-wise BH correction."
             if passes
             else "Fails the family-wise BH correction (adjusted p "
-            f"{pr.rush_effect.p_value_adj:.3f}) — reported as suggestive, "
+            f"{pr.rush_effect.p_value_adj:.3f}), reported as suggestive, "
             "excluded from headlines and exported assets by the system's own rule."
         ),
         percentile_sensitivity=pr.rush_sensitivity.to_dict("records"),

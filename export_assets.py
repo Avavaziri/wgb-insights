@@ -141,6 +141,11 @@ def findings_summary(pr: PipelineResult) -> str:
         f"the family-wise BH correction (adj p {rush.p_value_adj:.3f}) under the "
         "mandated cluster-robust SEs. Reported as suggestive; excluded from "
         "headlines and this export by the system's own rule. One spoken sentence.",
+        "  Say it as pricing, never as selection: most of the cost base is fixed, "
+        "so an hour at a lower contribution rate still beats an idle hour. "
+        "Declining short-notice work would only pay if the constraint were "
+        "binding and the rush job displaced a better-rate one — and there is no "
+        "capacity data here to establish when that happens.",
         f"- Override -> margin (+{pr.pricing_effect.pct_effect:.1f}%, adj p "
         f"{pr.pricing_effect.p_value_adj:.3f}): survives BH but remains excluded — "
         "selection-biased (humans choose which jobs to reprice); shown in-app "

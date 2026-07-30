@@ -1,55 +1,80 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Image from "next/image";
+import { Inter } from "next/font/google";
+import { HeronWatermark } from "@/components/Heron";
+import Nav from "@/components/Nav";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "wgb-insights",
-  description:
-    "Dynamic analytics over W&G Baird print-job sales data — contribution per constraint-hour, pricing governance, retention.",
-};
+// One face, weights carry the hierarchy — matching the Tender Assistant, the
+// other W&G Baird internal app. The web design system nominates Fraunces for
+// display; it was tried here and read as decoration at dashboard sizes, so
+// this project stays sans-only. Noted as a deliberate departure.
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-body-src",
+  display: "swap",
+});
 
-const NAV = [
-  { href: "/", label: "Overview" },
-  { href: "/margin", label: "Where margin lives" },
-  { href: "/pricing", label: "Pricing & overrides" },
-  { href: "/constraint", label: "Size & the constraint" },
-  { href: "/retention", label: "Retention risk" },
-];
+export const metadata: Metadata = {
+  title: "Sales Insights — W&G Baird",
+  description:
+    "Print-job sales analysis: contribution per press-hour, pricing governance and retention.",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      {/* Deliberately single-theme: the brand is flat white/black/yellow. */}
-      <body className="min-h-screen bg-white font-sans text-black antialiased">
-        <header className="border-b-4 border-[#FFE600] bg-black text-white">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-baseline gap-x-8 gap-y-2 px-6 py-4">
-            <span className="text-2xl font-black tracking-tight">
-              wgb<span className="text-[#FFE600]">-</span>insights
+    <html lang="en" className={inter.variable}>
+      <body className="min-h-screen">
+        <a
+          href="#main"
+          className="plain sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:text-white"
+        >
+          Skip to content
+        </a>
+
+        {/* Masthead lockup: yellow-tile badge, app name, workspace descriptor,
+            heritage mark right. True black lives here and nowhere else, and
+            the yellow rule under it closes the bar. */}
+        <header className="border-b-4 border-yellow bg-black text-white">
+          <div className="mx-auto flex max-w-[104rem] flex-wrap items-center gap-x-6 gap-y-3 px-6 py-3">
+            <Image
+              src="/brand/badge-yellow-tile.png"
+              alt="W&G Baird"
+              width={74}
+              height={58}
+              priority
+              className="h-[58px] w-auto"
+            />
+            <span className="leading-tight">
+              <span className="block text-[26px] font-bold tracking-[-0.015em]">
+                Sales Insights
+              </span>
+              <span className="eyebrow block text-[10.5px] text-white/70">
+                Margin &amp; capacity analysis
+              </span>
             </span>
-            <nav className="flex flex-wrap gap-x-6 gap-y-1 text-sm font-bold uppercase tracking-wide">
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="hover:text-[#FFE600] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFE600]"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            <span className="ml-auto hidden text-xs text-neutral-400 sm:block">
-              Python is the source of truth — this UI renders JSON.
+            <span className="eyebrow ml-auto hidden text-[11px] text-white lg:block">
+              Printing since <span className="text-yellow">1862</span>
             </span>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl space-y-8 px-6 py-8">{children}</main>
-        <footer className="border-t border-neutral-200 py-6 text-center text-xs text-neutral-500">
-          Local analysis system — no deployment, no auth. API docs at{" "}
-          <a className="underline" href="http://localhost:8000/docs">
-            localhost:8000/docs
-          </a>
+
+        <Nav />
+
+        <main id="main" className="mx-auto max-w-[104rem] space-y-9 px-6 py-7">
+          {children}
+        </main>
+
+        <HeronWatermark />
+
+        <footer className="relative z-10 mt-6 border-t border-line py-6">
+          <div className="mx-auto max-w-[104rem] px-6 text-[12px] text-muted">
+            W&amp;G Baird — internal analysis. Figures are computed from the
+            uploaded sales extract; this sample covers part of company turnover
+            and nothing here extrapolates to company totals.
+          </div>
         </footer>
       </body>
     </html>

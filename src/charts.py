@@ -3,7 +3,10 @@
 The frontend renders these verbatim (react-plotly.js); export_assets.py
 writes the same figures to PNG. No chart logic exists anywhere else.
 
-Brand system (W&G Baird): one yellow #FFE600, hard black, white, flat.
+Brand system: the W&G Baird *web* design system, so structure is --ink
+#3F454D and true black is reserved for the masthead and wordmark — the
+figures sit inside the app and must not be a harder black than the page
+around them. One yellow #FFE600, white ground, flat.
 Chart adaptation per the dataviz method: a monochrome brand cannot pass
 multi-hue categorical checks (black/grey carry zero chroma by design),
 so every figure holds to <=2 series with the black+yellow pair (CVD
@@ -23,17 +26,22 @@ if TYPE_CHECKING:  # pipeline imports charts nowhere; avoid cycles
     from src.pipeline import PipelineResult
 
 YELLOW = "#FFE600"
-INK = "#000000"
-MUTED = "#737373"
+INK = "#3F454D"      # web system: charcoal, not true black
+MUTED = "#555555"    # captions and helper text only
 GRID = "#E6E6E6"
 PARTIAL = "#D9D9D9"
 
+# Inter is the app's UI face; kaleido falls back to Arial when rendering the
+# PNGs on a box without it, and the frontend passes the resolved family
+# through so the web view matches the page exactly.
+_FONT = "Inter, Arial, Helvetica, sans-serif"
+
 _LAYOUT: dict[str, Any] = {
-    "font": {"family": "Arial, Helvetica, sans-serif", "color": INK, "size": 16},
+    "font": {"family": _FONT, "color": INK, "size": 16},
     # title pinned to the container top so paper-space subtitle
     # annotations (y ~ 1.04) never collide with it
     "title": {
-        "font": {"family": "Arial Black, Arial, sans-serif", "size": 24},
+        "font": {"family": _FONT, "size": 22, "weight": 700},
         "x": 0.02, "y": 0.98, "yref": "container", "yanchor": "top",
     },
     "paper_bgcolor": "#FFFFFF",
@@ -325,7 +333,67 @@ CHARTS: dict[str, Any] = {
 }
 
 
-def build_chart(name: str, pr: PipelineResult) -> go.Figure:
+def _scale_font(obj: Any, factor: float, floor: int = 9) -> None:
+    """Multiply every font size found anywhere in `obj`, in place."""
+    if isinstance(obj, dict):
+        for key, val in obj.items():
+            if key == "size" and isinstance(val, (int, float)):
+                obj[key] = max(floor, round(val * factor))
+            else:
+                _scale_font(val, factor, floor)
+    elif isinstance(obj, (list, tuple)):
+        for item in obj:
+            _scale_font(item, factor, floor)
+
+
+def to_compact(fig: go.Figure) -> go.Figure:
+    """Dashboard-tile variant of a presentation figure.
+
+    The named figures are laid out for 1920x1080 PNG export: 16px base type,
+    a 22px title and a 130px top margin holding a paper-space subtitle. In a
+    grid of ~240px tiles that geometry is unreadable, so this strips the
+    chrome the tile itself provides (title, subtitle, legend), scales all
+    type down and tightens the margins.
+
+    Cosmetic only — no trace, axis range or annotation *value* is touched, so
+    a tile and its full-size counterpart are the same figure. Python owns
+    both, which is why this is here and not a CSS trick in the frontend.
+    """
+    small = go.Figure(fig)
+    layout = small.layout.to_plotly_json()
+
+    # The tile header replaces the in-figure title; paper-space annotations
+    # (the subtitle takeaways, y > 1) have nowhere to live at this size.
+    layout.pop("title", None)
+    layout["annotations"] = [
+        a
+        for a in layout.get("annotations", [])
+        if not (a.get("yref") == "paper" and float(a.get("y", 0)) > 1)
+    ]
+    _scale_font(layout, 0.68)
+    _scale_font(layout.get("annotations", []), 1.0, floor=10)
+
+    layout["margin"] = {"l": 46, "r": 14, "t": 10, "b": 34}
+    layout["showlegend"] = False
+    for axis in ("xaxis", "yaxis"):
+        ax = dict(layout.get(axis) or {})
+        ax["automargin"] = True
+        layout[axis] = ax
+
+    # Assign wholesale rather than update_layout(): Plotly merges array
+    # containers by index, so passing a shorter `annotations` list updates
+    # element 0 and leaves the rest in place instead of replacing them.
+    small.layout = layout
+    # Data-space text labels are sized for the poster too.
+    for trace in small.data:
+        tf = getattr(trace, "textfont", None)
+        if tf is not None and tf.size:
+            trace.textfont.size = max(9, round(float(tf.size) * 0.68))
+    return small
+
+
+def build_chart(name: str, pr: PipelineResult, *, compact: bool = False) -> go.Figure:
     if name not in CHARTS:
         raise KeyError(f"unknown chart {name!r}; available: {sorted(CHARTS)}")
-    return CHARTS[name](pr)
+    fig = CHARTS[name](pr)
+    return to_compact(fig) if compact else fig

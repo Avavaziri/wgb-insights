@@ -286,11 +286,15 @@ def register() -> schemas.RegisterResponse:
 
 
 @app.get("/charts/{name}", response_class=PlainTextResponse)
-def chart(name: str) -> str:
-    """Plotly fig.to_json() — the frontend renders, never recomputes."""
+def chart(name: str, compact: bool = False) -> str:
+    """Plotly fig.to_json() — the frontend renders, never recomputes.
+
+    `compact=true` returns the dashboard-tile variant: same figure, chrome
+    stripped and type scaled for a ~240px tile (see charts.to_compact).
+    """
     pr = state.active()
     try:
-        fig = build_chart(name, pr)
+        fig = build_chart(name, pr, compact=compact)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return str(fig.to_json())

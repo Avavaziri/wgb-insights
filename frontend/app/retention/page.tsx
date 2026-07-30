@@ -12,7 +12,7 @@ import {
   Th,
   Tr,
 } from "@/components/ui";
-import { dp, num } from "@/lib/format";
+import { dash, dp, num } from "@/lib/format";
 import { API_BASE, ApiDownError, getChart, getJson } from "@/lib/api";
 import type { Churn } from "@/lib/types";
 
@@ -52,7 +52,7 @@ export default async function RetentionPage() {
         <Kpi
           label="Accounts"
           value={num(data.rows.length)}
-          detail={`as of ${data.as_of} — from the data, not the clock`}
+          detail={`as of ${data.as_of}, from the data and not the clock`}
         />
         <Kpi
           label="Forecastable"
@@ -69,7 +69,7 @@ export default async function RetentionPage() {
           label={`Fixed ${data.comparison.fixed_days}-day rule`}
           value={num(data.comparison.n_fixed)}
           detail={
-            `a different set — it misses ${data.comparison.only_personalised.length} accounts the personalised rule catches` +
+            `a different set: it misses ${data.comparison.only_personalised.length} accounts the personalised rule catches` +
             (data.comparison.only_fixed.length > 0
               ? `, and flags ${data.comparison.only_fixed.length} that are simply slow-cycle`
               : "")
@@ -85,7 +85,7 @@ export default async function RetentionPage() {
       <Section
         kicker="Actionable output"
         title="Ranked call list"
-        note="Ordered by how far past its own normal cadence each account is. An account with no reliable cadence is shown, flagged, and given no predicted date — the system does not fill that gap with a guess."
+        note="Ordered by how far past its own normal cadence each account is. An account with no reliable cadence is shown, flagged, and given no predicted date. The system does not fill that gap with a guess."
       >
         <a
           href={`${API_BASE}/call-list.csv`}
@@ -128,7 +128,7 @@ export default async function RetentionPage() {
                     </Td>
                     <Td align="right" num muted>
                       {r.median_interval === null
-                        ? "—"
+                        ? dash
                         : `${r.median_interval.toFixed(0)}d`}
                     </Td>
                     <Td align="right" num muted>
@@ -150,7 +150,7 @@ export default async function RetentionPage() {
                       {r.reason_code}
                     </Td>
                     <Td num className={r.expected_next_order ? "" : "text-muted"}>
-                      {r.expected_next_order ?? "not forecastable — no date invented"}
+                      {r.expected_next_order ?? "not forecastable, no date invented"}
                     </Td>
                   </Tr>
                 ))}

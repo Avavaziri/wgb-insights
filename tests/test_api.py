@@ -2,7 +2,7 @@
 
 The TestClient boots state from data/sample/sample.xlsx when data/raw is
 absent; in a checkout WITH real data present, state.active() would use
-it — so tests pin the fixture explicitly via POST /datasets first.
+it, so tests pin the fixture explicitly via POST /datasets first.
 """
 
 from __future__ import annotations

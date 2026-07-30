@@ -8,14 +8,14 @@ rather than emit nonsense.
 Status notes (§1, adjudicated):
 - override_scale (rate, direction, net GBP/yr) is a headline.
 - override_effect (B7) is computed and shown ONLY under a caution
-  banner: correlational, selection-biased, fails BH — never a headline,
+  banner: correlational, selection-biased, fails BH: never a headline,
   never in exported assets.
 - override_model is hard-capped (~0.25 day): one family, defaults, three
-  mandatory baselines. A negative result ships as a finding — the
+  mandatory baselines. A negative result ships as a finding: the
   estimators use information the system doesn't capture.
 
 Rows with null manadj (64 in the real export) are excluded from all
-override analysis and the count is reported — data, not absence.
+override analysis and the count is reported, data, not absence.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ IDENTITY_TOL = 1e-8
 
 
 class OverrideIdentityError(RuntimeError):
-    """mupnett != labmup + manadj — manadj is no longer a price override."""
+    """mupnett != labmup + manadj, manadj is no longer a price override."""
 
 
 @dataclass(frozen=True)
@@ -70,7 +70,7 @@ def validate_override_identity(data: pd.DataFrame) -> None:
 
 
 def override_flags(data: pd.DataFrame, tolerance_gbp: float) -> pd.DataFrame:
-    """Per-job override status. Columns: overridden (nullable bool — null
+    """Per-job override status. Columns: overridden (nullable bool, null
     manadj stays null, never imputed), direction (up/down/none),
     magnitude_gbp (signed)."""
     validate_override_identity(data)
@@ -129,7 +129,7 @@ def override_scale(data: pd.DataFrame, tolerance_gbp: float) -> dict[str, Any]:
 def override_effect(
     data: pd.DataFrame, tolerance_gbp: float, *, seed: int
 ) -> EffectReport:
-    """B7 — computed, NEVER a headline (§1): correlational, selection-
+    """B7, computed, NEVER a headline (§1): correlational, selection-
     biased, fails BH. Callers must wrap this in a caution object.
 
     Outcome: log contribution per constraint-hour on the constraint
@@ -165,7 +165,7 @@ def _feature_frame(df: pd.DataFrame) -> pd.DataFrame:
 def override_model(
     data: pd.DataFrame, config: dict[str, Any], *, seed: int
 ) -> OverrideModelReport:
-    """Timeboxed learnability test (§5.4). GroupKFold grouped on customer —
+    """Timeboxed learnability test (§5.4). GroupKFold grouped on customer:
     plain KFold leaks account pricing patterns and is a defect. Baselines
     are mandatory; 'beats none of them' is a shippable finding."""
     validate_override_identity(data)

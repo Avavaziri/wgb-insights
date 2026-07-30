@@ -11,7 +11,7 @@ from src.checks import bh_adjust, currency_replication, load_register
 
 class TestBHAdjust:
     def test_textbook_example(self) -> None:
-        # classic BH: m=5, alpha=0.05 — largest k with p(k) <= k/m * alpha
+        # classic BH: m=5, alpha=0.05, largest k with p(k) <= k/m * alpha
         ps = {"a": 0.001, "b": 0.008, "c": 0.039, "d": 0.041, "e": 0.90}
         table = bh_adjust(ps).set_index("name")
         # k: a(0.001<=0.01) yes, b(0.008<=0.02) yes, c(0.039<=0.03) no,
@@ -22,7 +22,7 @@ class TestBHAdjust:
 
     def test_step_up_rescues_earlier_rank(self) -> None:
         # p3 clears its threshold, so p2 passes too even though it missed
-        # its own — the step-up property naive implementations get wrong
+        # its own: the step-up property naive implementations get wrong
         ps = {"p1": 0.001, "p2": 0.030, "p3": 0.029, "p4": 0.9, "p5": 0.9,
               "p6": 0.9, "p7": 0.9}
         # sorted: 0.001, 0.029, 0.030, ... thresholds 0.0071, 0.0143, 0.0214

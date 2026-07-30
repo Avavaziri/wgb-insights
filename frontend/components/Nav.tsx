@@ -5,7 +5,7 @@
 // brand lockup.
 //
 // "Method & data" is the discovery tab: every statement about how the system
-// works — standards, ingest checks, the hypothesis register, the API — lives
+// works (standards, ingest checks, the hypothesis register, the API) lives
 // there, off the pages a manager reads for conclusions.
 
 import Link from "next/link";

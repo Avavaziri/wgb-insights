@@ -5,7 +5,7 @@ import { HeronWatermark } from "@/components/Heron";
 import Nav from "@/components/Nav";
 import "./globals.css";
 
-// One face, weights carry the hierarchy — matching the Tender Assistant, the
+// One face, weights carry the hierarchy, matching the Tender Assistant, the
 // other W&G Baird internal app. The web design system nominates Fraunces for
 // display; it was tried here and read as decoration at dashboard sizes, so
 // this project stays sans-only. Noted as a deliberate departure.
@@ -16,7 +16,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Sales Insights — W&G Baird",
+  title: "Sales Insights | W&G Baird",
   description:
     "Print-job sales analysis: contribution per press-hour, pricing governance and retention.",
 };
@@ -71,7 +71,7 @@ export default function RootLayout({
 
         <footer className="relative z-10 mt-6 border-t border-line py-6">
           <div className="mx-auto max-w-[104rem] px-6 text-[12px] text-muted">
-            W&amp;G Baird — internal analysis. Figures are computed from the
+            W&amp;G Baird internal analysis. Figures are computed from the
             uploaded sales extract; this sample covers part of company turnover
             and nothing here extrapolates to company totals.
           </div>

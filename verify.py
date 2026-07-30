@@ -1,6 +1,6 @@
-"""`make verify` — the §8 QA gate.
+"""`make verify`: the §8 QA gate.
 
-Runs the full pipeline (src.pipeline — the same code path the API and
+Runs the full pipeline (src.pipeline: the same code path the API and
 asset export use) on data/raw/ and prints one table: every §9 expected
 value, the computed value, and PASS / DEVIATION / INFO per row.
 Non-zero exit on any DEVIATION. Rows §9 marks as expected-to-shift print
@@ -28,7 +28,7 @@ RAW_DIR = Path(__file__).parent / "data" / "raw"
 class Row:
     name: str
     expected: str
-    # returns (computed_str, ok) — ok=None means informational (INFO)
+    # returns (computed_str, ok), ok=None means informational (INFO)
     compute: Callable[[], tuple[str, bool | None]]
 
 
@@ -141,7 +141,7 @@ def build_rows(pr: PipelineResult, cfg: dict[str, Any]) -> list[Row]:
             f"{e.pct_effect:+.1f}%, raw p = {e.p_value:.3f}, adj p = "
             f"{e.p_value_adj:.3f}, {'PASSES' if passes else 'fails'} BH"
         )
-        # §9 expects this to FAIL BH — under cluster-robust SEs it may
+        # §9 expects this to FAIL BH, under cluster-robust SEs it may
         # not. Effect size is the regression test; the BH fate is
         # reported for the human to adjudicate (see rush row).
         return got, abs((e.pct_effect or 0) - 11.2) < 5 and 0.005 < e.p_value < 0.15

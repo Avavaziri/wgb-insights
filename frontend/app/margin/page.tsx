@@ -11,7 +11,7 @@ import {
   Th,
   Tr,
 } from "@/components/ui";
-import { dp, num, pval } from "@/lib/format";
+import { dash, dp, num, pval } from "@/lib/format";
 import { ApiDownError, getChart, getJson } from "@/lib/api";
 import type { Decomposition } from "@/lib/types";
 
@@ -54,7 +54,7 @@ export default async function MarginPage() {
         title="Blocks in order, judged on cross-validated fit"
         note={data.order_note}
       >
-        <TableFrame caption="CV increment is the change in out-of-sample R² when the block is added. The in-sample-only marker records a block that clears the nested F-test decisively while moving out-of-sample R² by less than the increment set in config — statistically present, predictively negligible. Thresholds live in config.yaml, so they are described here rather than restated.">
+        <TableFrame caption="CV increment is the change in out-of-sample R² when the block is added. The in-sample-only marker records a block that clears the nested F-test decisively while moving out-of-sample R² by less than the increment set in config: statistically present, predictively negligible. Thresholds live in config.yaml, so they are described here rather than restated.">
           <Table>
             <thead>
               <tr>
@@ -94,7 +94,7 @@ export default async function MarginPage() {
                     {r.n_params}
                   </Td>
                   <Td align="right" num muted>
-                    {r.f_p_vs_prev === null ? "—" : pval(r.f_p_vs_prev)}
+                    {r.f_p_vs_prev === null ? dash : pval(r.f_p_vs_prev)}
                   </Td>
                 </Tr>
               ))}
@@ -106,7 +106,7 @@ export default async function MarginPage() {
       <Section
         kicker="Negative result"
         title="The rep dashboard this data refuses to build"
-        note="A naive rep-only model looks like a performance story. Once size, run features, product, customer and year are in first, the rep block adds nothing — the apparent effect was which accounts each rep carries."
+        note="A naive rep-only model looks like a performance story. Once size, run features, product, customer and year are in first, the rep block adds nothing. The apparent effect was which accounts each rep carries."
       >
         <PlotlyChart figure={repFig} />
         <Readout

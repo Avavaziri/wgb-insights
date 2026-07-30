@@ -1,17 +1,17 @@
-"""Named Plotly figures (§12) — built in Python, shipped as fig.to_json().
+"""Named Plotly figures (§12), built in Python, shipped as fig.to_json().
 
 The frontend renders these verbatim (react-plotly.js); export_assets.py
 writes the same figures to PNG. No chart logic exists anywhere else.
 
 Brand system: the W&G Baird *web* design system, so structure is --ink
-#3F454D and true black is reserved for the masthead and wordmark — the
+#3F454D and true black is reserved for the masthead and wordmark: the
 figures sit inside the app and must not be a harder black than the page
 around them. One yellow #FFE600, white ground, flat.
 Chart adaptation per the dataviz method: a monochrome brand cannot pass
 multi-hue categorical checks (black/grey carry zero chroma by design),
 so every figure holds to <=2 series with the black+yellow pair (CVD
-dE 32 — passes), 1px black outlines on yellow fills, and direct ink
-labels — the documented secondary-encoding relief. Yellow is never used
+dE 32, passes), 1px black outlines on yellow fills, and direct ink
+labels: the documented secondary-encoding relief. Yellow is never used
 for unoutlined thin marks (1.23:1 contrast vs white).
 """
 
@@ -62,7 +62,7 @@ def _fig(title: str, **layout: Any) -> go.Figure:
 
 def trend_context(pr: PipelineResult) -> go.Figure:
     """Asset 1: revenue by full year, partial 2026 greyed; margin labelled
-    directly (one axis — margin rides as text, not a second scale)."""
+    directly (one axis, margin rides as text, not a second scale)."""
     t = pr.trend_yearly
     partial_year = pr.clean_report.partial_year
     partial_rev = (
@@ -180,7 +180,7 @@ def override_scale(pr: PipelineResult) -> go.Figure:
 
 
 def rate_curve(pr: PipelineResult) -> go.Figure:
-    """Asset 5: the §5.3 curve — benchmark, crossover + CI band, monotone
+    """Asset 5: the §5.3 curve, benchmark, crossover + CI band, monotone
     decline visible. The centrepiece chart."""
     th = pr.thresholds
     curve = th["curve"]
@@ -222,7 +222,7 @@ def rate_curve(pr: PipelineResult) -> go.Figure:
 
 
 def capacity_share(pr: PipelineResult) -> go.Figure:
-    """Asset 6: descriptive form ONLY — capacity share at rate X vs
+    """Asset 6: descriptive form ONLY, capacity share at rate X vs
     benchmark Y. No counterfactual GBP figure exists anywhere."""
     cs = pr.thresholds["capacity_share"]
     xover = pr.thresholds["crossover_hrs"]
@@ -256,7 +256,7 @@ def capacity_share(pr: PipelineResult) -> go.Figure:
 
 
 def churn_comparison(pr: PipelineResult) -> go.Figure:
-    """Asset 8: fixed 90-day rule vs personalised thresholds — different
+    """Asset 8: fixed 90-day rule vs personalised thresholds, different
     accounts, not just different counts."""
     c = pr.churn_comparison
     fig = _fig("A fixed 90-day rule watches the wrong accounts")
@@ -279,8 +279,8 @@ def churn_comparison(pr: PipelineResult) -> go.Figure:
 
 
 def bh_family(pr: PipelineResult) -> go.Figure:
-    """Replaces the cut rush asset (adjudicated): the BH pass itself —
-    the system demoting one of its own findings is the methodology story."""
+    """Replaces the cut rush asset (adjudicated): the BH pass itself. The
+    system demoting one of its own findings is the methodology story."""
     t = pr.bh_table.sort_values("rank")
     labels = {
         "customer_block": "Customer identity", "run_features_block": "Run features",
@@ -303,7 +303,7 @@ def bh_family(pr: PipelineResult) -> go.Figure:
             text=[f"adj p = {p:.3g}{'' if ok else ' (FAILS)'}  "
                   if p > 0.001 else f"  adj p = {p:.3g}"
                   for p, ok in zip(t["p_adj"], t["passes_bh"], strict=True)],
-            # near-1 points hug the right edge — label those leftwards
+            # near-1 points hug the right edge, label those leftwards
             textposition=[
                 "middle left" if p > 0.001 else "middle right" for p in t["p_adj"]
             ],
@@ -355,7 +355,7 @@ def to_compact(fig: go.Figure) -> go.Figure:
     chrome the tile itself provides (title, subtitle, legend), scales all
     type down and tightens the margins.
 
-    Cosmetic only — no trace, axis range or annotation *value* is touched, so
+    Cosmetic only: no trace, axis range or annotation *value* is touched, so
     a tile and its full-size counterpart are the same figure. Python owns
     both, which is why this is here and not a CSS trick in the frontend.
     """

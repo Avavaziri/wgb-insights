@@ -47,7 +47,7 @@ export default async function ConstraintPage() {
         lede={
           <>
             Press hours are the capacity-constrained resource, so the margin
-            metric is contribution per constraint-hour — throughput accounting,
+            metric is contribution per constraint-hour: throughput accounting,
             not gross margin percentage. {th.litho_only_note}
           </>
         }
@@ -57,12 +57,12 @@ export default async function ConstraintPage() {
         <Kpi
           label="Shape of the curve"
           value={mono.interior_optimum ? "Interior optimum" : "Monotonic decline"}
-          detail={`Spearman ρ ${Number(mono.spearman_rho).toFixed(2)} on n ${num(Number(mono.n))} — tested before any banding, so the bins can't manufacture the shape`}
+          detail={`Spearman ρ ${Number(mono.spearman_rho).toFixed(2)} on n ${num(Number(mono.n))}, tested before any banding, so the bins can't manufacture the shape`}
         />
         <Kpi
           label="Factory benchmark"
           value={`${gbp(th.benchmark_rate_gbp_per_hr)}/hr`}
-          detail="hour-weighted mean rate — the internal line every job is judged against"
+          detail="hour-weighted mean rate, the internal line every job is judged against"
         />
         <Kpi
           label="Crossover threshold"
@@ -88,7 +88,7 @@ export default async function ConstraintPage() {
       <Section
         kicker="Short-notice work"
         title="Rush jobs, and why this isn't on the headline slide"
-        note="Rush is proxied by bottom-percentile dwell time within a size band — no scheduling data exists in this extract. The effect is negative and reasonably sized, and it still failed the multiplicity correction. It is reported here in full rather than quietly dropped."
+        note="Rush is proxied by bottom-percentile dwell time within a size band, and no scheduling data exists in this extract. The effect is negative and reasonably sized, and it still failed the multiplicity correction. It is reported here in full rather than quietly dropped."
       >
         {rush.bh_status === "not_headline" && (
           <NotHeadlineBanner text={rush.bh_note} />
@@ -100,7 +100,7 @@ export default async function ConstraintPage() {
         <Callout label="What this does not say" tone="settled">
           Nothing here argues for declining short-notice work. Most of the cost
           base is fixed, so an hour running at a lower contribution rate still
-          beats an idle hour — the finding is an argument for pricing and
+          beats an idle hour. The finding is an argument for pricing and
           sequencing the premium, not for turning the job away. Declining would
           only pay if the constraint were genuinely binding and a rush job
           displaced a better-rate one, and this extract carries no capacity
@@ -200,7 +200,7 @@ export default async function ConstraintPage() {
       <Section
         kicker="Multiplicity"
         title="The correction that demoted our own finding"
-        note="One Benjamini-Hochberg pass over a family fixed in config before the tests were run, applied once. Anything that fails is stripped of headline status automatically and excluded from the exported slide set — including the rush effect above."
+        note="One Benjamini-Hochberg pass over a family fixed in config before the tests were run, applied once. Anything that fails is stripped of headline status automatically and excluded from the exported slide set, including the rush effect above."
       >
         <PlotlyChart figure={bhFig} />
       </Section>

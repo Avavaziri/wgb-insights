@@ -1,6 +1,6 @@
-// The discovery tab. Everything about how the system works lives here —
-// standards, ingest checks, the hypothesis register, the data gaps, the API —
-// so the pages a manager reads carry conclusions and nothing else.
+// The discovery tab. Everything about how the system works lives here:
+// standards, ingest checks, the hypothesis register, the data gaps and the
+// API, so the pages a manager reads carry conclusions and nothing else.
 
 import { ApiDown } from "@/components/ApiGuard";
 import {
@@ -22,7 +22,7 @@ import type { Overview } from "@/lib/types";
 const STANDARDS = [
   {
     head: "One multiplicity correction",
-    body: "A Benjamini-Hochberg pass over a test family fixed before the tests ran, applied once. Anything that fails loses headline status automatically and is dropped from the exported slides — no one decides case by case.",
+    body: "A Benjamini-Hochberg pass over a test family fixed before the tests ran, applied once. Anything that fails loses headline status automatically and is dropped from the exported slides, so no one decides case by case.",
   },
   {
     head: "Cluster-robust standard errors",
@@ -96,7 +96,7 @@ export default async function MethodPage() {
               {
                 label: (
                   <>
-                    Identity <code>VA/24 = VA ÷ hrs × 24</code> — largest error
+                    Identity <code>VA/24 = VA ÷ hrs × 24</code>, largest error
                   </>
                 ),
                 value: expo(Number(v.identity1_max_err)),
@@ -104,19 +104,19 @@ export default async function MethodPage() {
               {
                 label: (
                   <>
-                    Identity <code>mupnett = labmup + manadj</code> — largest
+                    Identity <code>mupnett = labmup + manadj</code>, largest
                     error across {num(Number(v.n_identity2_checked))} complete
                     rows
                   </>
                 ),
                 value: v.identity2_ok
                   ? expo(Number(v.identity2_max_err))
-                  : "Failed — pricing withheld",
+                  : "Failed, pricing withheld",
               },
               {
                 label: (
                   <>
-                    <code>#DIV/0!</code> cells in the margin column — real Excel
+                    <code>#DIV/0!</code> cells in the margin column: real Excel
                     error cells, counted before the spreadsheet reader turns them
                     into blanks
                   </>
@@ -126,7 +126,7 @@ export default async function MethodPage() {
               {
                 label: (
                   <>
-                    Blank <code>manadj</code> — held out of the override analysis
+                    Blank <code>manadj</code>, held out of the override analysis
                   </>
                 ),
                 value: num(Number(v.n_null_manadj)),
@@ -134,7 +134,7 @@ export default async function MethodPage() {
               {
                 label: (
                   <>
-                    Blank <code>Binding Type</code> — read as outsourced binding:
+                    Blank <code>Binding Type</code>, read as outsourced binding:
                     data, not absence
                   </>
                 ),
@@ -143,7 +143,7 @@ export default async function MethodPage() {
               {
                 label: (
                   <>
-                    Jobs with no press hours — why the capacity analysis covers
+                    Jobs with no press hours, which is why the capacity analysis covers
                     Litho only
                   </>
                 ),
@@ -152,7 +152,7 @@ export default async function MethodPage() {
               {
                 label: (
                   <>
-                    Credits (<code>Sell Price</code> ≤ 0) — separated and
+                    Credits (<code>Sell Price</code> ≤ 0), separated and
                     counted, never dropped silently
                   </>
                 ),
@@ -182,7 +182,7 @@ export default async function MethodPage() {
 
       <Section
         kicker="Audit trail"
-        title={`Every hypothesis tested — ${data.hypothesis_register.length} of them`}
+        title={`Every hypothesis tested: ${data.hypothesis_register.length} of them`}
         note="Recorded before the results were known, so the list cannot be trimmed to fit the story afterwards."
       >
         <Panel>
@@ -220,7 +220,7 @@ export default async function MethodPage() {
       <Section
         kicker="Reproducing it"
         title="Reproducing and interrogating the numbers"
-        note={`Every figure on this site is computed once from the file and served as structured data — the pages only render it, so a number cannot drift between the analysis and the screen. Seeds are fixed (${Object.entries(
+        note={`Every figure on this site is computed once from the file and served as structured data, and the pages only render it, so a number cannot drift between the analysis and the screen. Seeds are fixed (${Object.entries(
           data.seeds,
         )
           .map(([k, s]) => `${k} ${s}`)

@@ -1,6 +1,6 @@
 // Shared error boundary for pages: shows a start-the-API hint instead of
 // a stack trace when the backend isn't running. The UI holds no fallback
-// numbers on purpose — if Python is down there is nothing to render.
+// numbers on purpose: if Python is down there is nothing to render.
 
 export function ApiDown({ message }: { message: string }) {
   return (

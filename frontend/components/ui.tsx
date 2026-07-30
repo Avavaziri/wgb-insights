@@ -1,11 +1,11 @@
 // Presentation primitives, built to the W&G Baird *web* design system
 // (~/.claude/wgb-web-design-system.md) and its reference stylesheet, the 360
-// Jobs dashboard. No data logic lives here — these components receive
+// Jobs dashboard. No data logic lives here: these components receive
 // already-formatted strings and arrange them.
 //
 // The rules that shape every component below:
 //   · --ink (#3F454D) for all structure; true black only in the masthead.
-//   · Yellow is a highlight, not a surface — roughly one yellow thing per
+//   · Yellow is a highlight, not a surface: roughly one yellow thing per
 //     view, so it means "look here" rather than "this is branded".
 //   · Uppercase for eyebrows, labels and chips only.
 //   · Structure comes from rules and fills, never elevation. Radius 0.
@@ -18,15 +18,15 @@ export type ChipTone = "done" | "now";
 /**
  * The one micro-interaction on the site, used on exactly two components.
  *
- * WIPE   — a 2px rule that draws itself in from the left. The whole analysis
+ * WIPE   is a 2px rule that draws itself in from the left. The whole analysis
  *          is about lines (a crossover, a benchmark, a cut-off), so a rule
  *          that draws in is the subject's own vocabulary, not a generic fade.
- * REVEAL — the qualification behind a figure, collapsed with max-height so it
+ * REVEAL is the qualification behind a figure, collapsed with max-height so
  *          stays in the DOM and in the accessibility tree.
  *
  * Both fire on group-hover AND group-focus-within, which is why every tile
  * using them is a link: the keyboard reaches exactly what the mouse does.
- * Reduced motion is handled globally — the transition drops out and the
+ * Reduced motion is handled globally: the transition drops out and the
  * reveal becomes an instant toggle.
  */
 const WIPE =
@@ -131,7 +131,7 @@ export function PanelHead({
   meta,
 }: {
   children: ReactNode;
-  /** Right-hand note — yellow bold, per the house panel recipe. */
+  /** Right-hand note, yellow bold, per the house panel recipe. */
   meta?: ReactNode;
 }) {
   return (
@@ -164,7 +164,7 @@ export function Kpi({
   detail,
   href,
   /** The one figure in a group that is the point. Yellow tile, hovering to
-      white — hovering to ink would hide its own label. */
+      white, because hovering to ink would hide its own label. */
   accent = false,
   /** Board view: hold the caveat back until hover or keyboard focus. Only
       use with `href`, so the tile is focusable and the keyboard can reach
@@ -293,7 +293,7 @@ export function FindingCell({
         <span className="display block text-[30px]">{figure}</span>
         <span className="eyebrow mt-1 block text-[10px]">{figureLabel}</span>
       </span>
-      {/* The qualification is the analyst's half of the sentence — held back
+      {/* The qualification is the analyst's half of the sentence, held back
           so the board reads four conclusions, not four paragraphs. */}
       <span className={REVEAL}>
         <span className="block pt-1 text-[13px] leading-snug text-ink">
@@ -346,7 +346,7 @@ export function Readout({ items }: { items: ReadoutItem[] }) {
 /* ------------------------------------------------------------------ chips */
 
 /** Status chip: done is filled ink, "now" (needs attention) is filled
-    yellow — the same logic the house system uses for flashes, where a
+    yellow, the same logic the house system uses for flashes, where a
     warning is a "do this next" rather than an emergency. */
 export function Chip({
   children,
@@ -371,7 +371,7 @@ export function Chip({
 /**
  * Flash: a qualifier attached to a number. "attention" is ink on yellow
  * with a thick ink left rule; "settled" is white on ink with a yellow left
- * rule. No red anywhere — it is not in the palette.
+ * rule. No red anywhere, since it is not in the palette.
  */
 export function Callout({
   label,
@@ -425,7 +425,7 @@ export function Disclosure({
   );
 }
 
-/** Label/value rows inside a panel — counts, checks and caveats. */
+/** Label/value rows inside a panel: counts, checks and caveats. */
 export function DefList({
   title,
   rows,
@@ -558,7 +558,7 @@ export function Tr({
   highlight = false,
 }: {
   children: ReactNode;
-  /** Marks a row structurally — a thick ink left rule, not a fill. */
+  /** Marks a row structurally: a thick ink left rule, not a fill. */
   highlight?: boolean;
 }) {
   return (

@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 /* W&G Baird web design system (~/.claude/wgb-web-design-system.md), derived
-   from the 360 Jobs dashboard stylesheet — the reference implementation.
+   from the 360 Jobs dashboard stylesheet, the reference implementation.
    Not the deck system: that one is Arial Black on true black. Type here is
    Inter only, weights carrying the hierarchy, matching the Tender Assistant
-   app rather than the design system's Fraunces — see layout.tsx.
+   app rather than the design system's Fraunces; see layout.tsx.
 
    THREE COLOURS ONLY: yellow, charcoal, white. True black is reserved for
-   the brand marks — the masthead bar and the wordmark — so the identity
+   the brand marks (the masthead bar and the wordmark) so the identity
    stays exact while the interface reads softer. Everything else is --ink.
    The two greys are functional exceptions: hairlines and caption text.
    Text on yellow is always ink; text on ink is white; never yellow text on
@@ -19,12 +19,12 @@
 @theme {
   --color-yellow: #ffe600;
   --color-black: #000000; /* brand marks only: masthead bar, wordmark */
-  --color-ink: #3f454d; /* everything else — 9.7:1 on white, 7.6:1 on yellow */
+  --color-ink: #3f454d; /* everything else: 9.7:1 on white, 7.6:1 on yellow */
   --color-canvas: #f7f7f5; /* page ground */
   --color-white: #ffffff;
   --color-line: #d9d9d9; /* hairlines and inactive tracks only */
   --color-muted: #555555; /* captions and helper text only */
-  --color-hover: #f4f4f4; /* table row hover — deliberately not yellow */
+  --color-hover: #f4f4f4; /* table row hover: deliberately not yellow */
 
   /* next/font supplies the two --font-*-src variables on <html>. */
   --font-body: var(--font-body-src), Inter, Arial, Helvetica, sans-serif;
@@ -62,7 +62,7 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Heading rail — a 4px yellow bar to the left of a section heading. The
+  /* Heading rail: a 4px yellow bar to the left of a section heading. The
      web system forbids a thin accent rule *under* a title; this is the
      Tender Assistant's device instead, and it reads as structure. */
   .rail {
@@ -112,7 +112,7 @@
     display: none;
   }
 
-  /* On yellow a yellow ring is invisible — inverted per-element in the
+  /* On yellow a yellow ring is invisible, so it is inverted per-element in the
      components themselves, never across a whole dark region (that bug hid
      keyboard focus against the masthead once already). */
   :focus-visible {
@@ -132,15 +132,15 @@
      custom classes here, for two reasons learned the hard way:
 
        · A custom class in @layer base and a group-* variant in @layer
-         utilities are a cascade trap — and worse, mixing `transform:
+         utilities are a cascade trap, and worse, mixing `transform:
          scaleX(0)` in base with Tailwind's `scale-x-100` (which sets the
          separate `scale` property) does not override at all, it composes.
          The two transforms multiplied out to zero and the rule never drew.
        · One property per state, one layer, so the collapsed and expanded
          rules are the same declaration and the cascade is unambiguous.
 
-     The detail stays in the DOM and in the accessibility tree — collapsed
-     with max-height, never display:none — so a screen reader still reads
+     The detail stays in the DOM and in the accessibility tree, collapsed
+     with max-height and never display:none, so a screen reader still reads
      the caveat that a mouse user has to hover for. */
 
   @media (prefers-reduced-motion: reduce) {

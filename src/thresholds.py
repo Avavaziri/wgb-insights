@@ -1,10 +1,10 @@
 """Job size vs contribution per constraint-hour: curve, crossover, CI (§5.3).
 
-All functions take the constraint frame (Litho, press hrs > 0, closed —
+All functions take the constraint frame (Litho, press hrs > 0, closed; see
 clean.constraint_frame). Rates are GBP per press hour. The crossover is
 never reported as a bare point: point + window-sensitivity range +
 bootstrap CI travel together, and monotonicity_report runs BEFORE any
-banding — if new data ever shows an interior optimum, the framing
+banding, if new data ever shows an interior optimum, the framing
 changes and the verdict is displayed.
 """
 
@@ -22,7 +22,7 @@ def benchmark_rate(data: pd.DataFrame) -> float:
     """Hour-weighted mean rate: total contribution / total press hours.
 
     Weighting by hours makes this the factory's own average earning rate
-    per constraint-hour — the internal benchmark the curve is judged
+    per constraint-hour: the internal benchmark the curve is judged
     against (no external capacity data exists, §6).
     """
     return float(data["va_amount_gbp"].sum() / data["press_hrs"].sum())
@@ -99,7 +99,7 @@ def breakpoints_grid(data: pd.DataFrame, k: int, min_group: int) -> list[float]:
 
 
 def breakpoints_cart(data: pd.DataFrame, max_leaves: int, min_samples_leaf: int) -> list[float]:
-    """CART split points on log_rate ~ press_hrs — data-derived banding
+    """CART split points on log_rate ~ press_hrs, data-derived banding
     alternative to quantiles (§2.5: thresholds derived, never asserted)."""
     tree = DecisionTreeRegressor(
         max_leaf_nodes=max_leaves, min_samples_leaf=min_samples_leaf, random_state=0
@@ -116,7 +116,7 @@ def monotonicity_report(
     """Runs BEFORE any banding (§5.3). Verdict displayed in the app.
 
     interior_optimum is True only if the curve's maximum sits away from
-    the smallest-jobs end (beyond `interior_margin` of windows) — if it
+    the smallest-jobs end (beyond `interior_margin` of windows), if it
     ever flips True on new data, 'crossover' framing is wrong and the
     output says so.
     """
@@ -144,7 +144,7 @@ def monotonicity_report(
 def window_sensitivity(
     data: pd.DataFrame, windows: list[int], *, step: int
 ) -> pd.DataFrame:
-    """Crossover across window widths (§5.8 named check 2) — the range
+    """Crossover across window widths (§5.8 named check 2): the range
     that must accompany every crossover statement."""
     bench = benchmark_rate(data)
     rows = [
@@ -160,7 +160,7 @@ def window_sensitivity(
 def capacity_share_above(data: pd.DataFrame, crossover_hrs: float) -> dict[str, float]:
     """Descriptive form ONLY (§1): share of constraint-hours in jobs above
     the crossover and the pooled rate they earn vs the benchmark. No
-    counterfactual GBP figure — capacity data doesn't exist."""
+    counterfactual GBP figure, capacity data doesn't exist."""
     above = data[data["press_hrs"] > crossover_hrs]
     total_hrs = float(data["press_hrs"].sum())
     above_hrs = float(above["press_hrs"].sum())

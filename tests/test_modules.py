@@ -1,4 +1,4 @@
-"""pricing, rush, churn, trend — §8 test list items and module contracts."""
+"""pricing, rush, churn, trend, §8 test list items and module contracts."""
 
 from __future__ import annotations
 
@@ -174,7 +174,7 @@ class TestChurn:
         return df
 
     def test_as_of_derives_from_data_not_now(self) -> None:
-        # §8: as_of behaviour — identical result on the same file, any day
+        # §8: as_of behaviour, identical result on the same file, any day
         df = self.cadence_data()
         c1 = cadence_stats(df)
         c2 = cadence_stats(df, as_of=df["sales_in"].max())
@@ -205,7 +205,7 @@ class TestChurn:
         # long-lapsed regular: both rules agree
         assert "REGULAR_60_LAPSED" in cmp["both"]
         # steady 20-day account ~50 days silent: only the personalised
-        # threshold fires — the whole point of the comparison
+        # threshold fires: the whole point of the comparison
         assert "STEADY_20_LAPSED" in cmp["only_personalised"]
         assert cmp["sets_differ"]
 

@@ -1,4 +1,4 @@
-"""stats_core is the contract everything else builds on — tested first (§11 step 2)."""
+"""stats_core is the contract everything else builds on, tested first (§11 step 2)."""
 
 from __future__ import annotations
 
@@ -138,7 +138,7 @@ class TestCvR2:
     def test_unseen_category_does_not_crash(self) -> None:
         rng = np.random.default_rng(SEED)
         n = 100
-        # one category appears once — guaranteed unseen in some train fold
+        # one category appears once, guaranteed unseen in some train fold
         cats = ["common"] * (n - 1) + ["rare-once"]
         df = pd.DataFrame({"y": rng.normal(size=n), "cat": cats})
         val = cv_r2(df, "y", [], ["cat"], folds=5, seed=SEED)

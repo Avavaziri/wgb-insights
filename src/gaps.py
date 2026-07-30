@@ -1,4 +1,4 @@
-"""The §6 data-gap report — emitted programmatically, presented as the
+"""The §6 data-gap report, emitted programmatically, presented as the
 investment ask, not an apology. Computed bits (sample share) come from
 the data; the structural gaps are facts about what the export contains.
 """

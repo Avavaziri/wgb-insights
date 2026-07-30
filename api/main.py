@@ -1,6 +1,6 @@
 """FastAPI app (§7.1). Local only: uvicorn :8000, CORS for :3000.
 
-/docs stays enabled — it is the fallback demo and a deliverable. Every
+/docs stays enabled, it is the fallback demo and a deliverable. Every
 response body is a schema with all fields required; §1-excluded findings
 travel inside caution/inconclusive/not_headline wrappers that the
 frontend must render visibly.
@@ -287,7 +287,7 @@ def register() -> schemas.RegisterResponse:
 
 @app.get("/charts/{name}", response_class=PlainTextResponse)
 def chart(name: str, compact: bool = False) -> str:
-    """Plotly fig.to_json() — the frontend renders, never recomputes.
+    """Plotly fig.to_json(): the frontend renders, never recomputes.
 
     `compact=true` returns the dashboard-tile variant: same figure, chrome
     stripped and type scaled for a ~240px tile (see charts.to_compact).

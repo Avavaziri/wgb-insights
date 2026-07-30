@@ -1,4 +1,4 @@
-// Mirrors of the API schemas — types only, no logic (§4: a number
+// Mirrors of the API schemas: types only, no logic (§4: a number
 // recomputed in TS is a defect).
 
 export interface EffectReport {

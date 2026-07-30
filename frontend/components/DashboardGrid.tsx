@@ -3,12 +3,12 @@
 // The dashboard surface: every panel on one page, with a slicer bar that
 // filters which panels are shown.
 //
-// IMPORTANT — what this filter does and does not do. It filters the *view*:
+// IMPORTANT: what this filter does and does not do. It filters the *view*:
 // which panels are on screen. It does not filter the data, because every
 // figure was computed in Python and shipped whole, and recomputing an
 // aggregate here would put a second source of truth in the browser. Real
 // data slicers (by year, work type, currency) need those slices precomputed
-// in the pipeline and served as alternative figures — see the note in the
+// in the pipeline and served as alternative figures; see the note in the
 // dashboard page.
 //
 // Series inside a panel can still be toggled: Plotly's own legend does that
@@ -23,7 +23,7 @@ export interface Tile {
   title: string;
   note?: string;
   figure: unknown;
-  /** Panels worth twice the width — a wide time series, a long bar list. */
+  /** Panels worth twice the width: a wide time series, a long bar list. */
   wide?: boolean;
 }
 

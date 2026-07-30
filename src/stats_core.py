@@ -2,7 +2,7 @@
 
 Every model result crosses the codebase as a ModelReport; every tested
 effect as an EffectReport. All fields are required, so no caller can emit
-a bare R² or a bare p-value — the dataclass constructor refuses.
+a bare R² or a bare p-value: the dataclass constructor refuses.
 
 Units: monetary coefficients are in GBP after FX conversion unless a
 docstring says otherwise. Logged-outcome effects also carry a
@@ -69,7 +69,7 @@ def _parse_formula(formula: str) -> tuple[str, str | None, list[str], list[str]]
     numeric_terms, categorical_cols) for the sklearn CV pipeline.
 
     Supported term forms: `col`, `np.log(col)`, `np.log1p(col)`, `C(col)`.
-    Anything else raises — extend deliberately rather than guess.
+    Anything else raises, extend deliberately rather than guess.
     """
     lhs, rhs = (part.strip() for part in formula.split("~", 1))
     m = _TERM_RE.match(lhs)
@@ -169,7 +169,7 @@ def fit_reported(
 ) -> tuple[Any, ModelReport]:
     """OLS via statsmodels formula API with a complete ModelReport.
 
-    cluster_on: column for cluster-robust SEs (§2.3 — customer for every
+    cluster_on: column for cluster-robust SEs (§2.3: customer for every
     job-level regression). CV R² comes from the sklearn pipeline in
     cv_r2(), parsed from the same formula, so in-sample and out-of-sample
     numbers always describe the same specification.
@@ -211,7 +211,7 @@ def effect(fit: Any, term: str, logged_outcome: bool = True) -> EffectReport:
 
     pct_effect back-transforms log-outcome coefficients to a % effect;
     it is None when the outcome is not logged. p_value_adj stays None
-    here — only the checks.py BH pass may fill it.
+    here: only the checks.py BH pass may fill it.
     """
     if term not in fit.params.index:
         raise KeyError(f"term {term!r} not in fitted model: {list(fit.params.index)}")
@@ -285,7 +285,7 @@ def nested_f_test(restricted: Any, full: Any) -> tuple[float, float]:
     """F-test of a restricted model against its superset. Returns (F, p).
 
     The classic F compares residual sums of squares, which is invalid on
-    cluster-robust results objects — so both models are refit nonrobust
+    cluster-robust results objects, so both models are refit nonrobust
     here for the block test. Cluster-robust SEs still govern effect
     inference (§2.3); this F only asks whether a block moves the fit.
 
@@ -296,7 +296,7 @@ def nested_f_test(restricted: Any, full: Any) -> tuple[float, float]:
     full_ols = full.model.fit()
     if full_ols.df_model <= restricted_ols.df_model:
         # added block is collinear with what's already in the model
-        # (e.g. a rep owning exactly one customer) — nothing to test
+        # (e.g. a rep owning exactly one customer): nothing to test
         return 0.0, 1.0
     f_stat, p_value, _ = full_ols.compare_f_test(restricted_ols)
     return float(f_stat), float(p_value)

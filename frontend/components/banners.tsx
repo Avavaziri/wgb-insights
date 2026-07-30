@@ -2,7 +2,7 @@
 // (caution / inconclusive / not_headline); these render the markers so an
 // excluded number can never appear naked on screen.
 //
-// House rule: there is no red. A qualifier is ink on yellow — a "read this
+// House rule: there is no red. A qualifier is ink on yellow, a "read this
 // before you quote the figure", not an emergency.
 
 import { Chip, Callout, Disclosure } from "@/components/ui";
@@ -33,7 +33,7 @@ export function Inconclusive({
   children?: React.ReactNode;
 }) {
   return (
-    <Disclosure title={title} hint="inconclusive — expand">
+    <Disclosure title={title} hint="inconclusive, expand">
       <p className="measure text-[14px] leading-relaxed">{note}</p>
       {children}
     </Disclosure>

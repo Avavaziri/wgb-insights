@@ -1,4 +1,4 @@
-// Nav glyphs — a placeholder set so the app reads as software today.
+// Nav glyphs: a placeholder set so the app reads as software today.
 //
 // Spec, so a hand-drawn replacement drops straight in: 20x20 viewBox, 1.5px
 // stroke, `stroke="currentColor"`, `fill="none"`, aligned to the 20px grid.
@@ -18,7 +18,7 @@ const S = {
   "aria-hidden": true,
 };
 
-/** Overview — the summary grid. */
+/** Overview: the summary grid. */
 export function IconGrid({ className }: IconProps) {
   return (
     <svg {...S} className={className}>
@@ -30,7 +30,7 @@ export function IconGrid({ className }: IconProps) {
   );
 }
 
-/** Where margin lives — contribution stacked by source. */
+/** Where margin lives: contribution stacked by source. */
 export function IconLayers({ className }: IconProps) {
   return (
     <svg {...S} className={className}>
@@ -40,7 +40,7 @@ export function IconLayers({ className }: IconProps) {
   );
 }
 
-/** Pricing & overrides — a price tag. */
+/** Pricing & overrides: a price tag. */
 export function IconTag({ className }: IconProps) {
   return (
     <svg {...S} className={className}>
@@ -50,7 +50,7 @@ export function IconTag({ className }: IconProps) {
   );
 }
 
-/** Size & the constraint — a press cylinder. */
+/** Size & the constraint: a press cylinder. */
 export function IconPress({ className }: IconProps) {
   return (
     <svg {...S} className={className}>
@@ -61,7 +61,7 @@ export function IconPress({ className }: IconProps) {
   );
 }
 
-/** Retention risk — days since the last order. */
+/** Retention risk: days since the last order. */
 export function IconClock({ className }: IconProps) {
   return (
     <svg {...S} className={className}>
@@ -71,7 +71,7 @@ export function IconClock({ className }: IconProps) {
   );
 }
 
-/** Method & data — the audit trail. */
+/** Method & data: the audit trail. */
 export function IconChecklist({ className }: IconProps) {
   return (
     <svg {...S} className={className}>

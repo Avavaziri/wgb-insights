@@ -4,7 +4,7 @@ The two §3.2 identities are the data's own consistency proofs:
   1. VA/24 == VA Amount / Press hrs × 24   (rows with Press hrs > 0)
   2. mupnett == labmup + manadj            (what makes manadj a £ override)
 
-Identity 1 failing means the file is not the schema we understand — raise.
+Identity 1 failing means the file is not the schema we understand, raise.
 Identity 2 failing is recorded on the ValidationReport; pricing.py checks
 it and refuses to report rather than emit nonsense (§5.4), but the rest
 of the system keeps working.
@@ -60,7 +60,7 @@ class ValidationReport:
     n_null_shipdate: int
     n_null_binding: int  # recoded to outsourced by clean, never imputed
     n_press_hrs_zero: int
-    # undocumented nulls found in the real export — counted, handled, never silent
+    # undocumented nulls found in the real export, counted, handled, never silent
     n_null_manadj: int  # rows excluded from override analysis, identity 2 unchecked
     n_null_purchases: int
     n_null_product: int
@@ -83,7 +83,7 @@ _schema = pa.DataFrameSchema(
         "Puchases": pa.Column(float, coerce=True, nullable=True),
         "Press hrs": pa.Column(float, pa.Check.ge(0), coerce=True),
         "labmup": pa.Column(float, coerce=True),
-        # manadj/mupnett null x64 in the real export — identity 2 checked on complete rows;
+        # manadj/mupnett null x64 in the real export, identity 2 checked on complete rows;
         # pricing excludes those rows from override analysis and reports the count
         "manadj": pa.Column(float, coerce=True, nullable=True),
         "mupnett": pa.Column(float, coerce=True, nullable=True),
@@ -99,7 +99,7 @@ _schema = pa.DataFrameSchema(
 
 
 def count_error_cells(path: Path, column: str, sheet: str = SHEET) -> int:
-    """Count native Excel error cells (#DIV/0! etc.) in a column — pandas
+    """Count native Excel error cells (#DIV/0! etc.) in a column, pandas
     reads them as NaN, indistinguishable from blanks, so count first."""
     wb = openpyxl.load_workbook(path, read_only=True)
     ws = wb[sheet]
@@ -127,7 +127,7 @@ def load_raw(path: Path) -> tuple[pd.DataFrame, ValidationReport]:
     except pa.errors.SchemaErrors as exc:
         raise IngestError(f"{path.name}: schema validation failed:\n{exc.failure_cases}") from exc
 
-    # Identity 1 — VA/24 == VA Amount / Press hrs * 24, where Press hrs > 0
+    # Identity 1, VA/24 == VA Amount / Press hrs * 24, where Press hrs > 0
     hrs = df["Press hrs"].astype(float)
     with_hours = hrs > 0
     id1_err = (
@@ -143,7 +143,7 @@ def load_raw(path: Path) -> tuple[pd.DataFrame, ValidationReport]:
             f"(max err {id1_err:.2e}): file is not the understood schema"
         )
 
-    # Identity 2 — mupnett == labmup + manadj, on complete rows (manadj is
+    # Identity 2, mupnett == labmup + manadj, on complete rows (manadj is
     # null on some real rows). Recorded, not raised: pricing.py refuses to
     # report when this is False (§5.4).
     id2_complete = df[["mupnett", "labmup", "manadj"]].notna().all(axis=1)

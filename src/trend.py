@@ -1,11 +1,11 @@
 """Yearly trend and concentration (§5.7).
 
-Full years only for trend/YoY — the partial final period is excluded
+Full years only for trend/YoY: the partial final period is excluded
 here and flagged everywhere else (§2.8). Closed jobs only for financial
 figures (§3.3 trap 8). GBP after FX throughout.
 
 Concentration is computed here, registered as a tested negative
-(Gini ≈ 0.36, top-1 ≈ 11%), and gets a README line — no app tab (§1).
+(Gini ≈ 0.36, top-1 ≈ 11%), and gets a README line: no app tab (§1).
 """
 
 from __future__ import annotations
@@ -73,7 +73,7 @@ def gini(values: np.ndarray) -> float:
 
 def concentration(data: pd.DataFrame) -> dict[str, Any]:
     """Customer revenue concentration over the full period (closed jobs).
-    Tested negative in the register — README line only, no app tab."""
+    Tested negative in the register, README line only, no app tab."""
     rev = (
         data[data["is_closed"]]
         .groupby("customer_id")["sell_price_gbp"]

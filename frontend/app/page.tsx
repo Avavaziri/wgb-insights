@@ -3,7 +3,7 @@ import DashboardGrid, { type Tile } from "@/components/DashboardGrid";
 import HeroBand from "@/components/HeroBand";
 import UploadZone from "@/components/UploadZone";
 import { Chip, Kpi, KpiRow, MetaSep, Section, Signpost } from "@/components/ui";
-import { gbp, num, pct, pctPoints, pval } from "@/lib/format";
+import { dash, gbp, num, pct, pctPoints, pval } from "@/lib/format";
 import { ApiDownError, getChart, getJson } from "@/lib/api";
 import type {
   Churn,
@@ -64,7 +64,7 @@ export default async function OverviewPage() {
   const [fTrend, fRate, fCapacity, fOverride, fDecomp, fRep, fChurn, fBh] =
     figures;
 
-  // Panel notes restate figures the API computed — never a value derived here.
+  // Panel notes restate figures the API computed, never a value derived here.
   const tiles: Tile[] = [
     {
       id: "trend",
@@ -99,7 +99,7 @@ export default async function OverviewPage() {
       id: "decomp",
       group: "Margin mix",
       title: "What explains the rate, block by block",
-      note: `customer +${cust ? cust.cv_increment.toFixed(3) : "—"} CV R²`,
+      note: `customer +${cust ? cust.cv_increment.toFixed(3) : dash} CV R²`,
       figure: fDecomp,
       wide: true,
     },
@@ -107,7 +107,7 @@ export default async function OverviewPage() {
       id: "rep",
       group: "Margin mix",
       title: "Rep effect before and after controls",
-      note: `rep ${rep ? (rep.cv_increment >= 0 ? "+" : "") + rep.cv_increment.toFixed(3) : "—"} CV R²`,
+      note: `rep ${rep ? (rep.cv_increment >= 0 ? "+" : "") + rep.cv_increment.toFixed(3) : dash} CV R²`,
       figure: fRep,
     },
     {
@@ -203,7 +203,7 @@ export default async function OverviewPage() {
           <div className="border border-line bg-white p-4">
             <Chip tone="now">Demoted by our own correction</Chip>
             <p className="mt-2.5 text-[14.5px] font-semibold">
-              Short-notice jobs earn less per press-hour —{" "}
+              Short-notice jobs earn less per press-hour:{" "}
               <span className="num">
                 {pctPoints(rush.main_effect.pct_effect)}
               </span>
@@ -218,9 +218,9 @@ export default async function OverviewPage() {
             </p>
           </div>
           <div className="border border-line bg-white p-4">
-            <Chip tone="now">Excluded — selection bias</Chip>
+            <Chip tone="now">Excluded for selection bias</Chip>
             <p className="mt-2.5 text-[14.5px] font-semibold">
-              Overridden jobs show a different margin —{" "}
+              Overridden jobs show a different margin:{" "}
               <span className="num">
                 {pctPoints(pricing.override_effect.effect.pct_effect)}
               </span>

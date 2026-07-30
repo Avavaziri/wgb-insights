@@ -1,4 +1,4 @@
-// Server-side fetch helpers. The frontend renders JSON from the API —
+// Server-side fetch helpers. The frontend renders JSON from the API;
 // Python is the single source of truth; no number is computed here.
 
 export const API_BASE =
@@ -12,7 +12,7 @@ export async function getJson<T>(path: string): Promise<T> {
     resp = await fetch(`${API_BASE}${path}`, { cache: "no-store" });
   } catch {
     throw new ApiDownError(
-      `API unreachable at ${API_BASE} — start it with \`make api\``,
+      `API unreachable at ${API_BASE}. Start it with \`make api\``,
     );
   }
   if (!resp.ok) {
@@ -23,7 +23,7 @@ export async function getJson<T>(path: string): Promise<T> {
 
 /**
  * A named Plotly figure, built in Python. `compact` asks the API for the
- * dashboard-tile variant of the same figure — chrome stripped and type
+ * dashboard-tile variant of the same figure: chrome stripped and type
  * scaled there, not shrunk with CSS here, so tile and full size stay the
  * same figure.
  */

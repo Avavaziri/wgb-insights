@@ -1,5 +1,5 @@
 // Overview header. With a press-floor photograph present it becomes the
-// brand's caption-box motif — a yellow block with black type overlapping the
+// brand's caption-box motif: a yellow block with black type overlapping the
 // image, flush to a corner. Without one it falls back to the plain page head,
 // so the page is never waiting on an asset.
 //
@@ -8,7 +8,7 @@
 //     frontend/public/brand/press-floor.jpg
 //
 // 2400x800 landscape, ~85% quality. Machinery, paper or ink detail rather
-// than faces — the repo is public and faces would need consent. Used in this
+// than faces, because the repo is public and faces would need consent. Used in this
 // one place only: a photograph behind live figures is decoration, but a
 // photograph behind the page title is the brand.
 

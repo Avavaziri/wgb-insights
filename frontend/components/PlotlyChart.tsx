@@ -1,7 +1,7 @@
 "use client";
 
 // Renders a Plotly figure shipped as fig.to_json() from Python. No chart
-// logic lives here — traces, axes, annotations and titles arrive fully
+// logic lives here: traces, axes, annotations and titles arrive fully
 // formed and are passed through untouched, so the web view and the
 // exported slide PNG are the same figure.
 //
@@ -45,12 +45,12 @@ export default function PlotlyChart({
   compact = false,
 }: {
   figure: unknown;
-  /** Reading note beneath the figure — never a restated number. */
+  /** Reading note beneath the figure, never a restated number. */
   caption?: string;
   /**
    * Dashboard-tile rendering. Pair with `getChart(name, { compact: true })`:
    * the small-format geometry comes from Python, this only sizes the box.
-   * A fixed short height, no frame — the tile supplies the frame and header.
+   * A fixed short height, no frame: the tile supplies the frame and header.
    */
   compact?: boolean;
 }) {

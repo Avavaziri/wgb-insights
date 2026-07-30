@@ -1,7 +1,7 @@
 """Named robustness checks, the single BH pass, register I/O (§5.8).
 
 The BH correction is applied ONCE, here, over the fixed headline family
-from config — nowhere else may set p_value_adj. Anything failing is
+from config, nowhere else may set p_value_adj. Anything failing is
 automatically flagged not_headline and barred from asset export. Raw and
 adjusted p-values are both kept (§2.7).
 """
@@ -24,7 +24,7 @@ REGISTER_PATH = Path(__file__).resolve().parents[1] / "register.yaml"
 
 def currency_replication(cf: pd.DataFrame) -> dict[str, Any]:
     """Named check 1: the size-rate ordering must hold within each
-    currency separately — otherwise it could be an FX artifact."""
+    currency separately, otherwise it could be an FX artifact."""
     out: dict[str, Any] = {}
     for ccy, grp in cf.groupby("currency"):
         rho, p = scipy.stats.spearmanr(grp["press_hrs"], grp["rate_gbp_per_hr"])

@@ -1,7 +1,7 @@
 """Pydantic response models mirroring stats_core dataclasses 1:1 (§7.1).
 
 Every field is required (no defaults on report models), so no bare
-number can cross the API boundary — the server refuses to serialise it.
+number can cross the API boundary: the server refuses to serialise it.
 Findings excluded in §1 are structurally marked: `caution`,
 `inconclusive` and `not_headline` wrappers, which the frontend must
 render visibly.
@@ -85,7 +85,7 @@ class GapSchema(Strict):
 
 
 class DatasetResponse(Strict):
-    """POST /datasets — the dynamic-system contract: a new file of the
+    """POST /datasets: the dynamic-system contract: a new file of the
     same schema refreshes every result with no code change."""
 
     dataset_hash: str
@@ -205,7 +205,7 @@ class InconclusiveWrapped(Strict):
 
 class RushResponse(Strict):
     main_effect: EffectReportSchema
-    bh_status: str  # 'headline' or 'not_headline' — set by the BH pass alone
+    bh_status: str  # 'headline' or 'not_headline', set by the BH pass alone
     bh_note: str
     percentile_sensitivity: list[dict[str, Any]]
     interaction: InconclusiveWrapped

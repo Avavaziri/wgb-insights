@@ -6,7 +6,7 @@
 //
 //     frontend/public/brand/heron.svg
 //
-// Single path or single-colour group, no hardcoded fill — with `fill:
+// Single path or single-colour group, no hardcoded fill. With `fill:
 // currentColor` the same file works as a faint watermark and as a full-ink
 // empty state, which is why the colour is set here rather than in the file.
 
@@ -40,7 +40,7 @@ export function HeronWatermark() {
 /**
  * Empty state: the illustration plus a line saying what would fill the space.
  * Every list in the app says what it means when it is empty and what would
- * change that — "no data" is never the message.
+ * change that. "no data" is never the message.
  */
 export function EmptyState({
   title,

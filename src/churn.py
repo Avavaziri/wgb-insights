@@ -1,12 +1,12 @@
 """Reorder cadence and retention risk (§5.6).
 
-No ML here — n=50 customers; transparent rules, defended not apologised
+No ML here, n=50 customers; transparent rules, defended not apologised
 for. The regularity gate is mandatory: most reorder timing is
 near-random, and predicting a next-order date for an irregular account
 is noise dressed as insight. Non-forecastable accounts still get a risk
 band, with the exclusion reason shown.
 
-`as_of` always derives from max(SalesIn) — never datetime.now() (§10):
+`as_of` always derives from max(SalesIn): never datetime.now() (§10):
 analyses must reproduce identically on the same file forever.
 """
 
@@ -65,7 +65,7 @@ def risk_table(
     as_of: pd.Timestamp | None = None,
 ) -> pd.DataFrame:
     """Cadence + gate + risk band + reason codes + expected_next_order
-    (null where not forecastable — never invented)."""
+    (null where not forecastable: never invented)."""
     cadence = cadence_stats(data, as_of=as_of)
     forecastable = regularity_gate(cadence, cv_max, min_orders)
     out = cadence.copy()
@@ -96,8 +96,7 @@ def risk_table(
 
 def personalised_at_risk(cadence: pd.DataFrame, multiplier: float) -> pd.Series:
     """Variability-aware personalised flag: silent longer than your own
-    median interval plus `multiplier` times your own spread —
-    gap > median × (1 + multiplier × CV).
+    median interval plus `multiplier` times your own spread, gap > median × (1 + multiplier × CV).
 
     A steady 30-day account is flagged weeks before a fixed 90-day rule
     notices; an erratic account isn't flagged for noise a fixed rule
@@ -117,7 +116,7 @@ def compare_fixed_rule(
     as_of: pd.Timestamp | None = None,
 ) -> dict[str, Any]:
     """Fixed N-day rule vs personalised thresholds: counts AND the set
-    difference — the point is they flag DIFFERENT accounts (§1)."""
+    difference: the point is they flag DIFFERENT accounts (§1)."""
     table = risk_table(data, multiplier, cv_max, min_orders, as_of=as_of)
     fixed = set(table.index[table["gap_days"] > fixed_days])
     personalised = set(table.index[personalised_at_risk(table, multiplier)])

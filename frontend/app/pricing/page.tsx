@@ -35,7 +35,7 @@ export default async function PricingPage() {
   const e = data.override_effect.effect;
 
   const baselines = [
-    { label: "Model — quote-time features only", value: m.r2_cv_model, model: true },
+    { label: "Model, quote-time features only", value: m.r2_cv_model, model: true },
     { label: "Baseline: predict zero", value: m.r2_cv_baseline_zero, model: false },
     { label: "Baseline: customer mean", value: m.r2_cv_baseline_customer_mean, model: false },
     { label: "Baseline: global mean", value: m.r2_cv_baseline_global_mean, model: false },
@@ -61,7 +61,7 @@ export default async function PricingPage() {
           label="Override rate"
           value={pct(s.override_rate, 0)}
           detail={
-            `|manadj| > £${s.tolerance_gbp} — a tolerance derived from the observed bimodal gap, not chosen` +
+            `|manadj| > £${s.tolerance_gbp}, a tolerance derived from the observed bimodal gap rather than chosen` +
             (s.n_unknown_manadj > 0
               ? ` · ${num(s.n_unknown_manadj)} rows with a null override excluded`
               : "")
@@ -89,7 +89,7 @@ export default async function PricingPage() {
       <Section
         kicker="Negative result"
         title="Is the override learnable?"
-        note="If a model could predict the override from what is known at quote time, the adjustment could be built into the price list. It can't — and the baselines are what prove it, since an R² near zero is only meaningless once you know what zero-effort prediction scores."
+        note="If a model could predict the override from what is known at quote time, the adjustment could be built into the price list. It can't, and the baselines are what prove it, since an R² near zero is only meaningless once you know what zero-effort prediction scores."
       >
         <TableFrame
           caption={`${m.model_family}, GroupKFold grouped on customer, ${m.cv_folds} folds. Grouping matters: plain KFold would put the same account in train and test and leak its pricing habits into the score.`}

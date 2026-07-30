@@ -20,6 +20,7 @@ Sample ~52% of stated turnover; nothing here extrapolates. All money GBP after F
 
 ## Computed but excluded (with reasons — the register is the audit trail)
 - Rush penalty -4.6% (raw p 0.044): fails the family-wise BH correction (adj p 0.052) under the mandated cluster-robust SEs. Reported as suggestive; excluded from headlines and this export by the system's own rule. One spoken sentence.
+  Say it as pricing, never as selection: most of the cost base is fixed, so an hour at a lower contribution rate still beats an idle hour. Declining short-notice work would only pay if the constraint were binding and the rush job displaced a better-rate one — and there is no capacity data here to establish when that happens.
 - Override -> margin (+11.2%, adj p 0.032): survives BH but remains excluded — selection-biased (humans choose which jobs to reprice); shown in-app under a caution banner only.
 - Rush x load gradient: interaction p 0.34 — consistent with queueing theory, not established by this data. Appendix only.
 - Concentration: tested negative (Gini 0.37, top-1 11%, top-10 46%) — register line.

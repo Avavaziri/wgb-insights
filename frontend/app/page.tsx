@@ -1,153 +1,239 @@
-import PlotlyChart from "@/components/PlotlyChart";
-import UploadZone from "@/components/UploadZone";
 import { ApiDown } from "@/components/ApiGuard";
-import { StatTile } from "@/components/banners";
-import { API_BASE, ApiDownError, getChart, getJson } from "@/lib/api";
-import type { Overview } from "@/lib/types";
+import DashboardGrid, { type Tile } from "@/components/DashboardGrid";
+import HeroBand from "@/components/HeroBand";
+import UploadZone from "@/components/UploadZone";
+import { Chip, Kpi, KpiRow, MetaSep, Section, Signpost } from "@/components/ui";
+import { gbp, num, pct, pctPoints, pval } from "@/lib/format";
+import { ApiDownError, getChart, getJson } from "@/lib/api";
+import type {
+  Churn,
+  Decomposition,
+  Overview,
+  Pricing,
+  Rush,
+  Thresholds,
+} from "@/lib/types";
+
+// Every panel in the app on one page, at tile size. The figures arrive from
+// Python already laid out for a small tile (`compact`), so nothing here is a
+// scaled-down poster.
+const CHARTS = [
+  "trend_context",
+  "rate_curve",
+  "capacity_share",
+  "override_scale",
+  "decomposition_table",
+  "rep_confounding",
+  "churn_comparison",
+  "bh_family",
+] as const;
 
 export default async function OverviewPage() {
   let data: Overview;
-  let trendFig: unknown;
+  let th: Thresholds;
+  let dec: Decomposition;
+  let pricing: Pricing;
+  let rush: Rush;
+  let churn: Churn;
+  let figures: unknown[];
   try {
-    [data, trendFig] = await Promise.all([
-      getJson<Overview>("/overview"),
-      getChart("trend_context"),
+    const [core, figs] = await Promise.all([
+      Promise.all([
+        getJson<Overview>("/overview"),
+        getJson<Thresholds>("/thresholds"),
+        getJson<Decomposition>("/decomposition"),
+        getJson<Pricing>("/pricing"),
+        getJson<Rush>("/rush"),
+        getJson<Churn>("/churn"),
+      ]),
+      Promise.all(CHARTS.map((n) => getChart(n, { compact: true }))),
     ]);
+    [data, th, dec, pricing, rush, churn] = core;
+    figures = figs;
   } catch (e) {
     if (e instanceof ApiDownError) return <ApiDown message={e.message} />;
     throw e;
   }
+
   const v = data.validation;
-  const c = data.clean_report;
+  const cust = dec.rows.find((r) => r.block === "customer");
+  const rep = dec.rows.find((r) => r.block === "rep");
+  const capacityShare = Math.round(
+    th.capacity_share.share_of_constraint_hours * 100,
+  );
+  const [fTrend, fRate, fCapacity, fOverride, fDecomp, fRep, fChurn, fBh] =
+    figures;
+
+  // Panel notes restate figures the API computed — never a value derived here.
+  const tiles: Tile[] = [
+    {
+      id: "trend",
+      group: "Trend",
+      title: "Revenue and margin by year",
+      note: `CAGR ${pct(data.growth.revenue_cagr)}`,
+      figure: fTrend,
+      wide: true,
+    },
+    {
+      id: "rate",
+      group: "Capacity",
+      title: "Contribution per press-hour by job size",
+      note: `crossover ${th.crossover_hrs.toFixed(1)}h`,
+      figure: fRate,
+    },
+    {
+      id: "capacity",
+      group: "Capacity",
+      title: "Press-hours above and below the benchmark",
+      note: `benchmark ${gbp(th.benchmark_rate_gbp_per_hr)}/hr`,
+      figure: fCapacity,
+    },
+    {
+      id: "override",
+      group: "Pricing",
+      title: "Manual price overrides, up against down",
+      note: `${pct(pricing.scale.override_rate, 0)} of jobs`,
+      figure: fOverride,
+    },
+    {
+      id: "decomp",
+      group: "Margin mix",
+      title: "What explains the rate, block by block",
+      note: `customer +${cust ? cust.cv_increment.toFixed(3) : "—"} CV R²`,
+      figure: fDecomp,
+      wide: true,
+    },
+    {
+      id: "rep",
+      group: "Margin mix",
+      title: "Rep effect before and after controls",
+      note: `rep ${rep ? (rep.cv_increment >= 0 ? "+" : "") + rep.cv_increment.toFixed(3) : "—"} CV R²`,
+      figure: fRep,
+    },
+    {
+      id: "churn",
+      group: "Retention",
+      title: "Own cadence against a flat 90-day rule",
+      note: `${churn.comparison.n_personalised} vs ${churn.comparison.n_fixed} accounts`,
+      figure: fChurn,
+    },
+    {
+      id: "bh",
+      group: "Diagnostics",
+      title: "Multiplicity correction across the test family",
+      note: `rush adj p ${pval(rush.main_effect.p_value_adj)}`,
+      figure: fBh,
+    },
+  ];
 
   return (
     <>
-      <section className="space-y-3">
-        <h1 className="text-4xl font-black tracking-tight">
-          Print-job analytics.{" "}
-          <span className="bg-[#FFE600] px-2">Judged, not just charted.</span>
-        </h1>
-        <p className="max-w-3xl text-neutral-700">
-          {data.source_name} · data to {data.as_of} (derived from the data, never
-          the clock) · seeds {JSON.stringify(data.seeds)} — every number
-          reproduces. {data.scale_caveat}
-        </p>
-      </section>
+      <HeroBand
+        eyebrow={`Sales analysis · ${data.trend[0]?.year}–${data.as_of.slice(0, 4)}`}
+        title="Print-job margin analysis"
+        lede={`${num(Number(v.n_rows))} jobs across three years, measured as contribution per press-hour. Press hours are the capacity-constrained resource, so that is the margin measure used throughout rather than gross margin percentage.`}
+        meta={
+          <>
+            <span className="font-mono">{data.source_name}</span>
+            <MetaSep />
+            <span>
+              {v.n_customers} customers · {v.n_reps} reps
+            </span>
+            <MetaSep />
+            <span>
+              data to <span className="num">{data.as_of}</span>
+            </span>
+            <MetaSep />
+            <span>{data.scale_caveat}</span>
+          </>
+        }
+      />
 
       <UploadZone />
 
-      <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatTile
+      <KpiRow cols="grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+        <Kpi
           label="Revenue CAGR 23→25"
-          value={`${(data.growth.revenue_cagr * 100).toFixed(1)}%`}
-          detail={`value/job ${(data.growth.revenue_per_job_cagr * 100).toFixed(1)}% · jobs ${(data.growth.jobs_cagr * 100).toFixed(1)}%`}
+          value={pct(data.growth.revenue_cagr)}
+          href="/margin"
         />
-        <StatTile
-          label="Rows / customers / reps"
-          value={`${v.n_rows}`}
-          detail={`${v.n_customers} customers · ${v.n_reps} reps`}
+        <Kpi
+          label="Value per job"
+          value={pct(data.growth.revenue_per_job_cagr)}
+          href="/margin"
         />
-        <StatTile
-          label="Quarantined credits"
-          value={`${c.n_quarantined_credits}`}
-          detail="Sell Price ≤ 0 — separated, counted, never dropped silently"
+        <Kpi
+          label="Crossover"
+          value={`${th.crossover_hrs.toFixed(1)}h`}
+          href="/constraint"
         />
-        <StatTile
-          label="Sample share of turnover"
-          value={`${(data.sample_share_of_turnover * 100).toFixed(0)}%`}
-          detail="computed from config — no extrapolation anywhere"
+        <Kpi
+          label="Hours below benchmark"
+          value={`${capacityShare}%`}
+          href="/constraint"
         />
-      </section>
+        <Kpi
+          label="Jobs re-priced"
+          value={pct(pricing.scale.override_rate, 0)}
+          href="/pricing"
+        />
+        <Kpi
+          label="Accounts to call"
+          value={num(churn.comparison.n_personalised)}
+          href="/retention"
+        />
+      </KpiRow>
 
-      <section>
-        <PlotlyChart figure={trendFig} />
-      </section>
+      <DashboardGrid tiles={tiles} />
 
-      <section className="grid gap-6 md:grid-cols-2">
-        <div className="border border-neutral-300 p-4">
-          <h2 className="font-black uppercase tracking-wide">Validation report</h2>
-          <ul className="mt-2 space-y-1 text-sm text-neutral-700">
-            <li>
-              Identity VA/24 = VA/(hrs)·24 max err:{" "}
-              {Number(v.identity1_max_err).toExponential(1)}
-            </li>
-            <li>
-              Identity mupnett = labmup + manadj max err:{" "}
-              {Number(v.identity2_max_err).toExponential(1)} on{" "}
-              {v.n_identity2_checked} complete rows
-              {v.identity2_ok ? "" : " — BROKEN: pricing module refuses to report"}
-            </li>
-            <li>
-              #DIV/0! error cells in VA% (counted via openpyxl): {v.va_pct_error_cells}
-            </li>
-            <li>Null manadj (excluded from override analysis): {v.n_null_manadj}</li>
-            <li>
-              Null Binding Type (recoded to outsourced — data, not absence):{" "}
-              {v.n_null_binding}
-            </li>
-            <li>
-              Press hrs = 0 (constraint analysis is Litho-only): {v.n_press_hrs_zero}
-            </li>
-          </ul>
+      <Signpost
+        eyebrow="Headline finding"
+        headline={`${capacityShare}% of press capacity earns less than the factory's own average rate`}
+        sub={`Contribution per press-hour falls as jobs get bigger, crossing the ${gbp(th.benchmark_rate_gbp_per_hr)}/hr benchmark at ${th.crossover_hrs.toFixed(1)} hours. Above it the pooled rate is ${gbp(th.capacity_share.pooled_rate_above)}/hr.`}
+        href="/constraint"
+        go="See the constraint"
+      />
+
+      <Section
+        kicker="Read alongside"
+        title="Two results computed, and held back"
+        note="Both produced a number. The reason each is held back is what makes the rest worth acting on."
+      >
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className="border border-line bg-white p-4">
+            <Chip tone="now">Demoted by our own correction</Chip>
+            <p className="mt-2.5 text-[14.5px] font-semibold">
+              Short-notice jobs earn less per press-hour —{" "}
+              <span className="num">
+                {pctPoints(rush.main_effect.pct_effect)}
+              </span>
+            </p>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
+              Raw p = {pval(rush.main_effect.p_value)} becomes{" "}
+              {pval(rush.main_effect.p_value_adj)} after the correction, so it is
+              dropped from the headlines automatically. It would not mean
+              declining the work either: most of the cost base is fixed, so a
+              lower-rate hour still beats an idle one. It is an argument for
+              pricing the premium, not for turning jobs away.
+            </p>
+          </div>
+          <div className="border border-line bg-white p-4">
+            <Chip tone="now">Excluded — selection bias</Chip>
+            <p className="mt-2.5 text-[14.5px] font-semibold">
+              Overridden jobs show a different margin —{" "}
+              <span className="num">
+                {pctPoints(pricing.override_effect.effect.pct_effect)}
+              </span>
+            </p>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
+              This one survives the correction at{" "}
+              {pval(pricing.override_effect.effect.p_value_adj)} and is still
+              excluded: overrides land on jobs humans chose to adjust. The bias,
+              not the p-value, is the problem.
+            </p>
+          </div>
         </div>
-        <div className="border border-neutral-300 p-4">
-          <h2 className="font-black uppercase tracking-wide">
-            Data gaps — the investment ask
-          </h2>
-          <ul className="mt-2 space-y-2 text-sm text-neutral-700">
-            {data.gaps.map((g) => (
-              <li key={g.gap}>
-                <span className="font-bold">{g.gap}.</span> Blocks: {g.blocks}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <details className="border border-neutral-300">
-        <summary className="cursor-pointer bg-neutral-100 p-3 font-bold">
-          Hypothesis register — {data.hypothesis_register.length} hypotheses,
-          including the rejected ones
-        </summary>
-        <div className="overflow-x-auto p-4">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b-2 border-black font-black uppercase">
-                <th className="py-2 pr-4">Hypothesis</th>
-                <th className="py-2 pr-4">Outcome</th>
-                <th className="py-2 pr-4">Status</th>
-                <th className="py-2">Evidence</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.hypothesis_register.map((e) => (
-                <tr key={e.id} className="border-b border-neutral-200 align-top">
-                  <td className="py-2 pr-4 font-medium">{e.hypothesis}</td>
-                  <td className="py-2 pr-4">{e.outcome}</td>
-                  <td className="py-2 pr-4">
-                    <span
-                      className={`px-1.5 py-0.5 text-xs font-black uppercase ${
-                        e.status === "headline" ? "bg-[#FFE600]" : "bg-neutral-200"
-                      }`}
-                    >
-                      {e.status}
-                    </span>
-                  </td>
-                  <td className="py-2 text-neutral-600">{e.evidence}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </details>
-
-      <p className="text-sm text-neutral-500">
-        Typed API with every schema at{" "}
-        <a className="underline" href={`${API_BASE}/docs`}>
-          {API_BASE}/docs
-        </a>{" "}
-        — no bare R², no bare p-value can cross it.
-      </p>
+      </Section>
     </>
   );
 }

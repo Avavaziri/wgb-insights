@@ -1,9 +1,14 @@
 "use client";
 
-// Renders a Plotly figure shipped as fig.to_json() from Python.
-// No chart logic lives here — data and layout arrive fully formed.
-// plotly.js-dist-min has no types/default component, so the factory
-// pattern wires it into react-plotly.js inside the dynamic import.
+// Renders a Plotly figure shipped as fig.to_json() from Python. No chart
+// logic lives here — traces, axes, annotations and titles arrive fully
+// formed and are passed through untouched, so the web view and the
+// exported slide PNG are the same figure.
+//
+// The only overrides are presentational and non-numeric: a transparent
+// paper so the card supplies the surface, and a 16:9 box so the
+// export-tuned type sizes (base 16 / title 24 at 1920x1080) stay in
+// proportion instead of being squashed into a short container.
 
 import dynamic from "next/dynamic";
 import type { Layout, Data } from "plotly.js";
@@ -19,8 +24,11 @@ const Plot = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-96 items-center justify-center text-neutral-400">
-        Loading chart…
+      <div className="flex h-full min-h-[228px] items-center justify-center">
+        <span className="flex items-center gap-2.5 text-[12.5px] text-muted">
+          <span className="size-3 animate-spin rounded-full border-2 border-line border-t-ink" />
+          Rendering
+        </span>
       </div>
     ),
   },
@@ -31,16 +39,81 @@ interface FigureJson {
   layout: Partial<Layout>;
 }
 
-export default function PlotlyChart({ figure }: { figure: unknown }) {
+export default function PlotlyChart({
+  figure,
+  caption,
+  compact = false,
+}: {
+  figure: unknown;
+  /** Reading note beneath the figure — never a restated number. */
+  caption?: string;
+  /**
+   * Dashboard-tile rendering. Pair with `getChart(name, { compact: true })`:
+   * the small-format geometry comes from Python, this only sizes the box.
+   * A fixed short height, no frame — the tile supplies the frame and header.
+   */
+  compact?: boolean;
+}) {
   const fig = figure as FigureJson;
+
+  if (compact) {
+    return (
+      <div className="h-[228px] w-full">
+        <Plot
+          data={fig.data}
+          layout={{
+            ...fig.layout,
+            autosize: true,
+            paper_bgcolor: "rgba(0,0,0,0)",
+            plot_bgcolor: "rgba(0,0,0,0)",
+          }}
+          useResizeHandler
+          style={{ width: "100%", height: "100%" }}
+          config={{
+            displaylogo: false,
+            responsive: true,
+            displayModeBar: false,
+            staticPlot: false,
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
-    <Plot
-      data={fig.data}
-      layout={{ ...fig.layout, autosize: true }}
-      useResizeHandler
-      className="w-full"
-      style={{ width: "100%", height: "480px" }}
-      config={{ displaylogo: false, responsive: true }}
-    />
+    <figure className="space-y-2">
+      <div className="border border-line bg-white">
+        <div className="aspect-[16/9] min-h-[380px] w-full">
+          <Plot
+            data={fig.data}
+            layout={{
+              ...fig.layout,
+              autosize: true,
+              paper_bgcolor: "rgba(0,0,0,0)",
+              plot_bgcolor: "rgba(0,0,0,0)",
+            }}
+            useResizeHandler
+            style={{ width: "100%", height: "100%" }}
+            config={{
+              displaylogo: false,
+              responsive: true,
+              displayModeBar: "hover",
+              modeBarButtonsToRemove: [
+                "lasso2d",
+                "select2d",
+                "autoScale2d",
+                "toggleSpikelines",
+              ],
+              toImageButtonOptions: { format: "png", scale: 2 },
+            }}
+          />
+        </div>
+      </div>
+      {caption && (
+        <figcaption className="measure text-[13px] leading-relaxed text-muted">
+          {caption}
+        </figcaption>
+      )}
+    </figure>
   );
 }

@@ -7,6 +7,8 @@ export interface EffectReport {
   pct_effect: number | null;
   ci_low: number;
   ci_high: number;
+  ci_low_pct: number | null;
+  ci_high_pct: number | null;
   p_value: number;
   p_value_adj: number | null;
   n_obs: number;
@@ -135,6 +137,8 @@ export interface Rush {
   percentile_sensitivity: {
     percentile: number;
     pct_effect: number;
+    ci_low_pct: number | null;
+    ci_high_pct: number | null;
     p_value: number;
     n_rush: number;
   }[];

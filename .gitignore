@@ -34,3 +34,6 @@ Thumbs.db
 desktop.ini
 .vscode/
 .idea/
+
+# Claude Code MCP config: local tooling, not part of the deliverable
+.mcp.json

@@ -50,7 +50,9 @@ class TestDataclassContracts:
             EffectReport(name="x", coef=1.0, p_value=0.01)  # type: ignore[call-arg]
 
     def test_effect_report_frozen(self) -> None:
-        r = EffectReport("x", 1.0, None, 0.5, 1.5, 0.01, None, 100, None, "nonrobust")
+        r = EffectReport(
+            "x", 1.0, None, 0.5, 1.5, None, None, 0.01, None, 100, None, "nonrobust"
+        )
         with pytest.raises(dataclasses.FrozenInstanceError):
             r.p_value = 0.5  # type: ignore[misc]
 

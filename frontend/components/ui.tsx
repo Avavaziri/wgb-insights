@@ -122,15 +122,18 @@ export function Section({
   title,
   kicker,
   note,
+  id,
   children,
 }: {
   title: string;
   kicker?: string;
   note?: ReactNode;
+  /** Anchor target, so findings cards can deep-link into a section. */
+  id?: string;
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-3">
+    <section className="scroll-mt-4 space-y-3" id={id}>
       <div className="rail">
         <h2 className="text-[19px]">
           {kicker && <span className="eyebrow mr-3 align-[3px]">{kicker}</span>}

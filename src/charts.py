@@ -82,8 +82,15 @@ def _fig(title: str, subtitle: str = "", **layout: Any) -> go.Figure:
     return fig
 
 
-def _scope_label(year: int | None) -> str:
-    return "all years" if year is None else str(year)
+def _scope_label(pr: PipelineResult, year: int | None) -> str:
+    """Scope line for sliced figures. The partial year is named as such,
+    with its cutoff, everywhere it can appear (§10: everything outside
+    the trend flags the partial period, never silently)."""
+    if year is None:
+        return "all years"
+    if year == pr.clean_report.partial_year:
+        return f"{year} (partial, to {pr.clean_report.as_of})"
+    return str(year)
 
 
 def trend_context(pr: PipelineResult) -> go.Figure:
@@ -197,9 +204,12 @@ def override_scale(pr: PipelineResult, year: int | None = None) -> go.Figure:
 
     Sliceable by year: the split is a descriptive count, so a slice is
     the same computation on the year's rows (src.pricing.override_scale
-    on the filtered constraint frame), not a browser-side filter. For a
-    single year the annualised net is effectively that year's net.
+    on the filtered constraint frame), not a browser-side filter. A full
+    year's annualised net is that year's net; the PARTIAL year is shown
+    as the observed net, never grossed up to a full year (annualising
+    five months by x2.6 would be exactly the extrapolation §10 bans).
     """
+    partial = year is not None and year == pr.clean_report.partial_year
     if year is None:
         s = pr.pricing_scale
     else:
@@ -207,11 +217,18 @@ def override_scale(pr: PipelineResult, year: int | None = None) -> go.Figure:
         s = pricing_override_scale(
             pr.constraint[pr.constraint["year"] == year], tol
         )
+    net_label = (
+        # observed net = per-year rate x observed span; undoes the
+        # annualisation without changing the endpoint's schema
+        f"net {s['net_gbp_per_year'] * s['span_years'] / 1000:+,.0f}k GBP observed"
+        if partial
+        else f"net {s['net_gbp_per_year'] / 1000:+,.0f}k GBP/yr"
+    )
     fig = _fig(
         f"{s['override_rate']:.0%} of jobs are manually re-priced "
-        f"(net {s['net_gbp_per_year'] / 1000:+,.0f}k GBP/yr)",
+        f"({net_label})",
         f"Manual price overrides by direction, Litho constraint frame, "
-        f"{_scope_label(year)}",
+        f"{_scope_label(pr, year)}",
     )
     fig.add_bar(
         x=["Priced up", "Priced down"],
@@ -310,7 +327,7 @@ def capacity_share(pr: PipelineResult, year: int | None = None) -> go.Figure:
         f"{share_above:.0%} of press capacity runs below the factory's "
         "own average rate",
         f"Share of Litho constraint-hours either side of the "
-        f"{xover:.1f}h crossover, {_scope_label(year)}",
+        f"{xover:.1f}h crossover, {_scope_label(pr, year)}",
     )
     # the above-crossover segment is the finding, so it takes the ink
     fig.add_bar(

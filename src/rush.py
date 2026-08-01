@@ -101,8 +101,9 @@ def rush_load_interaction(
         )
         srep = effect(sfit, "is_rush", logged_outcome=True)
         slopes.append(
-            {"load_bin": int(b), "pct_effect": srep.pct_effect, "p_value": srep.p_value,
-             "n": srep.n_obs}
+            {"load_bin": int(b), "pct_effect": srep.pct_effect,
+             "ci_low_pct": srep.ci_low_pct, "ci_high_pct": srep.ci_high_pct,
+             "p_value": srep.p_value, "n": srep.n_obs}
         )
     return {"interaction": interaction, "simple_slopes": slopes}
 
@@ -118,6 +119,8 @@ def percentile_sensitivity(
             {
                 "percentile": p,
                 "pct_effect": rep.pct_effect,
+                "ci_low_pct": rep.ci_low_pct,
+                "ci_high_pct": rep.ci_high_pct,
                 "p_value": rep.p_value,
                 "n_rush": int(flag_rush(data, p, size_bands).sum()),
             }

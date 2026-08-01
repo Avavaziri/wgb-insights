@@ -35,6 +35,8 @@ class EffectReportSchema(Strict):
     pct_effect: float | None
     ci_low: float
     ci_high: float
+    ci_low_pct: float | None
+    ci_high_pct: float | None
     p_value: float
     p_value_adj: float | None
     n_obs: int

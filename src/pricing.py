@@ -95,8 +95,10 @@ def override_scale(data: pd.DataFrame, tolerance_gbp: float) -> dict[str, Any]:
     year. GBP throughout; annualised over the observed SalesIn span."""
     flags = override_flags(data, tolerance_gbp)
     known = flags.dropna(subset=["overridden"])
+    # a degenerate slice (every job on one day) counts as one day rather
+    # than dividing the annualisation by zero
     span_years = (
-        (data["sales_in"].max() - data["sales_in"].min()).days / 365.25
+        max((data["sales_in"].max() - data["sales_in"].min()).days, 1) / 365.25
     )
     up = int((known["direction"] == "up").sum())
     down = int((known["direction"] == "down").sum())

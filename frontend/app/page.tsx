@@ -24,7 +24,7 @@ import {
   Tr,
 } from "@/components/ui";
 import {
-  ciPctFromLog,
+  ciPct,
   dash,
   dp,
   expo,
@@ -93,10 +93,10 @@ export default async function OverviewPage() {
       area: "Pricing",
       claim: "Margin is an account property",
       figure: `+${cust ? cust.cv_increment.toFixed(2) : dash}`,
-      figureLabel: "out-of-sample R² from customer identity",
+      figureLabel: "gain in out-of-sample R² from adding customer identity",
       support: `Product and rep add ~nothing; ${pct(pricing.scale.override_rate, 0)} of prices are re-priced by hand, net ${gbp(pricing.scale.net_gbp_per_year)}/yr.`,
-      href: "/dashboards",
-      link: "Pricing panels",
+      href: "#evidence",
+      link: "See the decomposition",
     },
     {
       area: "Capacity",
@@ -298,6 +298,7 @@ export default async function OverviewPage() {
       </Section>
 
       <Section
+        id="evidence"
         kicker="Evidence & method"
         title="Every proof, one click deep"
         note="The statistics behind each claim, including two results held back and the hypotheses that failed."
@@ -474,7 +475,7 @@ export default async function OverviewPage() {
             label="Rush effect: full statistical readout"
             items={[
               { label: "Effect on rate", value: pctPoints(me.pct_effect) },
-              { label: "95% CI", value: ciPctFromLog(me.ci_low, me.ci_high) },
+              { label: "95% CI", value: ciPct(me.ci_low_pct, me.ci_high_pct) },
               { label: "p (raw)", value: pval(me.p_value) },
               { label: "p (BH-adjusted)", value: pval(me.p_value_adj) },
               { label: "Jobs", value: num(me.n_obs) },
@@ -485,7 +486,7 @@ export default async function OverviewPage() {
             label="Override effect: full statistical readout"
             items={[
               { label: "Effect on rate", value: pctPoints(oe.pct_effect) },
-              { label: "95% CI", value: ciPctFromLog(oe.ci_low, oe.ci_high) },
+              { label: "95% CI", value: ciPct(oe.ci_low_pct, oe.ci_high_pct) },
               { label: "p (raw)", value: pval(oe.p_value) },
               { label: "p (BH-adjusted)", value: pval(oe.p_value_adj) },
               { label: "Jobs", value: num(oe.n_obs) },
@@ -536,6 +537,7 @@ export default async function OverviewPage() {
                 <tr>
                   <Th>Flag percentile</Th>
                   <Th align="right">Effect on rate</Th>
+                  <Th align="right">95% CI</Th>
                   <Th align="right">raw p</Th>
                   <Th align="right">n flagged</Th>
                 </tr>
@@ -546,6 +548,9 @@ export default async function OverviewPage() {
                     <Td num>{(r.percentile * 100).toFixed(0)}%</Td>
                     <Td align="right" num className="font-semibold">
                       {r.pct_effect.toFixed(1)}%
+                    </Td>
+                    <Td align="right" num muted>
+                      {ciPct(r.ci_low_pct, r.ci_high_pct)}
                     </Td>
                     <Td align="right" num muted>
                       {pval(r.p_value)}
@@ -570,6 +575,13 @@ export default async function OverviewPage() {
                 label: "Interaction coef",
                 value: dp(rush.interaction.interaction.coef),
               },
+              {
+                label: "95% CI",
+                value: ciPct(
+                  rush.interaction.interaction.ci_low_pct,
+                  rush.interaction.interaction.ci_high_pct,
+                ),
+              },
               { label: "p", value: pval(rush.interaction.interaction.p_value) },
               { label: "Jobs", value: num(rush.interaction.interaction.n_obs) },
             ]}
@@ -586,7 +598,10 @@ export default async function OverviewPage() {
                   <span className="font-semibold">
                     {Number(s.pct_effect).toFixed(1)}%
                   </span>{" "}
-                  <span className="text-muted">p {pval(Number(s.p_value))}</span>
+                  <span className="text-muted">
+                    {ciPct(Number(s.ci_low_pct), Number(s.ci_high_pct))} · p{" "}
+                    {pval(Number(s.p_value))} · n {String(s.n)}
+                  </span>
                 </span>
               ))}
             </div>

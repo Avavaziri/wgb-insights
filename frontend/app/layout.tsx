@@ -25,7 +25,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="min-h-screen">
+      {/* suppressHydrationWarning: browser extensions (password managers,
+          unit converters) inject attributes into <body> before React
+          hydrates, tripping a false mismatch warning in dev. Suppression
+          is one element deep only, so real mismatches in children still
+          surface. */}
+      <body className="min-h-screen" suppressHydrationWarning>
         <a
           href="#main"
           className="plain sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:text-white"

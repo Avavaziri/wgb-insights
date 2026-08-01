@@ -44,9 +44,11 @@ class ModelReport:
 class EffectReport:
     """§2.2: every effect ships size, CI, p and n together.
 
-    pct_effect is the back-transformed % effect for logged outcomes,
-    None otherwise. p_value_adj is filled by the single BH pass in
-    checks.py and stays None until then.
+    pct_effect and the ci_*_pct bounds are the back-transformed % forms
+    for logged outcomes, None otherwise; they are computed HERE so that
+    no client ever re-derives them (a number recomputed in TS is a
+    defect). p_value_adj is filled by the single BH pass in checks.py
+    and stays None until then.
     """
 
     name: str
@@ -54,6 +56,8 @@ class EffectReport:
     pct_effect: float | None
     ci_low: float
     ci_high: float
+    ci_low_pct: float | None
+    ci_high_pct: float | None
     p_value: float
     p_value_adj: float | None
     n_obs: int
@@ -223,6 +227,8 @@ def effect(fit: Any, term: str, logged_outcome: bool = True) -> EffectReport:
         pct_effect=float((np.exp(coef) - 1.0) * 100.0) if logged_outcome else None,
         ci_low=float(ci[0]),
         ci_high=float(ci[1]),
+        ci_low_pct=float((np.exp(ci[0]) - 1.0) * 100.0) if logged_outcome else None,
+        ci_high_pct=float((np.exp(ci[1]) - 1.0) * 100.0) if logged_outcome else None,
         p_value=float(fit.pvalues[term]),
         p_value_adj=None,
         n_obs=int(fit.nobs),
@@ -273,6 +279,8 @@ def mannwhitney_reported(
         pct_effect=None,
         ci_low=float(lo),
         ci_high=float(hi),
+        ci_low_pct=None,
+        ci_high_pct=None,
         p_value=float(p),
         p_value_adj=None,
         n_obs=int(len(a_arr) + len(b_arr)),

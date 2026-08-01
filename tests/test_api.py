@@ -163,6 +163,30 @@ class TestEndpoints:
         sliced = json.loads(client.get("/charts/override_scale?year=2024").text)
         title = sliced["layout"]["title"]["text"]
         assert "2024" in title  # the slice names its scope in the figure
+        assert "GBP/yr" in title  # a full year is annualised as normal
         # model-backed charts refuse a slice rather than faking one
         assert client.get("/charts/rate_curve?year=2024").status_code == 404
         assert client.get("/charts/override_scale?year=1999").status_code == 404
+
+    def test_partial_year_slice_never_annualised(self, client: TestClient) -> None:
+        # Slicing to the incomplete final year must show the observed net
+        # with an explicit partial label: annualising five months by ~x2.6
+        # would be exactly the extrapolation the scope bans.
+        partial = json.loads(client.get("/charts/override_scale?year=2026").text)
+        title = partial["layout"]["title"]["text"]
+        assert "observed" in title and "GBP/yr" not in title
+        assert "partial" in title
+        shares = json.loads(client.get("/charts/capacity_share?year=2026").text)
+        assert "partial" in shares["layout"]["title"]["text"]
+
+    def test_effect_cis_ship_on_pct_scale(self, client: TestClient) -> None:
+        # No client may transform a bound: the API ships CI bounds already
+        # back-transformed to the % scale, everywhere an effect appears.
+        rush = client.get("/rush").json()
+        me = rush["main_effect"]
+        assert me["ci_low_pct"] is not None and me["ci_high_pct"] is not None
+        assert me["ci_low_pct"] < me["pct_effect"] < me["ci_high_pct"]
+        for row in rush["percentile_sensitivity"]:
+            assert "ci_low_pct" in row and "ci_high_pct" in row
+        for slope in rush["interaction"]["simple_slopes"]:
+            assert "ci_low_pct" in slope and "ci_high_pct" in slope

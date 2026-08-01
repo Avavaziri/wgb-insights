@@ -36,15 +36,19 @@ export const pval = (x: number | null): string => {
 };
 
 /**
- * CI bounds arrive on the log scale (the models are log-linear), so the
- * percentage form needs exp() - 1. This is a unit conversion of a
- * supplied bound, not a new estimate, but it is the one transform still
- * happening client-side, so it lives here alone rather than inline on two
- * pages. Proper fix: emit ci_low_pct / ci_high_pct from stats_core's
- * EffectReport and delete this function.
+ * CI bounds arrive from the API already on the percentage scale
+ * (EffectReport.ci_low_pct / ci_high_pct, back-transformed in
+ * stats_core). This only formats them; the exp() that used to live here
+ * was the last client-side transform and is gone.
  */
-export const ciPctFromLog = (lo: number, hi: number, places = 1): string =>
-  `[${((Math.exp(lo) - 1) * 100).toFixed(places)}, ${((Math.exp(hi) - 1) * 100).toFixed(places)}]%`;
+export const ciPct = (
+  lo: number | null,
+  hi: number | null,
+  places = 1,
+): string =>
+  lo === null || hi === null
+    ? dash
+    : `[${lo.toFixed(places)}, ${hi.toFixed(places)}]%`;
 
 /**
  * The SE label from the API already carries the cluster variable and

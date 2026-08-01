@@ -8,12 +8,13 @@
 // ink segment past that split is the finding: the hours running below the
 // factory's own average rate.
 //
-// The segment is the Tender Assistant's timeline bar: yellow fill inside
-// an ink-bordered track, against a quiet grey remainder. This is the one
-// place on the site where yellow fills an area, and it is defensible for
-// the same reason the timeline bars are: the ink border carries the
-// boundary (yellow alone is 1.23:1 on white), so the yellow is emphasis on
-// a shape the ink already defines. It is ruled like a gauge, ticked every
+// The segment wears exactly what every chart bar wears: charcoal fill,
+// the uniform yellow brand outline. Fills carry the data, yellow carries
+// the brand — the same contract the Plotly figures are pytest-tested
+// against, applied by hand here because this is the one drawn figure the
+// test cannot see. (A yellow FILL was tried and reviewed out: it made the
+// headline quantity the one data area on the site encoded in the colour
+// the system reserves for chrome.) It is ruled like a gauge, ticked every
 // ten percent, because a bare two-tone bar reads as a progress meter and
 // invites the eye to treat 65% as "nearly finished" rather than as a
 // proportion of capacity.
@@ -82,8 +83,12 @@ export default function ConstraintGauge({
           {/* Hours in jobs under the crossover. Takes the remainder of the
               width, so the split point is the crossover by construction. */}
           <div className="flex-1 bg-hover" />
-          {/* Hours in jobs over it: the finding, the timeline-bar yellow. */}
-          <div className="border-l border-ink bg-yellow" style={{ width }} />
+          {/* Hours in jobs over it: the finding — ink fill, yellow brand
+              outline, exactly like the capacity_share bars. */}
+          <div
+            className="border-[1.5px] border-yellow bg-ink"
+            style={{ width }}
+          />
         </div>
 
         {/* The gauge rule. Ticks every tenth of total constraint-hours, so
@@ -118,7 +123,6 @@ export default function ConstraintGauge({
           </div>
           <div className="text-right">
             <p className="eyebrow">{width} of press hours run at</p>
-            {/* The one serif figure on the page. */}
             <p className="figure-lead mt-1.5 text-[40px]">{gbp(rateAbove)}</p>
             <p className="mt-1.5 text-[12px] text-muted">
               per press-hour, in jobs over {crossoverHrs.toFixed(1)} h

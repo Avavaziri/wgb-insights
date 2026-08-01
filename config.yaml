@@ -47,6 +47,10 @@ product_type_map:
   "Fulfilment - other": "Fulfilment / Postage"
 long_tail_min_jobs: 15
 
+value:
+  # display depth of the most-valuable-customers ranking (descriptive view)
+  top_customers: 10
+
 decomposition:
   # blocks in adjudicated config order; run in this order only (reverse run cut for budget)
   blocks: [size, run_features, product, customer, rep, year]

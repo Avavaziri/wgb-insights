@@ -232,6 +232,58 @@ class ChurnResponse(Strict):
     comparison: dict[str, Any]
 
 
+class ValueRow(Strict):
+    """One ranked row of the most-valuable view. Descriptive sums, no
+    modelling; contribution_per_press_hr is None where the entity has no
+    Litho press hours."""
+
+    name: str
+    jobs: int
+    revenue_gbp: float
+    contribution_gbp: float
+    share_of_contribution: float
+    contribution_per_press_hr: float | None
+
+
+class CustomerValueRow(ValueRow):
+    rep: str
+    industry: str
+
+
+class ValueResponse(Strict):
+    """GET /value: the brief's first example insight, most valuable
+    customers and types of work, stated plainly with its caveats."""
+
+    as_of: str
+    top_customers: list[CustomerValueRow]
+    work_types: list[ValueRow]
+    caveat: str
+    litho_note: str
+
+
+class CallListRow(Strict):
+    customer: str
+    rep: str
+    industry: str
+    last_order: str
+    days_since: float
+    own_median_interval: float | None
+    interval_cv: float | None
+    forecastable: bool
+    gap_ratio: float | None
+    historic_contribution_gbp: float
+    contribution_per_constraint_hr: float | None
+    override_rate: float
+    risk_band: str
+    reason_code: str
+    expected_next_order: str | None
+
+
+class CallListResponse(Strict):
+    as_of: str
+    rows: list[CallListRow]
+
+
 class RegisterResponse(Strict):
     entries: list[RegisterEntry]
     bh_table: list[dict[str, Any]]

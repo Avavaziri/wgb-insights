@@ -114,6 +114,24 @@ class TestEndpoints:
             "override_rate", "risk_band", "reason_code", "expected_next_order",
         ]
 
+    def test_value_rankings(self, client: TestClient) -> None:
+        body = client.get("/value").json()
+        assert body["top_customers"] and body["work_types"]
+        tops = [r["contribution_gbp"] for r in body["top_customers"]]
+        assert tops == sorted(tops, reverse=True)
+        assert "cost-to-serve" in body["caveat"]
+        for r in body["work_types"]:
+            # no bare share without its base counts
+            assert {"jobs", "revenue_gbp", "share_of_contribution"} <= set(r)
+
+    def test_call_list_json_matches_csv(self, client: TestClient) -> None:
+        rows = client.get("/call-list").json()["rows"]
+        csv_lines = client.get("/call-list.csv").text.strip().splitlines()
+        assert len(rows) == len(csv_lines) - 1  # same builder, same rows
+        for row in rows:
+            if not row["forecastable"]:
+                assert row["expected_next_order"] is None
+
     def test_register(self, client: TestClient) -> None:
         body = client.get("/register").json()
         assert len(body["bh_table"]) == 7
@@ -126,3 +144,25 @@ class TestEndpoints:
         fig = json.loads(client.get("/charts/rate_curve").text)
         assert "data" in fig and "layout" in fig
         assert client.get("/charts/nonsense").status_code == 404
+
+    def test_chart_fills_stay_monochrome(self, client: TestClient) -> None:
+        # Tender Assistant treatment: yellow is the uniform brand OUTLINE
+        # and the CI band, never a data fill, so removing it changes no
+        # reading. Category identity must live in the charcoal/grey fills.
+        for name in client.get("/charts").json():
+            fig = json.loads(client.get(f"/charts/{name}").text)
+            for trace in fig["data"]:
+                marker = trace.get("marker") or {}
+                fill = marker.get("color")
+                fills = fill if isinstance(fill, list) else [fill]
+                for c in fills:
+                    if isinstance(c, str):
+                        assert c.upper() != "#FFE600", f"{name}: yellow fill"
+
+    def test_chart_year_slice(self, client: TestClient) -> None:
+        sliced = json.loads(client.get("/charts/override_scale?year=2024").text)
+        title = sliced["layout"]["title"]["text"]
+        assert "2024" in title  # the slice names its scope in the figure
+        # model-backed charts refuse a slice rather than faking one
+        assert client.get("/charts/rate_curve?year=2024").status_code == 404
+        assert client.get("/charts/override_scale?year=1999").status_code == 404

@@ -16,7 +16,14 @@ from src.pricing import (
     validate_override_identity,
 )
 from src.rush import flag_rush, load_quantiles, percentile_sensitivity, rush_effect
-from src.trend import concentration, gini, growth_attribution, yearly_trend
+from src.trend import (
+    concentration,
+    customer_value,
+    gini,
+    growth_attribution,
+    work_type_value,
+    yearly_trend,
+)
 
 SEED = 42
 TOL = 0.005
@@ -37,6 +44,7 @@ def jobs_frame(n: int = 1200, seed: int = SEED) -> pd.DataFrame:
         {
             "customer_id": [f"C{i % 30:02d}" for i in range(n)],
             "rep": [f"R{i % 4}" for i in range(n)],
+            "industry": rng.choice(["Education", "Retail", "Public"], n),
             "sales_in": sales_in,
             "year": sales_in.year,
             "press_hrs": press_hrs,
@@ -236,3 +244,23 @@ class TestTrend:
         c = concentration(jobs)
         assert c["top_1_share"] < c["top_3_share"] < c["top_5_share"] < c["top_10_share"] <= 1
         assert 0 <= c["gini"] <= 1
+
+    def test_customer_value_ranked_with_partial_shares(self, jobs: pd.DataFrame) -> None:
+        cv = customer_value(jobs, top_n=10)
+        assert len(cv) == 10
+        assert cv["contribution_gbp"].is_monotonic_decreasing
+        # shares are of the WHOLE sample, so a top-10 slice sums below 1
+        assert 0 < cv["share_of_contribution"].sum() < 1
+        # all-Litho frame: every customer has press hours, so a rate exists
+        assert (cv["contribution_per_press_hr"] > 0).all()
+
+    def test_work_type_long_tail_rollup(self, jobs: pd.DataFrame) -> None:
+        # six products at 200 jobs each: below the threshold everything
+        # stays; above it everything rolls into the long-tail row
+        wt = work_type_value(jobs, min_jobs=15)
+        assert "Other (long tail)" not in wt["name"].values
+        assert wt["share_of_contribution"].sum() == pytest.approx(1.0)
+        assert wt["contribution_gbp"].is_monotonic_decreasing
+        rolled = work_type_value(jobs, min_jobs=250)
+        assert list(rolled["name"]) == ["Other (long tail)"]
+        assert rolled["jobs"].iat[0] == int(jobs["is_closed"].sum())

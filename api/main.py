@@ -24,6 +24,7 @@ from src.charts import CHARTS, build_chart
 from src.gaps import gap_report
 from src.ingest import IngestError
 from src.pipeline import PipelineResult
+from src.trend import customer_value, work_type_value
 
 app = FastAPI(
     title="wgb-insights API",
@@ -272,6 +273,87 @@ def call_list_csv() -> str:
     return buf.getvalue()
 
 
+def _opt(v: Any) -> float | None:
+    return None if pd.isna(v) else float(v)
+
+
+@app.get("/call-list", response_model=schemas.CallListResponse)
+def call_list() -> schemas.CallListResponse:
+    """The CSV's JSON twin, same builder, so the on-screen table and the
+    download can never disagree."""
+    pr = state.active()
+    tol = float(pr.config["clean"]["override_tolerance_gbp"])
+    df = build_call_list(pr.jobs, pr.churn_risk, tol)
+    rows = [
+        schemas.CallListRow(
+            customer=str(r["customer"]),
+            rep=str(r["rep"]),
+            industry=str(r["industry"]),
+            last_order=str(pd.Timestamp(r["last_order"]).date()),
+            days_since=float(r["days_since"]),
+            own_median_interval=_opt(r["own_median_interval"]),
+            interval_cv=_opt(r["interval_cv"]),
+            forecastable=bool(r["forecastable"]),
+            gap_ratio=_opt(r["gap_ratio"]),
+            historic_contribution_gbp=float(r["historic_contribution_gbp"]),
+            contribution_per_constraint_hr=_opt(
+                r["contribution_per_constraint_hr"]
+            ),
+            override_rate=float(r["override_rate"]),
+            risk_band=str(r["risk_band"]),
+            reason_code=str(r["reason_code"]),
+            expected_next_order=(
+                None if pd.isna(r["expected_next_order"])
+                else str(pd.Timestamp(r["expected_next_order"]).date())
+            ),
+        )
+        for r in df.to_dict("records")
+    ]
+    return schemas.CallListResponse(as_of=pr.clean_report.as_of, rows=rows)
+
+
+@app.get("/value", response_model=schemas.ValueResponse)
+def value() -> schemas.ValueResponse:
+    """Most valuable customers and types of work: descriptive rankings,
+    the plainest of the brief's example insights, with the caveats that
+    keep them honest."""
+    pr = state.active()
+    top_n = int(pr.config.get("value", {}).get("top_customers", 10))
+    min_jobs = int(pr.config["long_tail_min_jobs"])
+    customers = customer_value(pr.jobs, top_n=top_n)
+    work = work_type_value(pr.jobs, min_jobs=min_jobs)
+
+    def base(r: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "name": str(r["name"]),
+            "jobs": int(r["jobs"]),
+            "revenue_gbp": float(r["revenue_gbp"]),
+            "contribution_gbp": float(r["contribution_gbp"]),
+            "share_of_contribution": float(r["share_of_contribution"]),
+            "contribution_per_press_hr": _opt(r["contribution_per_press_hr"]),
+        }
+
+    return schemas.ValueResponse(
+        as_of=pr.clean_report.as_of,
+        top_customers=[
+            schemas.CustomerValueRow(
+                **base(r), rep=str(r["rep"]), industry=str(r["industry"])
+            )
+            for r in customers.to_dict("records")
+        ],
+        work_types=[schemas.ValueRow(**base(r)) for r in work.to_dict("records")],
+        caveat=(
+            "Contribution is sell price net of purchases and flatters small "
+            "jobs: no cost-to-serve data exists. Shares are of this sample, "
+            "not of company turnover."
+        ),
+        litho_note=(
+            "Contribution per press-hour exists only where the entity has "
+            "Litho press hours; Digital and outwork carry none."
+        ),
+    )
+
+
 @app.get("/register", response_model=schemas.RegisterResponse)
 def register() -> schemas.RegisterResponse:
     pr = state.active()
@@ -286,15 +368,17 @@ def register() -> schemas.RegisterResponse:
 
 
 @app.get("/charts/{name}", response_class=PlainTextResponse)
-def chart(name: str, compact: bool = False) -> str:
+def chart(name: str, compact: bool = False, year: int | None = None) -> str:
     """Plotly fig.to_json(): the frontend renders, never recomputes.
 
     `compact=true` returns the dashboard-tile variant: same figure, chrome
     stripped and type scaled for a ~240px tile (see charts.to_compact).
+    `year=YYYY` returns the year slice, recomputed in Python; only the
+    descriptive charts in charts.SLICEABLE accept it (404 otherwise).
     """
     pr = state.active()
     try:
-        fig = build_chart(name, pr, compact=compact)
+        fig = build_chart(name, pr, compact=compact, year=year)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return str(fig.to_json())

@@ -79,7 +79,6 @@ export default async function OverviewPage() {
   const v = data.validation;
   const c = data.clean_report;
   const cap = th.capacity_share;
-  const cust = dec.rows.find((r) => r.block === "customer");
   const me = rush.main_effect;
   const oe = pricing.override_effect.effect;
   const m = pricing.model;
@@ -97,7 +96,7 @@ export default async function OverviewPage() {
       claim: "The press is filled by the work that pays it least",
       figure: pct(cap.share_of_constraint_hours, 0),
       figureLabel: `of litho press hours sit in jobs over ${th.crossover_hrs.toFixed(1)}h`,
-      support: `Those hours earn ${gbp(cap.pooled_rate_above)}/hr against the factory's own ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average. There is no optimal job size, only this crossover.`,
+      support: `Those hours earn ${gbp(cap.pooled_rate_above)}/hr against the factory's own ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average — and it holds within accounts: the same customer's twice-bigger job earns ~${th.within_customer_pct_per_doubling.toFixed(0)}% per press-hour, so this is pricing, not just customer mix.`,
       href: "/dashboards",
       link: "Capacity panels",
     },
@@ -105,8 +104,8 @@ export default async function OverviewPage() {
       area: "Act 2 · What governs pricing",
       claim: "Prices are set by people, and their judgement isn't in the data",
       figure: pct(pricing.scale.override_rate, 0),
-      figureLabel: `of jobs are re-priced by hand, net ${gbp(pricing.scale.net_gbp_per_year)}/yr`,
-      support: `Margin is a property of the account, not the product or the rep (+${cust ? cust.cv_increment.toFixed(2) : dash} out-of-sample R² from customer identity alone) — and a fairly-tested model cannot reproduce the estimators' adjustments. That knowledge is tacit.`,
+      figureLabel: `of litho jobs are re-priced by hand, net ${gbpK(pricing.scale.net_gbp_per_year)}/yr`,
+      support: `Margin lives with the account, not the product or the rep, and a leakage-safe model cannot reproduce the estimators' adjustments for an unseen account: that knowledge is tacit. The Monday action: start recording the why behind each override, so it can be captured.`,
       href: "#evidence",
       link: "See the model evidence",
     },
@@ -164,7 +163,7 @@ export default async function OverviewPage() {
         <Kpi
           label="Crossover size"
           value={`${th.crossover_hrs.toFixed(1)}h`}
-          sub={`CI ${th.crossover_ci95[0].toFixed(1)}–${th.crossover_ci95[1].toFixed(1)}h`}
+          sub={`likely range ${th.crossover_ci95[0].toFixed(1)}–${th.crossover_ci95[1].toFixed(1)}h`}
           href="/dashboards"
         />
         <Kpi
@@ -174,7 +173,7 @@ export default async function OverviewPage() {
           href="/dashboards"
         />
         <Kpi
-          label="Jobs re-priced by hand"
+          label="Litho jobs re-priced by hand"
           value={pct(pricing.scale.override_rate, 0)}
           sub={`net ${gbpK(pricing.scale.net_gbp_per_year)}/yr`}
           href="/dashboards"
@@ -298,6 +297,95 @@ export default async function OverviewPage() {
             </ul>
           </Panel>
         </div>
+      </Section>
+
+      {/* The KTP arc: the data gaps above are not confessions, they are
+          the work programme. Each row names the build, the company
+          benefit, and the research substance for the university partner —
+          the three-way partnership on one card. Authored prose; the one
+          number in it is interpolated from the API. */}
+      <Section
+        kicker="Where this goes"
+        title="The gaps are a two-year programme, not a footnote"
+        note="What this system cannot see is exactly what gets built next — each row names the work, what the company gets, and the research question in it for the university partner."
+      >
+        <TableFrame caption="Sequencing follows dependency, not ambition: capacity and cost data (year 1) are what make the year-2 pricing work testable against the baselines this build already ships.">
+          <Table>
+            <thead>
+              <tr>
+                <Th>Phase</Th>
+                <Th>The work</Th>
+                <Th>What the company gets</Th>
+                <Th>The research in it</Th>
+              </tr>
+            </thead>
+            <tbody>
+              <Tr>
+                <Td className="whitespace-nowrap font-semibold">Year 1</Td>
+                <Td>
+                  Instrument press capacity: machine IDs, availability,
+                  downtime
+                </Td>
+                <Td>
+                  True utilisation instead of relative load — and the
+                  displaced-work £ figure this system currently refuses to
+                  print
+                </Td>
+                <Td muted>
+                  Capacity-constrained pricing tested on live production data
+                </Td>
+              </Tr>
+              <Tr>
+                <Td className="whitespace-nowrap font-semibold">Year 1</Td>
+                <Td>
+                  Cost-to-serve study: estimating, admin and make-ready per
+                  order
+                </Td>
+                <Td>
+                  Settles whether small jobs actually pay; today contribution
+                  flatters them
+                </Td>
+                <Td muted>
+                  Activity-based costing joined to contribution-per-
+                  constraint-hour analysis
+                </Td>
+              </Tr>
+              <Tr>
+                <Td className="whitespace-nowrap font-semibold">Year 2</Td>
+                <Td>
+                  Capture the estimators&rsquo; pricing judgement: log the why
+                  behind each override at the quote screen, then structured
+                  elicitation
+                </Td>
+                <Td>
+                  {gbpK(pricing.scale.net_gbp_per_year)}/yr of hand-pricing
+                  made institutional instead of personal
+                </Td>
+                <Td muted>
+                  Tacit-knowledge elicitation for human-in-the-loop pricing,
+                  evaluated against this build&rsquo;s own baselines —
+                  including the existing-customer temporal split this system
+                  names as its next test
+                </Td>
+              </Tr>
+              <Tr>
+                <Td className="whitespace-nowrap font-semibold">Year 2</Td>
+                <Td>
+                  Feed the intake from the MIS directly (scheduled export or
+                  API)
+                </Td>
+                <Td>
+                  Dashboards move from monthly to live; churn flags arrive
+                  when they happen, not at month end
+                </Td>
+                <Td muted>
+                  A deployed, evaluated decision-support system as the
+                  partnership&rsquo;s output
+                </Td>
+              </Tr>
+            </tbody>
+          </Table>
+        </TableFrame>
       </Section>
 
       <Section

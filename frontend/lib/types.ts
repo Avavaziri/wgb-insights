@@ -124,6 +124,8 @@ export interface Thresholds {
   crossover_hrs: number;
   crossover_window_range: [number, number];
   crossover_ci95: [number, number];
+  within_customer_size: EffectReport;
+  within_customer_pct_per_doubling: number;
   monotonicity: Record<string, number | boolean>;
   capacity_share: Record<string, number>;
   capacity_statement: string;

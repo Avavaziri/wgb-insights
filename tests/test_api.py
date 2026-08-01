@@ -91,6 +91,12 @@ class TestEndpoints:
         assert body["monotonicity"]["interior_optimum"] in (True, False)
         assert "Litho-only" in body["litho_only_note"]
         assert "no counterfactual" in body["capacity_statement"].lower()
+        # the composition check ships as a full effect report, plus the
+        # board-readable per-doubling form computed in Python
+        within = body["within_customer_size"]
+        assert within["ci_low"] < within["coef"] < within["ci_high"]
+        assert "cluster-robust" in within["se_type"]
+        assert isinstance(body["within_customer_pct_per_doubling"], float)
 
     def test_rush_interaction_inconclusive_wrapped(self, client: TestClient) -> None:
         body = client.get("/rush").json()
@@ -103,6 +109,14 @@ class TestEndpoints:
         for row in body["rows"]:
             if not row["forecastable"]:
                 assert row["expected_next_order"] is None
+
+    def test_churn_bands_match_headline_rule(self, client: TestClient) -> None:
+        # ONE at-risk rule: the accounts wearing a non-normal band must be
+        # exactly the accounts the personalised headline count flags. A
+        # count of 13 with 12 flagged rows on screen was a real defect.
+        body = client.get("/churn").json()
+        flagged_rows = [r for r in body["rows"] if r["risk_band"] != "normal"]
+        assert len(flagged_rows) == body["comparison"]["n_personalised"]
 
     def test_call_list_csv(self, client: TestClient) -> None:
         resp = client.get("/call-list.csv")

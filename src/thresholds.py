@@ -69,19 +69,58 @@ def crossover_ci(
     window: int,
     step: int,
 ) -> tuple[float, float]:
-    """Bootstrap 95% CI on the crossover: resample jobs (≥500 draws, §2.5),
-    recompute benchmark + curve + crossover each draw."""
+    """Cluster bootstrap 95% CI on the crossover: resample CUSTOMERS with
+    replacement (≥500 draws, §2.5), recompute benchmark + curve +
+    crossover each draw.
+
+    The resampling unit is the customer, not the job, for the same reason
+    every regression here clusters on customer: an account's jobs share
+    negotiated prices and are not independent, so an i.i.d. job bootstrap
+    understates the interval.
+    """
     rng = np.random.default_rng(seed)
     points: list[float] = []
-    n = len(data)
+    groups = {g: df for g, df in data.groupby("customer_id")}
+    ids = np.array(sorted(groups))
     for _ in range(n_boot):
-        sample = data.iloc[rng.integers(0, n, n)]
+        draw = rng.choice(ids, size=len(ids), replace=True)
+        sample = pd.concat([groups[g] for g in draw], ignore_index=True)
         curve = rolling_rate_curve(sample, window, step)
         points.append(crossover_point(curve, benchmark_rate(sample)))
     arr = np.array(points)
     arr = arr[~np.isnan(arr)]
     lo, hi = np.percentile(arr, [2.5, 97.5])
     return float(lo), float(hi)
+
+
+def within_customer_size_effect(data: pd.DataFrame, *, seed: int) -> Any:
+    """The size gradient with the account held fixed (the composition
+    check): log rate on log size with customer and year fixed effects,
+    cluster-robust on customer.
+
+    The pooled curve confounds two stories: bigger jobs are priced at
+    lower rates WITHIN an account, and the accounts that place big jobs
+    negotiated lower rates overall. This coefficient isolates the first.
+    Both are true in the 2026-05 extract (within-account ~ -9% per
+    doubling vs ~ -14% pooled); if a future extract disagrees, the rate
+    curve's annotation reports whatever this computes.
+    """
+    from src.stats_core import effect, fit_reported
+
+    fit, _ = fit_reported(
+        "log_rate ~ np.log(press_hrs) + C(customer_id) + C(year)",
+        data,
+        cluster_on="customer_id",
+        seed=seed,
+    )
+    return effect(fit, "np.log(press_hrs)", logged_outcome=True)
+
+
+def pct_per_doubling(coef: float) -> float:
+    """Board-readable form of a log-log coefficient: % change in the rate
+    when job size doubles, (2**coef - 1) * 100. Computed here so no
+    client ever re-derives it."""
+    return float((2.0**coef - 1.0) * 100.0)
 
 
 def breakpoints_grid(data: pd.DataFrame, k: int, min_group: int) -> list[float]:

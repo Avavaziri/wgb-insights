@@ -70,20 +70,26 @@ def risk_table(
     forecastable = regularity_gate(cadence, cv_max, min_orders)
     out = cadence.copy()
     out["forecastable"] = forecastable
+    # ONE at-risk rule everywhere: the personalised threshold. The bands
+    # and reason codes below are severity/explanation layered on that
+    # same flag, never a second rule - a headline count of 13 with 12
+    # flagged rows on screen was a real inconsistency, found in review.
+    flagged = personalised_at_risk(cadence, multiplier)
+    threshold = cadence["median_interval"] * (1 + multiplier * cadence["cv"])
     out["reason_code"] = np.select(
         [
             cadence["n_orders"] < min_orders,
+            flagged,
             ~forecastable,
-            forecastable & (cadence["gap_ratio"] > multiplier),
         ],
-        ["too_few_orders", "irregular_cadence", "overdue_vs_own_cadence"],
+        ["too_few_orders", "overdue_vs_own_cadence", "irregular_cadence"],
         default="within_own_cadence",
     )
     out["risk_band"] = np.select(
         [
-            forecastable & (cadence["gap_ratio"] > 2 * multiplier),
-            forecastable & (cadence["gap_ratio"] > multiplier),
-            ~forecastable & (cadence["gap_ratio"] > 2 * multiplier),
+            flagged & (cadence["gap_days"] > 2 * threshold),
+            flagged & forecastable,
+            flagged,
         ],
         ["high", "elevated", "watch (irregular)"],
         default="normal",

@@ -204,7 +204,7 @@ export default async function ActionsPage() {
                     <Td align="right" num muted>
                       {r.own_median_interval === null
                         ? dash
-                        : `${r.own_median_interval.toFixed(0)}d · CV ${dp(r.interval_cv, 2)}`}
+                        : `every ~${r.own_median_interval.toFixed(0)}d · variability ${dp(r.interval_cv, 2)}`}
                     </Td>
                     <Td>
                       {BAND_TONE[r.risk_band] ? (
@@ -227,9 +227,11 @@ export default async function ActionsPage() {
         </Panel>
         <p className="measure text-[12.5px] leading-relaxed text-muted">
           &ldquo;Own cadence&rdquo; is the account&rsquo;s median gap between
-          order dates and how steady it is (CV). The at-risk rule is silent
-          beyond own median × (1 + 1.5 × own CV): an account is judged
-          against its own rhythm, not a company-wide number of days.
+          order dates, and &ldquo;variability&rdquo; is how steady that rhythm
+          is (statistically, the coefficient of variation; 0 is clockwork).
+          The at-risk rule: silent beyond your own median gap × (1 + 1.5 ×
+          your own variability) — an account is judged against its own
+          rhythm, not a company-wide number of days.
         </p>
       </Section>
     </>

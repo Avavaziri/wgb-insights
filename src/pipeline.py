@@ -35,6 +35,7 @@ from src.thresholds import (
     monotonicity_report,
     rolling_rate_curve,
     window_sensitivity,
+    within_customer_size_effect,
 )
 from src.trend import concentration, growth_attribution, yearly_trend
 
@@ -107,6 +108,9 @@ def run_pipeline(path: Path, config: dict[str, Any] | None = None) -> PipelineRe
         "window_sensitivity": sens,
         "monotonicity": monotonicity_report(cf, window=window, step=step),
         "capacity_share": capacity_share_above(cf, xover),
+        # the composition check: the size gradient with the account held
+        # fixed, so the curve's finding can be separated from customer mix
+        "within_customer_size": within_customer_size_effect(cf, seed=cv_seed),
     }
 
     tol = float(cfg["clean"]["override_tolerance_gbp"])

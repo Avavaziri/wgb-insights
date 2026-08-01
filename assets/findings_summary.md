@@ -12,7 +12,7 @@ Sample ~52% of stated turnover; nothing here extrapolates. All money GBP after F
 
 ## Headline 2: the constraint
 - Contribution per constraint-hour declines monotonically with size (Spearman -0.58; no interior optimum, no 'optimal job size' exists).
-- Crossover threshold 4.3h (window range 4.1-4.3h, bootstrap 95% CI 4.2-4.6h): work above it occupies 65% of press capacity at 664 GBP/hr vs the factory's own average 769 GBP/hr. Descriptive only: no counterfactual GBP figure is defensible without capacity data.
+- Crossover threshold 4.3h (window range 4.1-4.3h, bootstrap 95% CI 3.6-5.1h): work above it occupies 65% of press capacity at 664 GBP/hr vs the factory's own average 769 GBP/hr. Descriptive only: no counterfactual GBP figure is defensible without capacity data.
 
 ## Headline 3: retention
 - Most reorder timing is near-random (median interval CV 0.97); next-order prediction is gated to 14/50 regular accounts. The system refuses to invent dates for the rest.

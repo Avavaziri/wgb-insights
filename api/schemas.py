@@ -193,6 +193,9 @@ class ThresholdsResponse(Strict):
     crossover_hrs: float
     crossover_window_range: tuple[float, float]
     crossover_ci95: tuple[float, float]
+    # the composition check: size gradient with the account held fixed
+    within_customer_size: EffectReportSchema
+    within_customer_pct_per_doubling: float
     monotonicity: dict[str, Any]
     capacity_share: dict[str, float]
     capacity_statement: str

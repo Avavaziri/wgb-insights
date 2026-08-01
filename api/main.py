@@ -24,6 +24,7 @@ from src.charts import CHARTS, build_chart
 from src.gaps import gap_report
 from src.ingest import IngestError
 from src.pipeline import PipelineResult
+from src.thresholds import pct_per_doubling
 from src.trend import customer_value, work_type_value
 
 app = FastAPI(
@@ -150,9 +151,14 @@ def pricing() -> schemas.PricingResponse:
         model=schemas.OverrideModelSchema(
             **dataclasses.asdict(m) | {"top_features": list(m.top_features)},
             finding=(
-                "Overrides are NOT learnable from quote-time features, because the "
-                "estimators use information the system doesn't capture. That is "
-                "a data gap, not a modelling failure."
+                "Overrides are NOT learnable from quote-time features for an "
+                "account the model has not seen: the estimators use information "
+                "the system doesn't capture. Scope honestly stated: under "
+                "GroupKFold the customer-mean baseline necessarily equals the "
+                "global mean (test customers are never in training), so this "
+                "rules out cold-start prediction; the next-quote-for-an-existing-"
+                "customer question needs a temporal split, named as follow-on "
+                "work. That is a data gap, not a modelling failure."
                 if not m.beats_all_baselines
                 else "Overrides are partially learnable from quote-time features."
             ),
@@ -175,11 +181,14 @@ def thresholds() -> schemas.ThresholdsResponse:
     th = pr.thresholds
     sens = th["window_sensitivity"]["crossover_hrs"]
     cs = th["capacity_share"]
+    within = th["within_customer_size"]
     return schemas.ThresholdsResponse(
         benchmark_rate_gbp_per_hr=float(th["benchmark_rate"]),
         crossover_hrs=float(th["crossover_hrs"]),
         crossover_window_range=(float(sens.min()), float(sens.max())),
         crossover_ci95=(float(th["crossover_ci"][0]), float(th["crossover_ci"][1])),
+        within_customer_size=_effect(within),
+        within_customer_pct_per_doubling=pct_per_doubling(within.coef),
         monotonicity=th["monotonicity"],
         capacity_share={k: float(v) for k, v in cs.items()},
         capacity_statement=(

@@ -29,7 +29,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from src.pricing import override_scale as pricing_override_scale
-from src.thresholds import capacity_share_above
+from src.thresholds import capacity_share_above, pct_per_doubling
 
 if TYPE_CHECKING:  # pipeline imports charts nowhere; avoid cycles
     from src.pipeline import PipelineResult
@@ -175,17 +175,18 @@ def rep_confounding(pr: PipelineResult) -> go.Figure:
     naive = pr.rep_pair["naive"]
     fig = _fig(
         "Rep differences are customer mix, not salesmanship",
-        "Out-of-sample R²: rep alone, then what rep adds once size, product "
-        "and account are already in",
+        "Margin variation explained by rep, out of sample: alone, then once "
+        "size, product and account are already accounted for",
     )
+    # board-readable labels; the full statistical readout (CV R2, F p)
+    # lives in the Overview's decomposition disclosure, one click away
     fig.add_bar(
-        x=["Naive: rate ~ rep alone", "Controlled: rep added last"],
+        x=["Rep alone", "Rep added after size, product, account"],
         y=[max(naive.r2_cv, 0.0), max(pr.rep_pair["controlled_cv_increment"], 0.0)],
         marker={"color": [INK, PARTIAL], "line": EDGE},
         text=[
-            f"CV R2 {naive.r2_cv:.3f}",
-            f"CV gain {pr.rep_pair['controlled_cv_increment']:+.3f}, "
-            f"F p = {pr.rep_pair['controlled_f_p']:.2f}",
+            f"explains {naive.r2_cv:.0%} of margin variation",
+            f"adds {pr.rep_pair['controlled_cv_increment']:+.1%}",
         ],
         textposition="outside", textfont={"size": 15},
     )
@@ -195,7 +196,10 @@ def rep_confounding(pr: PipelineResult) -> go.Figure:
         xref="paper", yref="paper", x=0.02, y=1.06, showarrow=False,
         font={"size": 15, "color": MUTED}, align="left",
     )
-    fig.update_yaxes(title="Out-of-sample R2", rangemode="tozero")
+    fig.update_yaxes(
+        title="Share of margin variation explained", rangemode="tozero",
+        tickformat=".0%",
+    )
     return fig
 
 
@@ -225,7 +229,7 @@ def override_scale(pr: PipelineResult, year: int | None = None) -> go.Figure:
         else f"net {s['net_gbp_per_year'] / 1000:+,.0f}k GBP/yr"
     )
     fig = _fig(
-        f"{s['override_rate']:.0%} of jobs are manually re-priced "
+        f"{s['override_rate']:.0%} of litho jobs are manually re-priced "
         f"({net_label})",
         f"Manual price overrides by direction, Litho constraint frame, "
         f"{_scope_label(pr, year)}",
@@ -290,6 +294,20 @@ def rate_curve(pr: PipelineResult) -> go.Figure:
                        yanchor="bottom", showarrow=False,
                        text=f"factory average {bench:,.0f} GBP/hr",
                        font={"size": 15, "color": MUTED})
+    # The composition check rides WITH the curve (review finding): the
+    # pooled decline partly reflects which accounts place big jobs, so the
+    # within-account gradient is stated wherever the curve is shown.
+    within = th["within_customer_size"]
+    fig.add_annotation(
+        text=(
+            f"Holds within accounts: the same customer's twice-bigger job "
+            f"earns {abs(pct_per_doubling(within.coef)):.0f}% less per "
+            f"press-hour (account held fixed; the rest of the pooled slope "
+            f"is customer mix)"
+        ),
+        xref="paper", yref="paper", x=0.02, y=1.06, showarrow=False,
+        font={"size": 14, "color": MUTED}, align="left",
+    )
     fig.update_xaxes(title="Job size (press hours, log scale)", type="log")
     fig.update_yaxes(title="Contribution per constraint-hour (GBP)", rangemode="tozero")
     return fig

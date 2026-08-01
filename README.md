@@ -96,6 +96,44 @@ specified, missing clustering, FX keyed off the wrong column).
 
 Current state: **24/24 checks green** against the real export.
 
+## Method framing: DSRM, threats to validity, and where this goes
+
+The build follows the six Design Science Research Methodology activities
+(Peffers et al.), and each maps to something concrete in this repo:
+
+1. **Problem identification** — margin is opaque at the point it is made:
+   per press-hour on the capacity constraint, not per invoice.
+2. **Objectives** — a dynamic system a non-technical board can read and a
+   new extract can update, with statistical discipline a research
+   audience can audit.
+3. **Design & development** — the pipeline, hypothesis register, typed
+   API and app in this repo; the artifact type is an instantiation.
+4. **Demonstration** — it runs on the real company extract; every upload
+   is a fresh demonstration.
+5. **Evaluation** — ex-post and naturalistic: 24 regression checks
+   against pre-agreed values (`make verify`), the test suite, one BH
+   pass that demoted the author's own finding, and negative results
+   recorded with reasons in the register.
+6. **Communication** — the board video, this README, and `/docs`.
+
+**Threats to validity, and where each is handled:** selection (the
+override→margin effect is computed and excluded — overridden jobs are
+chosen by humans); confounding (the rep effect vanishes under controls;
+the size gradient ships with its within-customer check); multiple testing
+(one pre-registered BH family); sampling (~52% of turnover, nothing
+extrapolates); measurement (`Labour` is a proxy and labelled as such);
+temporal (the partial year is flagged everywhere and never annualised).
+There are no protected personal attributes in this data, so fairness
+reduces to the above plus not letting outputs be used unfairly against
+staff — which is what the rep analysis is for.
+
+**Where this goes** (the two-year arc, also on the Overview): year 1 —
+instrument press capacity, then a cost-to-serve study; year 2 — capture
+the estimators' tacit pricing knowledge (log the why behind each
+override, structured elicitation, evaluated against this build's
+baselines and the temporal split named above), and feed the intake from
+the MIS so the dashboards run live.
+
 ## Methodology (what the numbers mean and don't)
 
 - **Reporting standards, enforced structurally.** Results travel as
@@ -113,11 +151,29 @@ Current state: **24/24 checks green** against the real export.
   showing exactly that. The override→margin effect survives BH
   (adj p = 0.032) but stays excluded anyway because it is
   selection-biased, and the bias rather than the p-value is the problem.
+  Two disclosures an academic reader should have without digging: the
+  four block F-tests in the family are refit nonrobust, because a
+  49-dummy customer block cannot be Wald-tested cluster-robustly on 50
+  clusters — the customer block's real evidence is its out-of-sample CV
+  gain, not its p-value; and on the restricted three-test family of the
+  genuinely-in-doubt effects (rush, rush×load, override), the override
+  effect (raw p = 0.023) fails BH as well — consistent with, not in
+  tension with, its exclusion.
 - **Every threshold is derived and travels with its uncertainty.**
-  Crossover: point + window-sensitivity range + bootstrap CI (500
-  seeded draws). Override tolerance (£1) sits in the observed bimodal
+  Crossover: point + window-sensitivity range + a CLUSTER bootstrap CI
+  (500 seeded draws resampling customers, not jobs — an account's jobs
+  share negotiated prices, so an i.i.d. job bootstrap understates the
+  interval, for the same reason every regression clusters on customer).
+  Override tolerance (£1) sits in the observed bimodal
   gap of |manadj| (rounding noise ≤ ~£0.60 vs human adjustments ≥ ~£9),
   with rate sensitivity reported across £0.5/1/2/5.
+- **The size gradient is checked for customer composition.** The pooled
+  rate curve confounds within-account pricing with which accounts place
+  big jobs, so the within-customer size effect (log rate on log size
+  with customer and year fixed effects, cluster-robust) ships alongside
+  the curve: in this extract roughly two-thirds of the pooled decline
+  survives with the account held fixed. The annotation on the curve
+  reports whatever the current file computes.
 - **FX keys off `Currency`, never `Region`** (Ireland has Stg jobs, NI
   has Euro jobs). Monthly rates in `config.yaml` (default 1.17 EUR/GBP);
   the size–rate ordering replicates within each currency separately.
@@ -129,10 +185,14 @@ Current state: **24/24 checks green** against the real export.
   gap > own median × (1 + 1.5 × own CV). n=50 means transparent rules,
   no ML.
 - **Override learnability:** ridge + GroupKFold grouped on customer
-  (plain KFold would leak account pricing patterns) vs three mandatory
-  baselines. Result: not learnable (R² −0.07 vs baselines ≈ −0.01;
-  direction AUC 0.57), because the estimators use information the MIS
-  doesn't capture. Shipped as a finding, not a failure.
+  (plain KFold would leak account pricing patterns) vs the mandatory
+  baselines. Result: not learnable for an unseen account (R² −0.07 vs
+  baselines ≈ −0.01/−0.02; direction AUC 0.57). Scope stated honestly:
+  under GroupKFold the customer-mean baseline necessarily degenerates to
+  the global mean (test customers never appear in training), so the
+  design rules out cold-start prediction; the deployment question —
+  the next quote for an existing customer — needs a forward-chaining
+  temporal split, which is named as follow-on work rather than claimed.
 - **The rush penalty is a pricing argument, not a selection one.** Most
   of the cost base is fixed, so an hour at a lower contribution rate
   still beats an idle hour. Declining short-notice work would only pay

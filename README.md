@@ -44,15 +44,41 @@ data trap planted.
 make api      # FastAPI on :8000; /docs is a deliverable, keep it open
 make web      # Next.js on :3000 (needs the API)
 make verify   # THE QA GATE, see below
-make test     # pytest (92 tests, fixture only, no real data needed)
+make test     # pytest (98 tests, fixture only, no real data needed)
 make lint     # ruff + mypy
 make assets   # writes assets/: every §12 presentation artefact
 make fixture  # regenerate the synthetic fixture
 ```
 
 First API request runs the full pipeline (~1–2 min); results are cached
-by file hash. The Overview page has the upload drop-zone, which is the
+by file hash. The Overview page has the upload control, which is the
 dynamic-system demo.
+
+## The app: three tabs
+
+- **Overview**: upload, a plain-language findings summary, the
+  validation and gap reports, the trend chart, and an "Evidence &
+  method" section holding every proof one click deep (the hypothesis
+  register, the nested decomposition, the BH pass, the two held-back
+  results, the override-learnability negative result, rush sensitivity,
+  seeds and the `/docs` link).
+- **Dashboards**: every chart panel on one page, led by the constraint
+  gauge. A year slicer refetches the descriptive panels with
+  `?year=YYYY`, recomputed in Python; model-backed panels always use the
+  full sample and wear a "full period" chip while a year is active,
+  because a per-year effect estimate would be a new analysis rather than
+  a filter. Panel toggles filter the view; Plotly legends toggle series.
+- **Customers & actions**: most valuable customers and types of work
+  (descriptive rankings with their caveats), and the ranked retention
+  call list with each account's historic contribution, plus the CSV.
+
+Chart titles state the finding; a smaller neutral line under each names
+the measurement. Styling follows the house dashboard register: white
+ground, bold sans, yellow as a thin accent (section rails, KPI card top
+borders, the uniform outline on chart marks) while category identity
+inside figures lives entirely in the charcoal/grey fills, so the accent
+encodes nothing. Figures are built once in Python, so the web view and
+the exported slides are the same artwork.
 
 Note: `uvicorn --reload` has proved unreliable on Windows here, dropping
 its file watcher after the first change. If a Python edit does not show
@@ -134,8 +160,8 @@ Current state: **24/24 checks green** against the real export.
 ## Hypothesis register
 
 `register.yaml` records every hypothesis; `checks.py` attaches outcomes
-at runtime, rendered live on the "Method & data" tab. Negative results
-are deliverables: rep effect (null), product type (in-sample only),
+at runtime, rendered live in the Overview's Evidence & method section.
+Negative results are deliverables: rep effect (null), product type (in-sample only),
 concentration (not a risk), optimal job size (does not exist), override
 learnability (no), rush×load interaction (unproven), rush main effect
 (demoted by BH).
@@ -145,7 +171,7 @@ learnability (no), rush×load interaction (unproven), rush main effect
 ```
 data/{raw (gitignored), sample}/   src/          analysis modules + pipeline
 api/                               frontend/     FastAPI · Next.js
-tests/ (92)                        assets/       exported presentation artefacts
+tests/ (98)                        assets/       exported presentation artefacts
 verify.py · export_assets.py · register.yaml · config.yaml · Makefile
 ```
 

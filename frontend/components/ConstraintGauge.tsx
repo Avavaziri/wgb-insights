@@ -36,6 +36,7 @@ export default function ConstraintGauge({
   crossoverHrs,
   benchmark,
   rateAbove,
+  shareRange,
   lithoNote,
 }: {
   /** Proportion of constraint-hours in jobs above the crossover, 0 to 1. */
@@ -45,6 +46,8 @@ export default function ConstraintGauge({
   benchmark: number;
   /** Pooled rate earned by the hours above the crossover, GBP per hour. */
   rateAbove: number;
+  /** Share evaluated at the crossover CI bounds (low, high), from the API. */
+  shareRange?: [number, number];
   lithoNote: string;
 }) {
   // The curve does not always cross the benchmark. When it does not, the
@@ -75,6 +78,11 @@ export default function ConstraintGauge({
         <span className="num text-[11.5px] text-muted">
           litho press hours, smallest jobs to largest · crossover at{" "}
           {crossoverHrs.toFixed(1)} h
+          {/* the headline share carries the crossover's own uncertainty:
+              the API evaluates it at both CI bounds, nothing derived here */}
+          {shareRange &&
+            Number.isFinite(shareRange[0]) &&
+            ` · ${pct(shareRange[0], 0)}–${pct(shareRange[1], 0)} across its likely range`}
         </span>
       </figcaption>
 

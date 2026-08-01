@@ -161,7 +161,7 @@ export default async function ActionsPage() {
       <Section
         kicker="Retention"
         title="Ranked call list"
-        note="Risk band first, then account value, so the valuable ones get rung first. No cadence, no predicted date: the system never guesses."
+        note="Risk band first, then account value, so the valuable ones get rung first. For overdue accounts the last column shows the date they were already due; no cadence means no date at all — the system never guesses."
       >
         <LinkButton href={`${API_BASE}/call-list.csv`} download="call_list.csv">
           <svg aria-hidden viewBox="0 0 16 16" className="size-4">
@@ -215,9 +215,17 @@ export default async function ActionsPage() {
                         </span>
                       )}
                     </Td>
+                    {/* For a flagged account the expected date has, by
+                        definition, already passed (that is what flagged
+                        means), so it is labelled as the date they were
+                        due — never shown as a fresh promise. The band is
+                        the API's own category; no date maths happens here. */}
                     <Td num className={r.expected_next_order ? "" : "text-muted"}>
-                      {r.expected_next_order ??
-                        "not forecastable, no date invented"}
+                      {r.expected_next_order === null
+                        ? "not forecastable, no date invented"
+                        : r.risk_band === "normal"
+                          ? r.expected_next_order
+                          : `was due ${r.expected_next_order}`}
                     </Td>
                   </Tr>
                 ))}

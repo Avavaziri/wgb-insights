@@ -126,6 +126,11 @@ export interface Thresholds {
   crossover_ci95: [number, number];
   within_customer_size: EffectReport;
   within_customer_pct_per_doubling: number;
+  pooled_size: EffectReport;
+  pooled_pct_per_doubling: number;
+  share_range_across_crossover_ci: [number, number];
+  within_customer_statement: string;
+  size_mix_statement: string;
   monotonicity: Record<string, number | boolean>;
   capacity_share: Record<string, number>;
   capacity_statement: string;
@@ -221,4 +226,21 @@ export interface Churn {
     both: string[];
     sets_differ: boolean;
   };
+  backtest: {
+    holdout_days: number;
+    cutoff: string;
+    fixed_days: number;
+    n_accounts: number;
+    n_went_quiet: number;
+    went_quiet: string[];
+    personalised: BacktestScore;
+    fixed: BacktestScore;
+  };
+}
+
+export interface BacktestScore {
+  n_flagged: number;
+  n_caught: number;
+  precision: number | null;
+  recall: number | null;
 }

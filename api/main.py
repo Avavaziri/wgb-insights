@@ -182,13 +182,35 @@ def thresholds() -> schemas.ThresholdsResponse:
     sens = th["window_sensitivity"]["crossover_hrs"]
     cs = th["capacity_share"]
     within = th["within_customer_size"]
+    pooled = th["pooled_size"]
+    w_pct, p_pct = pct_per_doubling(within.coef), pct_per_doubling(pooled.coef)
+    share_ci = th["capacity_share_at_ci"]
+    shares = sorted(
+        v for v in (share_ci["at_ci_low"], share_ci["at_ci_high"])
+        if not np.isnan(v)
+    ) or [float("nan"), float("nan")]
     return schemas.ThresholdsResponse(
         benchmark_rate_gbp_per_hr=float(th["benchmark_rate"]),
         crossover_hrs=float(th["crossover_hrs"]),
         crossover_window_range=(float(sens.min()), float(sens.max())),
         crossover_ci95=(float(th["crossover_ci"][0]), float(th["crossover_ci"][1])),
         within_customer_size=_effect(within),
-        within_customer_pct_per_doubling=pct_per_doubling(within.coef),
+        within_customer_pct_per_doubling=w_pct,
+        pooled_size=_effect(pooled),
+        pooled_pct_per_doubling=p_pct,
+        share_range_across_crossover_ci=(float(shares[0]), float(shares[-1])),
+        within_customer_statement=(
+            f"the same customer's twice-bigger job earns "
+            f"{abs(w_pct):.0f}% "
+            f"{'less' if within.coef < 0 else 'more'} per press-hour"
+        ),
+        size_mix_statement=(
+            f"pooled across all accounts, a twice-bigger job earns "
+            f"{abs(p_pct):.0f}% {'less' if pooled.coef < 0 else 'more'} per "
+            f"press-hour; with the account held fixed it still earns "
+            f"{abs(w_pct):.0f}% {'less' if within.coef < 0 else 'more'} — "
+            f"the gap between the two is customer mix"
+        ),
         monotonicity=th["monotonicity"],
         capacity_share={k: float(v) for k, v in cs.items()},
         capacity_statement=(
@@ -269,6 +291,18 @@ def churn() -> schemas.ChurnResponse:
         ),
         rows=rows,
         comparison=pr.churn_comparison,
+        # NaN rates (no outcomes in the holdout) travel as null, not NaN
+        backtest={
+            **pr.churn_backtest,
+            "personalised": {
+                k: _opt(v) if k in ("precision", "recall") else v
+                for k, v in pr.churn_backtest["personalised"].items()
+            },
+            "fixed": {
+                k: _opt(v) if k in ("precision", "recall") else v
+                for k, v in pr.churn_backtest["fixed"].items()
+            },
+        },
     )
 
 

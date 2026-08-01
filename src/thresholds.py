@@ -116,6 +116,23 @@ def within_customer_size_effect(data: pd.DataFrame, *, seed: int) -> Any:
     return effect(fit, "np.log(press_hrs)", logged_outcome=True)
 
 
+def pooled_size_effect(data: pd.DataFrame, *, seed: int) -> Any:
+    """The raw pooled size gradient, same estimator discipline as the
+    within-customer check (cluster-robust on customer), so the two
+    halves of the composition story are BOTH computed from the file:
+    pooled slope, within-account slope, gap = customer mix. Nothing
+    about the split is hand-written anywhere."""
+    from src.stats_core import effect, fit_reported
+
+    fit, _ = fit_reported(
+        "log_rate ~ np.log(press_hrs)",
+        data,
+        cluster_on="customer_id",
+        seed=seed,
+    )
+    return effect(fit, "np.log(press_hrs)", logged_outcome=True)
+
+
 def pct_per_doubling(coef: float) -> float:
     """Board-readable form of a log-log coefficient: % change in the rate
     when job size doubles, (2**coef - 1) * 100. Computed here so no

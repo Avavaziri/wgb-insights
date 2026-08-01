@@ -196,6 +196,15 @@ class ThresholdsResponse(Strict):
     # the composition check: size gradient with the account held fixed
     within_customer_size: EffectReportSchema
     within_customer_pct_per_doubling: float
+    pooled_size: EffectReportSchema
+    pooled_pct_per_doubling: float
+    # the headline share evaluated at the crossover CI bounds, ordered
+    # (low share, high share), so the 65% carries the crossover's interval
+    share_range_across_crossover_ci: tuple[float, float]
+    # board-voice sentences, composed in Python so no client strips a
+    # sign, takes an absolute value, or subtracts the two slopes
+    within_customer_statement: str
+    size_mix_statement: str
     monotonicity: dict[str, Any]
     capacity_share: dict[str, float]
     capacity_statement: str
@@ -235,6 +244,9 @@ class ChurnResponse(Strict):
     gate: str
     rows: list[ChurnRow]
     comparison: dict[str, Any]
+    # held-out check of both rules against the accounts that actually
+    # went quiet; counts always travel with the rates (outcome n is small)
+    backtest: dict[str, Any]
 
 
 class ValueRow(Strict):

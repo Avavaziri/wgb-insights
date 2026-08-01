@@ -183,7 +183,12 @@ the MIS so the dashboards run live.
   gated to accounts with interval CV < 0.75 and ≥ 4 orders (14/50), with
   no invented dates for the rest. Personalised at-risk threshold:
   gap > own median × (1 + 1.5 × own CV). n=50 means transparent rules,
-  no ML.
+  no ML. The rule is BACKTESTED, not just asserted: with the final year
+  held out and flags raised from history alone, the personalised rule
+  caught all 3 accounts that then went fully quiet (flagging 8); the
+  fixed 90-day rule caught 2 of 3. "Went quiet for a year" is a proxy
+  for churn and the outcome count is small, so the result always ships
+  with its raw counts, never as bare rates.
 - **Override learnability:** ridge + GroupKFold grouped on customer
   (plain KFold would leak account pricing patterns) vs the mandatory
   baselines. Result: not learnable for an unseen account (R² −0.07 vs

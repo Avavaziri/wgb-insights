@@ -113,6 +113,54 @@ def personalised_at_risk(cadence: pd.DataFrame, multiplier: float) -> pd.Series:
     return (cadence["gap_days"] > threshold).fillna(False)
 
 
+def backtest_rules(
+    data: pd.DataFrame,
+    fixed_days: int,
+    multiplier: float,
+    cv_max: float,
+    min_orders: int,
+    holdout_days: int = 365,
+) -> dict[str, Any]:
+    """Held-out check of the flagging rules (added in review: the rules
+    were compared to each other but never to an outcome).
+
+    Wind as_of back by holdout_days, flag under both rules using only
+    the history before that cutoff, then score against the one outcome
+    the data itself defines: accounts that placed NO order at all in the
+    held-out window. "Went fully quiet for a year" is a proxy for churn,
+    not churn itself — but it is the same proxy both rules are judged
+    on, so the comparison is fair. Outcome counts are small (churn is
+    rare at ~50 accounts), so the figures must always be shown with
+    their raw counts, never as bare rates.
+    """
+    as_of = data["sales_in"].max()
+    cutoff = as_of - pd.Timedelta(days=holdout_days)
+    past = data[data["sales_in"] <= cutoff]
+    table = risk_table(past, multiplier, cv_max, min_orders, as_of=cutoff)
+    active_after = set(data.loc[data["sales_in"] > cutoff, "customer_id"].unique())
+    went_quiet = set(table.index) - active_after
+
+    def score(flags: set[Any]) -> dict[str, Any]:
+        caught = len(flags & went_quiet)
+        return {
+            "n_flagged": int(len(flags)),
+            "n_caught": int(caught),
+            "precision": caught / len(flags) if flags else float("nan"),
+            "recall": caught / len(went_quiet) if went_quiet else float("nan"),
+        }
+
+    return {
+        "holdout_days": int(holdout_days),
+        "cutoff": str(cutoff.date()),
+        "fixed_days": int(fixed_days),
+        "n_accounts": int(len(table)),
+        "n_went_quiet": int(len(went_quiet)),
+        "went_quiet": sorted(went_quiet),
+        "personalised": score(set(table.index[table["at_risk_personalised"]])),
+        "fixed": score(set(table.index[table["gap_days"] > fixed_days])),
+    }
+
+
 def compare_fixed_rule(
     data: pd.DataFrame,
     fixed_days: int,

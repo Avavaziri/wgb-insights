@@ -84,7 +84,7 @@ export default async function DashboardsPage() {
       chart: "rate_curve",
       title: "Bigger jobs earn less per press-hour",
       note: `crossover ${th.crossover_hrs.toFixed(1)}h`,
-      read: `Left to right is job size; the line is what one hour of press time earns at that size. It only falls — there is no best size to aim for, only the point where it crosses the factory's own average (the dashed line). The yellow band is the uncertainty on that point. And it is not just customer mix: with the account held fixed, the rate still moves ~${th.within_customer_pct_per_doubling.toFixed(0)}% for each doubling of size.`,
+      read: `Left to right is job size; the line is what one hour of press time earns at that size. It only falls — there is no best size to aim for, only the point where it crosses the factory's own average (the dashed line). The yellow band is the uncertainty on that point. And it is not just customer mix: ${th.size_mix_statement}.`,
       changes: `Quotes expected to run past ${th.crossover_hrs.toFixed(1)}h get checked against the ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average before they go out — a review trigger, not a rule to refuse big work.`,
       figure: fRate,
       wide: true,
@@ -106,7 +106,7 @@ export default async function DashboardsPage() {
       chart: "override_scale",
       title: "Manual price overrides, up against down",
       note: `${pct(pricing.scale.override_rate, 0)} of litho jobs`,
-      read: "Counts of litho jobs the estimators re-priced upward and downward from the system price; the headline carries the net effect per year.",
+      read: "Counts of litho jobs the estimators re-priced upward and downward from the system price; the headline carries the net effect per year, stated to the nearest £1k. 'Per year' divides the observed span's total by its length, so it assumes that mix continues.",
       changes: "Keep the humans — pricing is actively governed, mostly upward, and the model evidence says it can't be automated from this extract. The practical step: start logging the reason for each override, so the knowledge can be captured.",
       figure: fOverride,
       sliceable: true,
@@ -127,7 +127,7 @@ export default async function DashboardsPage() {
       chart: "churn_comparison",
       title: "Own cadence against a flat 90-day rule",
       note: `${churn.comparison.n_personalised} vs ${churn.comparison.n_fixed} accounts`,
-      read: "At-risk accounts flagged by a company-wide 90-day rule versus each account's own ordering rhythm. The bars disagree on WHICH accounts, not just how many — steady accounts gone quiet are caught months earlier.",
+      read: `At-risk accounts flagged by a company-wide 90-day rule versus each account's own ordering rhythm. The bars disagree on WHICH accounts, not just how many. Backtested with the final year held out: the own-cadence rule caught ${churn.backtest.personalised.n_caught} of the ${churn.backtest.n_went_quiet} accounts that truly went quiet (flagging ${churn.backtest.personalised.n_flagged}); the fixed rule caught ${churn.backtest.fixed.n_caught}. Small outcome counts — churn is rare at ${churn.backtest.n_accounts} accounts — so this is evidence, not proof.`,
       changes: "The ranked call list on Customers & actions is built from the own-cadence rule, most valuable accounts first.",
       figure: fChurn,
     },
@@ -164,6 +164,7 @@ export default async function DashboardsPage() {
             crossoverHrs={th.crossover_hrs}
             benchmark={th.benchmark_rate_gbp_per_hr}
             rateAbove={cap.pooled_rate_above}
+            shareRange={th.share_range_across_crossover_ci}
             lithoNote={th.litho_only_note}
           />
         }

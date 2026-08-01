@@ -16,7 +16,11 @@ hypotheses:
 
   - id: margin_by_size
     hypothesis: Margin per constraint-hour falls with job size
-    test: Spearman + monotonicity report + rolling rate curve vs benchmark
+    test: >-
+      Spearman + monotonicity report + rolling rate curve vs benchmark;
+      within-customer fixed-effects check (customer + year, cluster-robust)
+      against the customer-composition confound, added in review alongside
+      its pooled counterpart so both halves of the gradient are computed
 
   - id: margin_by_run_features
     hypothesis: Run-length economics (quantity, impressions, plates) explain the size effect

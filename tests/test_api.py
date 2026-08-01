@@ -91,12 +91,17 @@ class TestEndpoints:
         assert body["monotonicity"]["interior_optimum"] in (True, False)
         assert "Litho-only" in body["litho_only_note"]
         assert "no counterfactual" in body["capacity_statement"].lower()
-        # the composition check ships as a full effect report, plus the
-        # board-readable per-doubling form computed in Python
-        within = body["within_customer_size"]
-        assert within["ci_low"] < within["coef"] < within["ci_high"]
-        assert "cluster-robust" in within["se_type"]
+        # the composition check ships as BOTH halves, full effect reports,
+        # plus the board-readable per-doubling forms computed in Python
+        for key in ("within_customer_size", "pooled_size"):
+            e = body[key]
+            assert e["ci_low"] < e["coef"] < e["ci_high"]
+            assert "cluster-robust" in e["se_type"]
         assert isinstance(body["within_customer_pct_per_doubling"], float)
+        assert isinstance(body["pooled_pct_per_doubling"], float)
+        assert "customer mix" in body["size_mix_statement"]
+        lo, hi = body["share_range_across_crossover_ci"]
+        assert lo <= hi  # headline share evaluated at the CI bounds
 
     def test_rush_interaction_inconclusive_wrapped(self, client: TestClient) -> None:
         body = client.get("/rush").json()
@@ -109,6 +114,16 @@ class TestEndpoints:
         for row in body["rows"]:
             if not row["forecastable"]:
                 assert row["expected_next_order"] is None
+
+    def test_churn_backtest_ships_with_counts(self, client: TestClient) -> None:
+        # the rules are scored against a held-out outcome, and the counts
+        # always travel with the rates (outcome n is small by nature)
+        bt = client.get("/churn").json()["backtest"]
+        assert bt["holdout_days"] > 0 and bt["n_accounts"] > 0
+        for rule in ("personalised", "fixed"):
+            score = bt[rule]
+            assert {"n_flagged", "n_caught", "precision", "recall"} <= set(score)
+            assert score["n_caught"] <= bt["n_went_quiet"] or bt["n_went_quiet"] == 0
 
     def test_churn_bands_match_headline_rule(self, client: TestClient) -> None:
         # ONE at-risk rule: the accounts wearing a non-normal band must be

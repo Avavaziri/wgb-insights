@@ -298,12 +298,13 @@ def rate_curve(pr: PipelineResult) -> go.Figure:
     # pooled decline partly reflects which accounts place big jobs, so the
     # within-account gradient is stated wherever the curve is shown.
     within = th["within_customer_size"]
+    pooled = th["pooled_size"]
     fig.add_annotation(
         text=(
-            f"Holds within accounts: the same customer's twice-bigger job "
-            f"earns {abs(pct_per_doubling(within.coef)):.0f}% less per "
-            f"press-hour (account held fixed; the rest of the pooled slope "
-            f"is customer mix)"
+            f"Pooled, a twice-bigger job earns "
+            f"{abs(pct_per_doubling(pooled.coef)):.0f}% less per press-hour; "
+            f"{abs(pct_per_doubling(within.coef)):.0f}% survives with the "
+            f"account held fixed - the gap is customer mix"
         ),
         xref="paper", yref="paper", x=0.02, y=1.06, showarrow=False,
         font={"size": 14, "color": MUTED}, align="left",
@@ -391,12 +392,16 @@ def churn_comparison(pr: PipelineResult) -> go.Figure:
         text=[str(len(c["both"])), str(len(c["only_fixed"])), str(len(c["only_personalised"]))],
         textposition="outside", textfont={"size": 16},
     )
+    bt = pr.churn_backtest
     fig.add_annotation(
         text=(f"Fixed rule: {c['n_fixed']} accounts. Personalised (own median x "
-              f"(1 + 1.5 x own CV)): {c['n_personalised']}. Steady accounts gone "
-              "quiet are caught months earlier; erratic accounts aren't flagged for noise."),
+              f"(1 + 1.5 x own CV)): {c['n_personalised']}. Backtest, final "
+              f"{bt['holdout_days']} days held out: personalised caught "
+              f"{bt['personalised']['n_caught']}/{bt['n_went_quiet']} accounts "
+              f"that went fully quiet (flagging {bt['personalised']['n_flagged']}); "
+              f"the fixed rule caught {bt['fixed']['n_caught']}/{bt['n_went_quiet']}."),
         xref="paper", yref="paper", x=0.02, y=1.06, showarrow=False,
-        font={"size": 14, "color": MUTED}, align="left",
+        font={"size": 13, "color": MUTED}, align="left",
     )
     fig.update_yaxes(title="Accounts", rangemode="tozero")
     return fig

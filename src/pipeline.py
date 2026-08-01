@@ -14,7 +14,7 @@ from typing import Any
 import pandas as pd
 
 from src import checks
-from src.churn import cadence_stats, compare_fixed_rule, risk_table
+from src.churn import backtest_rules, cadence_stats, compare_fixed_rule, risk_table
 from src.clean import CleanReport, clean, constraint_frame
 from src.config import load_config
 from src.decomposition import nested_decomposition, rep_naive_vs_controlled
@@ -33,6 +33,7 @@ from src.thresholds import (
     crossover_ci,
     crossover_point,
     monotonicity_report,
+    pooled_size_effect,
     rolling_rate_curve,
     window_sensitivity,
     within_customer_size_effect,
@@ -60,6 +61,7 @@ class PipelineResult:
     churn_cadence: pd.DataFrame
     churn_risk: pd.DataFrame
     churn_comparison: dict[str, Any]
+    churn_backtest: dict[str, Any]
     trend_yearly: pd.DataFrame
     trend_growth: dict[str, Any]
     trend_concentration: dict[str, Any]
@@ -108,9 +110,17 @@ def run_pipeline(path: Path, config: dict[str, Any] | None = None) -> PipelineRe
         "window_sensitivity": sens,
         "monotonicity": monotonicity_report(cf, window=window, step=step),
         "capacity_share": capacity_share_above(cf, xover),
-        # the composition check: the size gradient with the account held
-        # fixed, so the curve's finding can be separated from customer mix
+        # the composition check, BOTH halves computed from the file: the
+        # pooled gradient and the gradient with the account held fixed,
+        # so the customer-mix share of the slope is never hand-written
         "within_customer_size": within_customer_size_effect(cf, seed=cv_seed),
+        "pooled_size": pooled_size_effect(cf, seed=cv_seed),
+        "capacity_share_at_ci": {
+            # share evaluated at the crossover CI bounds, so the headline
+            # share carries the interval the crossover itself was given
+            "at_ci_low": capacity_share_above(cf, ci[0])["share_of_constraint_hours"],
+            "at_ci_high": capacity_share_above(cf, ci[1])["share_of_constraint_hours"],
+        },
     }
 
     tol = float(cfg["clean"]["override_tolerance_gbp"])
@@ -134,6 +144,7 @@ def run_pipeline(path: Path, config: dict[str, Any] | None = None) -> PipelineRe
     cadence = cadence_stats(jobs)
     risk = risk_table(jobs, mult, cv_max, min_orders)
     comparison = compare_fixed_rule(jobs, fixed_days, mult, cv_max, min_orders)
+    churn_bt = backtest_rules(jobs, fixed_days, mult, cv_max, min_orders)
 
     trend = yearly_trend(jobs)
     growth = growth_attribution(trend)
@@ -179,6 +190,7 @@ def run_pipeline(path: Path, config: dict[str, Any] | None = None) -> PipelineRe
         churn_cadence=cadence,
         churn_risk=risk,
         churn_comparison=comparison,
+        churn_backtest=churn_bt,
         trend_yearly=trend,
         trend_growth=growth,
         trend_concentration=conc,

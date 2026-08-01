@@ -96,7 +96,7 @@ export default async function OverviewPage() {
       claim: "The press is filled by the work that pays it least",
       figure: pct(cap.share_of_constraint_hours, 0),
       figureLabel: `of litho press hours sit in jobs over ${th.crossover_hrs.toFixed(1)}h`,
-      support: `Those hours earn ${gbp(cap.pooled_rate_above)}/hr against the factory's own ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average — and it holds within accounts: the same customer's twice-bigger job earns ~${th.within_customer_pct_per_doubling.toFixed(0)}% per press-hour, so this is pricing, not just customer mix.`,
+      support: `Those hours earn ${gbp(cap.pooled_rate_above)}/hr against the factory's own ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average — and it holds within accounts: ${th.within_customer_statement}, so this is pricing, not just customer mix.`,
       href: "/dashboards",
       link: "Capacity panels",
     },
@@ -105,7 +105,7 @@ export default async function OverviewPage() {
       claim: "Prices are set by people, and their judgement isn't in the data",
       figure: pct(pricing.scale.override_rate, 0),
       figureLabel: `of litho jobs are re-priced by hand, net ${gbpK(pricing.scale.net_gbp_per_year)}/yr`,
-      support: `Margin lives with the account, not the product or the rep, and a leakage-safe model cannot reproduce the estimators' adjustments for an unseen account: that knowledge is tacit. The Monday action: start recording the why behind each override, so it can be captured.`,
+      support: `Margin lives with the account, not the product or the rep, and a fairly-tested model cannot reproduce the estimators' adjustments for an account it hasn't seen: that knowledge is tacit. The Monday action: start recording the why behind each override, so it can be captured.`,
       href: "#evidence",
       link: "See the model evidence",
     },
@@ -169,7 +169,7 @@ export default async function OverviewPage() {
         <Kpi
           label="Hours over that size"
           value={pct(cap.share_of_constraint_hours, 0)}
-          sub={`at ${gbp(cap.pooled_rate_above)}/hr`}
+          sub={`at ${gbp(cap.pooled_rate_above)}/hr · ${pct(th.share_range_across_crossover_ci[0], 0)}–${pct(th.share_range_across_crossover_ci[1], 0)} across the range`}
           href="/dashboards"
         />
         <Kpi
@@ -309,12 +309,12 @@ export default async function OverviewPage() {
         title="The gaps are a two-year programme, not a footnote"
         note="What this system cannot see is exactly what gets built next — each row names the work, what the company gets, and the research question in it for the university partner."
       >
-        <TableFrame caption="Sequencing follows dependency, not ambition: capacity and cost data (year 1) are what make the year-2 pricing work testable against the baselines this build already ships.">
+        <TableFrame caption="Sequencing follows dependency, not ambition: capacity and cost data (year 1) are what make the year-2 pricing work testable against the baselines this build already ships. Run as supervised research from operations/management science, with the temporal-split evaluation of estimator knowledge capture as the partnership's first joint output.">
           <Table>
             <thead>
               <tr>
                 <Th>Phase</Th>
-                <Th>The work</Th>
+                <Th>The work, and what it takes</Th>
                 <Th>What the company gets</Th>
                 <Th>The research in it</Th>
               </tr>
@@ -324,7 +324,8 @@ export default async function OverviewPage() {
                 <Td className="whitespace-nowrap font-semibold">Year 1</Td>
                 <Td>
                   Instrument press capacity: machine IDs, availability,
-                  downtime
+                  downtime — takes a downtime taxonomy agreed with the
+                  operators and new MIS fields, before any sensor spend
                 </Td>
                 <Td>
                   True utilisation instead of relative load — and the
@@ -339,7 +340,8 @@ export default async function OverviewPage() {
                 <Td className="whitespace-nowrap font-semibold">Year 1</Td>
                 <Td>
                   Cost-to-serve study: estimating, admin and make-ready per
-                  order
+                  order — takes a time-and-motion sample across two or three
+                  departments, not a new system
                 </Td>
                 <Td>
                   Settles whether small jobs actually pay; today contribution
@@ -355,7 +357,8 @@ export default async function OverviewPage() {
                 <Td>
                   Capture the estimators&rsquo; pricing judgement: log the why
                   behind each override at the quote screen, then structured
-                  elicitation
+                  elicitation — takes one new field on the quote screen from
+                  day one, the estimators&rsquo; time later
                 </Td>
                 <Td>
                   {gbpK(pricing.scale.net_gbp_per_year)}/yr of hand-pricing
@@ -372,7 +375,8 @@ export default async function OverviewPage() {
                 <Td className="whitespace-nowrap font-semibold">Year 2</Td>
                 <Td>
                   Feed the intake from the MIS directly (scheduled export or
-                  API)
+                  API) — takes an export schedule or API access; the analysis
+                  engine itself does not change
                 </Td>
                 <Td>
                   Dashboards move from monthly to live; churn flags arrive

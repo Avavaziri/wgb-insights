@@ -284,12 +284,12 @@ export default async function OverviewPage() {
               {data.gaps.map((g) => (
                 <li
                   key={g.gap}
-                  className="flex items-baseline justify-between gap-4 px-4 py-2"
+                  className="flex flex-col gap-1 px-4 py-2 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
                 >
                   <p className="text-[13px] font-semibold leading-snug">
                     {g.gap}
                   </p>
-                  <p className="shrink-0 max-w-[16rem] text-right text-[11.5px] leading-snug text-muted">
+                  <p className="text-[11.5px] leading-snug text-muted sm:max-w-[16rem] sm:shrink-0 sm:text-right">
                     {g.blocks}
                   </p>
                 </li>

@@ -73,6 +73,35 @@ export function MetaSep() {
 }
 
 /**
+ * The interpretation layer every dashboard figure carries: how to read
+ * it, then the one decision it informs. One shared component so
+ * ConstraintGauge and every dashboard tile render the identical thing
+ * rather than two copies that can drift (found in review: they had).
+ * `read` is optional because the gauge folds its own reading into
+ * labels elsewhere and only needs the decision line.
+ */
+export function TileFooter({
+  read,
+  changes,
+}: {
+  read?: string;
+  changes: string;
+}) {
+  return (
+    <div className="space-y-0.5 border-t border-line px-3.5 py-2 text-[12.5px] leading-snug text-ink">
+      {read && (
+        <p>
+          <span className="font-semibold">How to read it</span> — {read}
+        </p>
+      )}
+      <p>
+        <span className="font-semibold">What it changes</span> — {changes}
+      </p>
+    </div>
+  );
+}
+
+/**
  * Page head, dashboard register: a slim bar, not a chapter opening. Title
  * left, live metadata right on the same line, closed by the house 2px ink
  * rule. The rule is plain ink on purpose: the nav above already spends the
@@ -170,13 +199,23 @@ export function Panel({
 export function PanelHead({
   children,
   meta,
+  level = "h3",
 }: {
   children: ReactNode;
   meta?: ReactNode;
+  /**
+   * "h2" for a panel that is the page's first content after PageHeader's
+   * h1 (no Section, so no h2, sits between them - found in review as a
+   * heading-level skip). "h3" (default) for a panel already nested inside
+   * a Section, where the Section's rail heading is the h2. Tag only;
+   * visual size is unaffected, so this never touches the design.
+   */
+  level?: "h2" | "h3";
 }) {
+  const Tag = level;
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-2.5">
-      <h3 className="text-[13.5px] font-semibold">{children}</h3>
+      <Tag className="text-[13.5px] font-semibold">{children}</Tag>
       {meta && <span className="num text-[12px] text-muted">{meta}</span>}
     </div>
   );

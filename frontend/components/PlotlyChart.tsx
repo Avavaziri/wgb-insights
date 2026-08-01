@@ -44,6 +44,7 @@ export default function PlotlyChart({
   caption,
   compact = false,
   tall = false,
+  title,
 }: {
   figure: unknown;
   /** Reading note beneath the figure, never a restated number. */
@@ -59,12 +60,24 @@ export default function PlotlyChart({
    * taller box so its labels stay legible in a 1080p screen recording.
    */
   tall?: boolean;
+  /**
+   * Accessible name for the figure (role="img" + aria-label). Plotly's own
+   * SVG has no text a screen reader can use, so this is required reading
+   * for anyone not looking at the chart - always compose it from copy
+   * that already exists on the page (a panel title, a "how to read it"
+   * line), never write new prose here.
+   */
+  title?: string;
 }) {
   const fig = figure as FigureJson;
 
   if (compact || tall) {
     return (
-      <div className={`w-full ${tall ? "h-[320px]" : "h-[228px]"}`}>
+      <div
+        role={title ? "img" : undefined}
+        aria-label={title}
+        className={`w-full ${tall ? "h-[320px]" : "h-[228px]"}`}
+      >
         <Plot
           data={fig.data}
           layout={{
@@ -91,7 +104,11 @@ export default function PlotlyChart({
       <div className="border border-line bg-white">
         {/* 16:9 keeps the export-tuned type in proportion, capped so a wide
             monitor does not turn one figure into a full screen of chart. */}
-        <div className="aspect-[16/9] max-h-[460px] min-h-[340px] w-full">
+        <div
+          role={title ? "img" : undefined}
+          aria-label={title}
+          className="aspect-[16/9] max-h-[460px] min-h-[340px] w-full"
+        >
           <Plot
             data={fig.data}
             layout={{

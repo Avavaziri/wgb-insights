@@ -1,7 +1,7 @@
 import { ApiDown } from "@/components/ApiGuard";
 import ConstraintGauge from "@/components/ConstraintGauge";
 import DashboardGrid, { type Tile } from "@/components/DashboardGrid";
-import { PageHeader } from "@/components/ui";
+import { MetaSep, PageHeader } from "@/components/ui";
 import { dash, gbp, num, pct } from "@/lib/format";
 import { ApiDownError, getChart, getJson } from "@/lib/api";
 import type {
@@ -142,15 +142,11 @@ export default async function DashboardsPage() {
         meta={
           <>
             <span>{num(Number(data.validation.n_rows))} jobs</span>
-            <span aria-hidden className="text-line">
-              /
-            </span>
+            <MetaSep />
             <span>
               to <span className="num">{data.as_of}</span>
             </span>
-            <span aria-hidden className="text-line">
-              /
-            </span>
+            <MetaSep />
             <span>constraint analysis is Litho-only</span>
           </>
         }

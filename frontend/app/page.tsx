@@ -189,10 +189,17 @@ export default async function OverviewPage() {
       <div className="grid gap-3 xl:grid-cols-3">
         <div className="xl:col-span-2">
           <Panel>
-            <PanelHead meta={`CAGR ${pct(data.growth.revenue_cagr)} · ${data.partial_year} partial greyed`}>
+            <PanelHead
+              level="h2"
+              meta={`CAGR ${pct(data.growth.revenue_cagr)} · ${data.partial_year} partial greyed`}
+            >
               Growth is value per job, not volume
             </PanelHead>
-            <PlotlyChart figure={trendFig} tall />
+            <PlotlyChart
+              figure={trendFig}
+              tall
+              title={`Growth is value per job, not volume: revenue by year, GBP millions, sample. CAGR ${pct(data.growth.revenue_cagr)}, ${data.partial_year} partial and greyed.`}
+            />
           </Panel>
         </div>
         <div className="grid content-start gap-3">
@@ -528,7 +535,10 @@ export default async function OverviewPage() {
             automatically and is excluded from the exported slides, so no one
             decides case by case.
           </p>
-          <PlotlyChart figure={bhFig} />
+          <PlotlyChart
+            figure={bhFig}
+            title="The correction that demoted our own finding: one Benjamini-Hochberg pass, fixed test family, seven claims in and five surviving."
+          />
         </Disclosure>
 
         <Disclosure

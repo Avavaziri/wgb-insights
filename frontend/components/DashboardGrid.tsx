@@ -24,6 +24,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import PlotlyChart from "@/components/PlotlyChart";
+import { TileFooter } from "@/components/ui";
 import { API_BASE } from "@/lib/api";
 
 export interface Tile {
@@ -146,7 +147,12 @@ function SlicedTile({
   return (
     <div className="border border-line bg-white">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line px-3.5 py-2.5">
-        <h3 className="text-[13px] font-semibold">{tile.title}</h3>
+        {/* Same semantic role as ui.tsx's PanelHead (a panel title), so
+            the same size: they had drifted to 13px vs 13.5px, found in
+            review. Not literally reusing PanelHead - this header also
+            carries the "comparing N" badge PanelHead's meta slot doesn't
+            model - but the text itself must match. */}
+        <h3 className="text-[13.5px] font-semibold">{tile.title}</h3>
         <span className="num text-[11.5px] text-muted">
           {picked.length > 1 && (
             <span className="mr-2 border border-ink px-1.5 py-px text-[10px] font-semibold uppercase tracking-[0.05em] text-ink">
@@ -194,36 +200,35 @@ function SlicedTile({
           </span>
         )}
       </div>
-      {state === "error" ? (
-        <p className="px-4 py-8 text-center text-[12.5px] text-muted">
-          This year&rsquo;s figure did not load. Pick another year or All
-          years.
-        </p>
-      ) : state === "loading" ? (
-        <div
-          className={`flex w-full items-center justify-center ${tile.wide ? "h-[320px]" : "h-[228px]"}`}
-        >
-          <span className="flex items-center gap-2.5 text-[12.5px] text-muted">
-            <span className="size-3 animate-spin rounded-full border-2 border-line border-t-ink" />
-            Recomputing {picked.join(" vs ")} in Python
-          </span>
-        </div>
-      ) : (
-        <PlotlyChart figure={figure} compact={!tile.wide} tall={tile.wide} />
-      )}
-      {/* The interpretation layer: how to read it, then the one decision
-          it informs. Two lines, always visible — a chart whose reading
-          lives in a tooltip is a chart the board never reads. */}
-      <div className="space-y-0.5 border-t border-line px-3.5 py-2 text-[11.5px] leading-snug text-muted">
-        <p>
-          <span className="font-semibold text-ink">How to read it</span>{" "}
-          — {tile.read}
-        </p>
-        <p>
-          <span className="font-semibold text-ink">What it changes</span>{" "}
-          — {tile.changes}
-        </p>
+      {/* aria-live: a screen-reader user who picks a year hears the swap
+          (loading -> chart or error), not just silence where a chart used
+          to be. Content only, never a layout container that would also
+          announce unrelated re-renders. */}
+      <div aria-live="polite">
+        {state === "error" ? (
+          <p className="px-4 py-8 text-center text-[12.5px] text-muted">
+            This year&rsquo;s figure did not load. Pick another year or All
+            years.
+          </p>
+        ) : state === "loading" ? (
+          <div
+            className={`flex w-full items-center justify-center ${tile.wide ? "h-[320px]" : "h-[228px]"}`}
+          >
+            <span className="flex items-center gap-2.5 text-[12.5px] text-muted">
+              <span className="size-3 animate-spin rounded-full border-2 border-line border-t-ink" />
+              Recomputing {picked.join(" vs ")} in Python
+            </span>
+          </div>
+        ) : (
+          <PlotlyChart
+            figure={figure}
+            compact={!tile.wide}
+            tall={tile.wide}
+            title={`${tile.title}. ${tile.read}`}
+          />
+        )}
       </div>
+      <TileFooter read={tile.read} changes={tile.changes} />
     </div>
   );
 }
@@ -252,6 +257,12 @@ export default function DashboardGrid({
 
   return (
     <div className="space-y-3">
+      {/* Not visible: PageHeader's h1 is otherwise followed straight by
+          each tile's h3 with nothing at h2, which breaks heading-based
+          screen-reader navigation (found in review). No visible second
+          heading suits this page's design, so this is the sr-only
+          landmark WCAG's own technique recommends for that case. */}
+      <h2 className="sr-only">Every panel, with its own year slicer</h2>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border border-line bg-white px-3 py-2.5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="eyebrow mr-1">Panels</span>

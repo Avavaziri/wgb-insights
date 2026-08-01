@@ -2,6 +2,7 @@ import { ApiDown } from "@/components/ApiGuard";
 import {
   Chip,
   LinkButton,
+  MetaSep,
   PageHeader,
   Panel,
   Section,
@@ -52,9 +53,7 @@ export default async function ActionsPage() {
             <span>
               as of <span className="num">{calls.as_of}</span>
             </span>
-            <span aria-hidden className="text-line">
-              /
-            </span>
+            <MetaSep />
             <span>closed jobs, whole period</span>
           </>
         }

@@ -130,6 +130,16 @@ export default function ConstraintGauge({
           </div>
         </div>
       </div>
+
+      {/* The same interpretation layer every tile below carries. */}
+      <div className="border-t border-line px-4 py-2 text-[11.5px] leading-snug text-muted">
+        <p>
+          <span className="font-semibold text-ink">What it changes</span> —
+          this is the margin question in one figure: most of the scarce
+          resource is sold below the factory&rsquo;s own average rate, so
+          large quotes earn a review against that rate. {lithoNote}
+        </p>
+      </div>
     </figure>
   );
 }

@@ -62,7 +62,10 @@ export default async function DashboardsPage() {
     ...(data.partial_year ? [data.partial_year] : []),
   ];
 
-  // Panel notes restate figures the API computed, never a value derived here.
+  // Panel notes restate figures the API computed, never a value derived
+  // here; the read/changes lines are prose interpretation with API values
+  // interpolated, which is the sanctioned pattern (words here, numbers
+  // from Python). Tiles run in story order: context, then the three acts.
   const tiles: Tile[] = [
     {
       id: "trend",
@@ -70,6 +73,8 @@ export default async function DashboardsPage() {
       chart: "trend_context",
       title: "Revenue and margin by year",
       note: `CAGR ${pct(data.growth.revenue_cagr)}`,
+      read: `Each bar is one full year's revenue in this sample; the label on the bar carries that year's margin. The grey bar is the part year to ${data.as_of}, greyed rather than hidden — it is not a decline.`,
+      changes: `Nothing: growth is healthy, so the margin conversation moves to mix. This sample is ~${pct(data.sample_share_of_turnover, 0)} of stated turnover and nothing here extrapolates beyond it.`,
       figure: fTrend,
       wide: true,
     },
@@ -79,6 +84,8 @@ export default async function DashboardsPage() {
       chart: "rate_curve",
       title: "Bigger jobs earn less per press-hour",
       note: `crossover ${th.crossover_hrs.toFixed(1)}h`,
+      read: "Left to right is job size; the line is what one hour of press time earns at that size. It only falls — there is no best size to aim for, only the point where it crosses the factory's own average (the dashed line). The yellow band is the uncertainty on that point.",
+      changes: `Quotes expected to run past ${th.crossover_hrs.toFixed(1)}h get checked against the ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average before they go out — a review trigger, not a rule to refuse big work.`,
       figure: fRate,
       wide: true,
     },
@@ -88,6 +95,8 @@ export default async function DashboardsPage() {
       chart: "capacity_share",
       title: "Press hours either side of the crossover",
       note: `benchmark ${gbp(th.benchmark_rate_gbp_per_hr)}/hr`,
+      read: "All litho press hours, split at the crossover size; each bar says what those hours earned per hour. Press time is the resource that can't be bought quickly, so hours — not revenue — are the honest denominator.",
+      changes: "Where re-pricing attention pays: the big-job share of hours. No '£ at stake' is claimed, because without capacity data a displaced-work figure would be invented.",
       figure: fCapacity,
       sliceable: true,
     },
@@ -97,6 +106,8 @@ export default async function DashboardsPage() {
       chart: "override_scale",
       title: "Manual price overrides, up against down",
       note: `${pct(pricing.scale.override_rate, 0)} of jobs`,
+      read: "Counts of jobs the estimators re-priced upward and downward from the system price; the headline carries the net effect per year.",
+      changes: "Keep the humans: pricing is actively governed, mostly upward — and the model evidence one click from the Overview says their judgement cannot be automated from this extract.",
       figure: fOverride,
       sliceable: true,
     },
@@ -106,6 +117,8 @@ export default async function DashboardsPage() {
       chart: "rep_confounding",
       title: "Rep effect before and after controls",
       note: `rep ${rep ? (rep.cv_increment >= 0 ? "+" : "") + rep.cv_increment.toFixed(3) : dash} CV R²`,
+      read: "The left bar is what a naive rep league table would show; the right bar is what rep still explains once job size, product and customer are accounted for — nothing.",
+      changes: "Don't manage reps on raw margin: the apparent differences are inherited accounts, not salesmanship. This panel exists to stop a bad decision, not to prompt one.",
       figure: fRep,
     },
     {
@@ -114,6 +127,8 @@ export default async function DashboardsPage() {
       chart: "churn_comparison",
       title: "Own cadence against a flat 90-day rule",
       note: `${churn.comparison.n_personalised} vs ${churn.comparison.n_fixed} accounts`,
+      read: "At-risk accounts flagged by a company-wide 90-day rule versus each account's own ordering rhythm. The bars disagree on WHICH accounts, not just how many — steady accounts gone quiet are caught months earlier.",
+      changes: "The ranked call list on Customers & actions is built from the own-cadence rule, most valuable accounts first.",
       figure: fChurn,
     },
   ];

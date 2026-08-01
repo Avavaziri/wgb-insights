@@ -27,6 +27,10 @@ export interface Tile {
   chart: string;
   title: string;
   note?: string;
+  /** How to read the figure, one breath, for a non-technical reader. */
+  read: string;
+  /** The single decision the figure informs (or refuses to inform). */
+  changes: string;
   /** Full-period figure, fetched server-side for first paint. */
   figure: unknown;
   /** Descriptive chart that accepts ?year= (charts.SLICEABLE). */
@@ -110,6 +114,19 @@ function SlicedTile({ tile, year }: { tile: Tile; year: number | null }) {
       ) : (
         <PlotlyChart figure={figure} compact={!tile.wide} tall={tile.wide} />
       )}
+      {/* The interpretation layer: how to read it, then the one decision
+          it informs. Two lines, always visible — a chart whose reading
+          lives in a tooltip is a chart the board never reads. */}
+      <div className="space-y-0.5 border-t border-line px-3.5 py-2 text-[11.5px] leading-snug text-muted">
+        <p>
+          <span className="font-semibold text-ink">How to read it</span>{" "}
+          — {tile.read}
+        </p>
+        <p>
+          <span className="font-semibold text-ink">What it changes</span>{" "}
+          — {tile.changes}
+        </p>
+      </div>
     </div>
   );
 }

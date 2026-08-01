@@ -86,29 +86,32 @@ export default async function OverviewPage() {
   const rp = dec.rep_pair;
   const churnAccounts = churn.comparison.n_personalised;
 
-  // Three findings, one card each: area, the claim, the single number that
-  // carries it, one qualifying line. The full argument lives one click away.
+  // The story spine: three acts, one card each, in argument order — where
+  // the margin goes, why prices end up where they do, who to keep. The
+  // number on each card carries the act; the proof lives one click away.
+  // Numbered eyebrows are earned here: the acts ARE a sequence, and the
+  // video walks the app in exactly this order.
   const findings = [
     {
-      area: "Pricing",
-      claim: "Margin is an account property",
-      figure: `+${cust ? cust.cv_increment.toFixed(2) : dash}`,
-      figureLabel: "gain in out-of-sample R² from adding customer identity",
-      support: `Product and rep add ~nothing; ${pct(pricing.scale.override_rate, 0)} of prices are re-priced by hand, net ${gbp(pricing.scale.net_gbp_per_year)}/yr.`,
-      href: "#evidence",
-      link: "See the decomposition",
-    },
-    {
-      area: "Capacity",
+      area: "Act 1 · Where the margin leaks",
       claim: "The press is filled by the work that pays it least",
       figure: pct(cap.share_of_constraint_hours, 0),
-      figureLabel: `of litho hours in jobs over ${th.crossover_hrs.toFixed(1)}h`,
-      support: `Earning ${gbp(cap.pooled_rate_above)}/hr against the factory's own ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average. No optimal size exists.`,
+      figureLabel: `of litho press hours sit in jobs over ${th.crossover_hrs.toFixed(1)}h`,
+      support: `Those hours earn ${gbp(cap.pooled_rate_above)}/hr against the factory's own ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average. There is no optimal job size, only this crossover.`,
       href: "/dashboards",
       link: "Capacity panels",
     },
     {
-      area: "Retention",
+      area: "Act 2 · What governs pricing",
+      claim: "Prices are set by people, and their judgement isn't in the data",
+      figure: pct(pricing.scale.override_rate, 0),
+      figureLabel: `of jobs are re-priced by hand, net ${gbp(pricing.scale.net_gbp_per_year)}/yr`,
+      support: `Margin is a property of the account, not the product or the rep (+${cust ? cust.cv_increment.toFixed(2) : dash} out-of-sample R² from customer identity alone) — and a fairly-tested model cannot reproduce the estimators' adjustments. That knowledge is tacit.`,
+      href: "#evidence",
+      link: "See the model evidence",
+    },
+    {
+      area: "Act 3 · Which customers to keep",
       claim: "The call list is gated, not guessed",
       figure: num(churnAccounts),
       figureLabel: "accounts silent beyond their own cadence",

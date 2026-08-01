@@ -128,11 +128,16 @@ reduces to the above plus not letting outputs be used unfairly against
 staff — which is what the rep analysis is for.
 
 **Where this goes** (the two-year arc, also on the Overview): year 1 —
-instrument press capacity, then a cost-to-serve study; year 2 — capture
-the estimators' tacit pricing knowledge (log the why behind each
-override, structured elicitation, evaluated against this build's
-baselines and the temporal split named above), and feed the intake from
-the MIS so the dashboards run live.
+instrument press capacity (a downtime taxonomy agreed with operators and
+new MIS fields, before any sensor spend), then a cost-to-serve study (a
+time-and-motion sample, not a new system); year 2 — capture the
+estimators' tacit pricing knowledge (one new field on the quote screen
+from day one, then structured elicitation, evaluated against this
+build's baselines and the temporal split named above), and feed the
+intake from the MIS so the dashboards run live. Run as supervised
+research from operations/management science, with the temporal-split
+evaluation of estimator knowledge capture as the partnership's first
+joint output.
 
 ## Methodology (what the numbers mean and don't)
 
@@ -185,10 +190,10 @@ the MIS so the dashboards run live.
   gap > own median × (1 + 1.5 × own CV). n=50 means transparent rules,
   no ML. The rule is BACKTESTED, not just asserted: with the final year
   held out and flags raised from history alone, the personalised rule
-  caught all 3 accounts that then went fully quiet (flagging 8); the
-  fixed 90-day rule caught 2 of 3. "Went quiet for a year" is a proxy
-  for churn and the outcome count is small, so the result always ships
-  with its raw counts, never as bare rates.
+  caught all 3 accounts that then went fully quiet (flagging 9); the
+  fixed 90-day rule caught 2 of 3 (flagging 6). "Went quiet for a year"
+  is a proxy for churn and the outcome count is small, so the result
+  always ships with its raw counts, never as bare rates.
 - **Override learnability:** ridge + GroupKFold grouped on customer
   (plain KFold would leak account pricing patterns) vs the mandatory
   baselines. Result: not learnable for an unseen account (R² −0.07 vs

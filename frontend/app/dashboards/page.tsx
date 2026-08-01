@@ -127,7 +127,7 @@ export default async function DashboardsPage() {
       chart: "churn_comparison",
       title: "Own cadence against a flat 90-day rule",
       note: `${churn.comparison.n_personalised} vs ${churn.comparison.n_fixed} accounts`,
-      read: `At-risk accounts flagged by a company-wide 90-day rule versus each account's own ordering rhythm. The bars disagree on WHICH accounts, not just how many. Backtested with the final year held out: the own-cadence rule caught ${churn.backtest.personalised.n_caught} of the ${churn.backtest.n_went_quiet} accounts that truly went quiet (flagging ${churn.backtest.personalised.n_flagged}); the fixed rule caught ${churn.backtest.fixed.n_caught}. Small outcome counts — churn is rare at ${churn.backtest.n_accounts} accounts — so this is evidence, not proof.`,
+      read: `At-risk accounts flagged by a company-wide 90-day rule versus each account's own ordering rhythm. The bars disagree on WHICH accounts, not just how many. Backtested with the final year held out: the own-cadence rule caught ${churn.backtest.personalised.n_caught} of the ${churn.backtest.n_went_quiet} accounts that truly went quiet, flagging ${churn.backtest.personalised.n_flagged}; the 90-day rule caught ${churn.backtest.fixed.n_caught}, flagging ${churn.backtest.fixed.n_flagged}. The gain is catching them all, bought with a few extra calls — and with ${churn.backtest.n_went_quiet} outcomes in ${churn.backtest.n_accounts} accounts this is evidence, not proof.`,
       changes: "The ranked call list on Customers & actions is built from the own-cadence rule, most valuable accounts first.",
       figure: fChurn,
     },

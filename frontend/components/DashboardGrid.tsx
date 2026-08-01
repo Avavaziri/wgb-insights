@@ -42,6 +42,12 @@ export interface Tile {
   figure: unknown;
   /** Descriptive chart that accepts ?year= (charts.SLICEABLE). */
   sliceable?: boolean;
+  /**
+   * Why this panel has no year filter, when the reason is not the default
+   * (a model-backed estimate). Shown in place of the filter row, because a
+   * missing control needs a reason and the reasons genuinely differ.
+   */
+  noSlice?: string;
   /** Headline panels span both columns and get the taller box. */
   wide?: boolean;
 }
@@ -195,8 +201,8 @@ function SlicedTile({
           </>
         ) : (
           <span className="text-caption text-muted">
-            Full sample always: this panel is model-backed, and a per-year
-            estimate would be a new analysis rather than a filter.
+            {tile.noSlice ??
+              "Full sample always. This panel is model-backed, so a per-year estimate would be a new analysis and not a filter."}
           </span>
         )}
       </div>
@@ -262,7 +268,7 @@ export default function DashboardGrid({
           screen-reader navigation (found in review). No visible second
           heading suits this page's design, so this is the sr-only
           landmark WCAG's own technique recommends for that case. */}
-      <h2 className="sr-only">Every panel, with its own year slicer</h2>
+      <h2 className="sr-only">Panels and year filters</h2>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border border-line bg-white px-3 py-2.5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="eyebrow mr-1">Panels</span>
@@ -305,9 +311,9 @@ export default function DashboardGrid({
           </button>
         </div>
         <span className="ml-auto max-w-[26rem] text-caption text-muted">
-          Each panel has its own year slicer: pick one year to slice, two or
-          more to compare. Python recomputes every figure from the years you
-          pick; nothing is filtered in the browser.
+          Each panel has its own year filter. Pick one year to slice it, or two
+          and more to compare. Python recomputes every figure from the years you
+          pick, so nothing is filtered in the browser.
         </span>
       </div>
 
@@ -315,7 +321,7 @@ export default function DashboardGrid({
 
       {visible.length === 0 ? (
         <p className="border border-line bg-white px-4 py-8 text-center text-body text-muted">
-          Every panel is switched off. Turn one back on above.
+          All panels are hidden. Turn one back on above.
         </p>
       ) : (
         <div className="grid gap-3 xl:grid-cols-2">

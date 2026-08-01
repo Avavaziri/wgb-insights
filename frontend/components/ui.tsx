@@ -91,11 +91,11 @@ export function TileFooter({
     <div className="space-y-0.5 border-t border-line px-3.5 py-2 text-body leading-snug text-ink">
       {read && (
         <p>
-          <span className="font-semibold">How to read it</span> — {read}
+          <span className="font-semibold">How to read it.</span> {read}
         </p>
       )}
       <p>
-        <span className="font-semibold">What it changes</span> — {changes}
+        <span className="font-semibold">What it changes.</span> {changes}
       </p>
     </div>
   );

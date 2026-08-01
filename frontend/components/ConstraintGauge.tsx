@@ -10,7 +10,7 @@
 //
 // The segment wears exactly what every chart bar wears: charcoal fill,
 // the uniform yellow brand outline. Fills carry the data, yellow carries
-// the brand — the same contract the Plotly figures are pytest-tested
+// the brand, the same contract the Plotly figures are pytest-tested
 // against, applied by hand here because this is the one drawn figure the
 // test cannot see. (A yellow FILL was tried and reviewed out: it made the
 // headline quantity the one data area on the site encoded in the colour
@@ -92,7 +92,7 @@ export default function ConstraintGauge({
           {/* Hours in jobs under the crossover. Takes the remainder of the
               width, so the split point is the crossover by construction. */}
           <div className="flex-1 bg-hover" />
-          {/* Hours in jobs over it: the finding — ink fill, yellow brand
+          {/* Hours in jobs over it: the finding. Ink fill, yellow brand
               outline, exactly like the capacity_share bars. */}
           <div
             className="border-[1.5px] border-yellow bg-ink"
@@ -126,8 +126,8 @@ export default function ConstraintGauge({
               {gbp(benchmark)}/hr
             </p>
             <p className="mt-1 text-caption text-muted">
-              Hour-weighted mean. Every job is judged against this line, not
-              against a target.
+              Hour-weighted mean, so every job is measured against what the
+              factory actually achieves.
             </p>
           </div>
           <div className="text-right">
@@ -141,7 +141,7 @@ export default function ConstraintGauge({
       </div>
 
       <TileFooter
-        changes={`This is the margin question in one figure: most of the scarce resource is sold below the factory's own average rate, so large quotes earn a review against that rate. ${lithoNote}`}
+        changes={`The margin question in one figure. Most of the scarce resource is sold below the factory's own average rate, so large quotes earn a review against that rate. ${lithoNote}`}
       />
     </figure>
   );

@@ -84,7 +84,7 @@ export default async function OverviewPage() {
   const rp = dec.rep_pair;
   const churnAccounts = churn.comparison.n_personalised;
 
-  // The story spine: three acts, one card each, in argument order — where
+  // The story spine: three acts, one card each, in argument order. Where
   // the margin goes, why prices end up where they do, who to keep. The
   // number on each card carries the act; the proof lives one click away.
   // Numbered eyebrows are earned here: the acts ARE a sequence, and the
@@ -95,26 +95,26 @@ export default async function OverviewPage() {
       claim: "The press is filled by the work that pays it least",
       figure: pct(cap.share_of_constraint_hours, 0),
       figureLabel: `of litho press hours sit in jobs over ${th.crossover_hrs.toFixed(1)}h`,
-      support: `Those hours earn ${gbp(cap.pooled_rate_above)}/hr against the factory's own ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average — and it holds within accounts: ${th.within_customer_statement}, so this is pricing, not just customer mix. Big runs still carry the fixed costs: price them knowingly, don't refuse them.`,
+      support: `Those hours earn ${gbp(cap.pooled_rate_above)}/hr against the factory's own ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average. The same pattern holds inside individual accounts (${th.within_customer_statement}), so it is about how work gets priced rather than which customers we happen to have. Big runs still carry the factory's fixed costs, so the point is to price them knowingly, not to turn them away.`,
       href: "/dashboards",
       link: "Capacity panels",
     },
     {
       area: "Act 2 · What governs pricing",
-      claim: "Prices are set by people, and their judgement isn't in the data",
+      claim: "Prices are set by people, and their judgement isn't written down anywhere",
       figure: pct(pricing.scale.override_rate, 0),
       figureLabel: `of litho jobs are re-priced by hand, net ${gbpK(pricing.scale.net_gbp_per_year)}/yr`,
-      support: `Margin lives with the account, not the product or the rep, and a fairly-tested model cannot reproduce the estimators' adjustments for an account it hasn't seen: that knowledge is tacit. The Monday action: start recording the why behind each override, so it can be captured.`,
+      support: `Margin tracks the account far more than the product or the rep. A fairly tested model still can't reproduce what the estimators do to a price for an account it has never seen, which puts that knowledge in their heads and nowhere else. Starting Monday: record the reason behind each override so it can be captured.`,
       href: "#evidence",
       link: "See the model evidence",
     },
     {
       area: "Act 3 · Which customers to keep",
-      claim: "The call list is gated, not guessed",
+      claim: "Only accounts with a real rhythm get a predicted date",
       figure: num(churnAccounts),
       figureLabel: "accounts silent beyond their own cadence",
       support:
-        "Regular accounts get a predicted next order; the rest get a risk band and a reason, never an invented date.",
+        "Accounts that order to a steady rhythm get a predicted next order. The rest get a risk band and the reason for it, and no date is invented for them.",
       href: "/actions",
       link: "Open the call list",
     },
@@ -191,12 +191,12 @@ export default async function OverviewPage() {
               level="h2"
               meta={`CAGR ${pct(data.growth.revenue_cagr)} · ${data.partial_year} partial greyed`}
             >
-              Growth is value per job, not volume
+              Revenue grew because jobs got more valuable
             </PanelHead>
             <PlotlyChart
               figure={trendFig}
               tall
-              title={`Growth is value per job, not volume: revenue by year, GBP millions, sample. CAGR ${pct(data.growth.revenue_cagr)}, ${data.partial_year} partial and greyed.`}
+              title={`Revenue grew because jobs got more valuable: revenue by year, GBP millions, sample. CAGR ${pct(data.growth.revenue_cagr)}, ${data.partial_year} partial and greyed.`}
             />
           </Panel>
         </div>
@@ -225,8 +225,8 @@ export default async function OverviewPage() {
 
       <Section
         kicker="Data health"
-        title="Checks on the current file, and what it can't answer"
-        note="If the pricing identity ever fails on an upload, the pricing analysis withholds its numbers rather than guess what a column means."
+        title="Checks on the current file"
+        note="If the pricing identity fails on an upload, the pricing analysis withholds its numbers instead of guessing what a column means."
       >
         <div className="grid gap-3 lg:grid-cols-2">
           <DefList
@@ -268,7 +268,7 @@ export default async function OverviewPage() {
                 value: num(Number(v.n_null_manadj)),
               },
               {
-                label: "Blank binding = outsourced (data, not absence)",
+                label: "Blank binding means outsourced, so it is kept",
                 value: num(Number(v.n_null_binding)),
               },
               {
@@ -276,7 +276,7 @@ export default async function OverviewPage() {
                 value: num(Number(v.n_press_hrs_zero)),
               },
               {
-                label: "Credits quarantined, never silently dropped",
+                label: "Credits set aside for review",
                 value: num(Number(c.n_quarantined_credits)),
               },
             ]}
@@ -306,15 +306,15 @@ export default async function OverviewPage() {
 
       {/* The KTP arc: the data gaps above are not confessions, they are
           the work programme. Each row names the build, the company
-          benefit, and the research substance for the university partner —
-          the three-way partnership on one card. Authored prose; the one
+          benefit, and the research substance for the university partner,
+          which is the three-way partnership on one card. Authored prose; the one
           number in it is interpolated from the API. */}
       <Section
         kicker="Where this goes"
-        title="The gaps are a two-year programme, not a footnote"
-        note="What this system cannot see is exactly what gets built next — each row names the work, what the company gets, and the research question in it for the university partner."
+        title="Turning the gaps into two years of work"
+        note="What this system can't see is what gets built next. Each row names the work, what the company gets from it, and the research question in it for the university partner."
       >
-        <TableFrame caption="Sequencing follows dependency, not ambition: capacity and cost data (year 1) are what make the year-2 pricing work testable against the baselines this build already ships. Run as supervised research from operations/management science, with the temporal-split evaluation of estimator knowledge capture as the partnership's first joint output.">
+        <TableFrame caption="The order follows what depends on what. Capacity and cost data in year 1 are what make the year-2 pricing work testable against the baselines this build already ships. It would run as supervised research from operations and management science, with the temporal-split evaluation of estimator knowledge capture as the partnership's first joint output.">
           <Table>
             <thead>
               <tr>
@@ -329,11 +329,11 @@ export default async function OverviewPage() {
                 <Td className="whitespace-nowrap font-semibold">Year 1</Td>
                 <Td>
                   Instrument press capacity: machine IDs, availability,
-                  downtime — takes a downtime taxonomy agreed with the
+                  downtime. Needs a downtime taxonomy agreed with the
                   operators and new MIS fields, before any sensor spend
                 </Td>
                 <Td>
-                  True utilisation instead of relative load — and the
+                  True utilisation instead of relative load, plus the
                   displaced-work £ figure this system currently refuses to
                   print
                 </Td>
@@ -345,8 +345,8 @@ export default async function OverviewPage() {
                 <Td className="whitespace-nowrap font-semibold">Year 1</Td>
                 <Td>
                   Cost-to-serve study: estimating, admin and make-ready per
-                  order — takes a time-and-motion sample across two or three
-                  departments, not a new system
+                  order. Needs a time-and-motion sample across two or three
+                  departments, and no new system
                 </Td>
                 <Td>
                   Settles whether small jobs actually pay; today contribution
@@ -362,8 +362,8 @@ export default async function OverviewPage() {
                 <Td>
                   Capture the estimators&rsquo; pricing judgement: log the why
                   behind each override at the quote screen, then structured
-                  elicitation — takes one new field on the quote screen from
-                  day one, the estimators&rsquo; time later
+                  elicitation. Needs one new field on the quote screen from
+                  day one, and the estimators&rsquo; time later
                 </Td>
                 <Td>
                   {gbpK(pricing.scale.net_gbp_per_year)}/yr of hand-pricing
@@ -371,7 +371,7 @@ export default async function OverviewPage() {
                 </Td>
                 <Td muted>
                   Tacit-knowledge elicitation for human-in-the-loop pricing,
-                  evaluated against this build&rsquo;s own baselines —
+                  evaluated against this build&rsquo;s own baselines,
                   including the existing-customer temporal split this system
                   names as its next test
                 </Td>
@@ -379,9 +379,9 @@ export default async function OverviewPage() {
               <Tr>
                 <Td className="whitespace-nowrap font-semibold">Year 2</Td>
                 <Td>
-                  Feed the intake from the MIS directly (scheduled export or
-                  API) — takes an export schedule or API access; the analysis
-                  engine itself does not change
+                  Feed the intake from the MIS directly, by scheduled export
+                  or API. Needs an export schedule or API access, and the
+                  analysis engine itself does not change
                 </Td>
                 <Td>
                   Dashboards move from monthly to live; churn flags arrive
@@ -400,11 +400,11 @@ export default async function OverviewPage() {
       <Section
         id="evidence"
         kicker="Evidence & method"
-        title="Every proof, one click deep"
-        note="The statistics behind each claim, including two results held back and the hypotheses that failed."
+        title="The workings behind each claim"
+        note="Open any of these for the statistics underneath, including two results we held back and the hypotheses that failed."
       >
         <Disclosure
-          title={`Every hypothesis tested: ${data.hypothesis_register.length} of them`}
+          title={`All ${data.hypothesis_register.length} hypotheses we tested`}
           hint="registered before the results were known"
         >
           <div className="overflow-x-auto">
@@ -438,10 +438,10 @@ export default async function OverviewPage() {
         </Disclosure>
 
         <Disclosure
-          title="What explains margin, block by block"
-          hint="nested decomposition"
+          title="What explains margin"
+          hint="nested decomposition, block by block"
         >
-          <TableFrame caption="CV increment is the change in out-of-sample R² when the block is added, in the fixed config order. The in-sample-only marker records a block that clears the nested F-test decisively while adding almost no predictive power: statistically present, practically negligible.">
+          <TableFrame caption="CV increment is the change in out-of-sample R² when the block is added, in the fixed config order. The in-sample-only marker records a block that clears the nested F-test decisively while adding almost no predictive power, so it is statistically present but practically negligible.">
             <Table>
               <thead>
                 <tr>
@@ -528,10 +528,10 @@ export default async function OverviewPage() {
           hint="one BH pass, fixed family"
         >
           <p className="measure text-body leading-relaxed">
-            One Benjamini-Hochberg pass over a family of seven tests fixed
-            before any test was run. Anything failing loses headline status
-            automatically and is excluded from the exported slides, so no one
-            decides case by case.
+            One Benjamini-Hochberg pass over a family of seven tests, fixed
+            before any test was run. Anything that fails loses headline status
+            automatically and drops out of the exported slides, so nobody makes
+            that call case by case.
           </p>
           <PlotlyChart
             figure={bhFig}
@@ -540,7 +540,7 @@ export default async function OverviewPage() {
         </Disclosure>
 
         <Disclosure
-          title="Two results computed, and held back"
+          title="Two results we computed but did not headline"
           hint="the reasons matter more than the numbers"
         >
           <div className="grid gap-3 lg:grid-cols-2">
@@ -554,11 +554,10 @@ export default async function OverviewPage() {
               }
             >
               Raw p = {pval(me.p_value)} becomes {pval(me.p_value_adj)} after
-              the correction, so it is dropped from the headlines
-              automatically. It would not mean declining the work either: most
-              of the cost base is fixed, so a lower-rate hour still beats an
-              idle one. It is an argument for pricing the premium, not for
-              turning jobs away.
+              the correction, so it drops out of the headlines automatically.
+              Even if it had held, it would not be a reason to decline the
+              work. Most of the cost base is fixed, so a lower-rate hour still
+              beats an idle one. It is an argument for pricing the premium.
             </NoteCard>
             <NoteCard
               chip="Excluded for selection bias"
@@ -570,8 +569,9 @@ export default async function OverviewPage() {
               }
             >
               This one survives the correction at {pval(oe.p_value_adj)} and is
-              still excluded: overrides land on jobs humans chose to adjust.
-              The bias, not the p-value, is the problem.
+              still excluded, because overrides only ever land on jobs somebody
+              chose to adjust. A clean p-value cannot rescue a sample selected
+              that way.
             </NoteCard>
           </div>
           <Evidence
@@ -599,13 +599,13 @@ export default async function OverviewPage() {
         </Disclosure>
 
         <Disclosure
-          title="Can the overrides be predicted? A negative result"
-          hint="the baselines are the proof"
+          title="Can the overrides be predicted?"
+          hint="a negative result, and the baselines are the proof"
         >
           <p className="measure text-body leading-relaxed">
             If a model could predict the override from what is known at quote
-            time, the adjustment could be built into the price list. It
-            cannot: {m.model_family}, GroupKFold grouped on customer so no
+            time, the adjustment could be built into the price list. It cannot.
+            The setup: {m.model_family}, GroupKFold grouped on customer so no
             account appears in both training and test data, scored against
             zero-effort baselines.
           </p>
@@ -631,10 +631,10 @@ export default async function OverviewPage() {
         </Disclosure>
 
         <Disclosure
-          title="The rush finding: sensitivity, and the interaction that failed"
-          hint="threshold sensitivity + rush × load"
+          title="How sensitive the rush finding is"
+          hint="threshold sensitivity, and the interaction that failed"
         >
-          <TableFrame caption="Rush is proxied by bottom-percentile dwell time within a size band; no scheduling data exists in this extract. The sign is stable across every percentile; the significance is not, which is the honest reading and part of why the finding was demoted.">
+          <TableFrame caption="Rush is proxied by bottom-percentile dwell time within a size band, since no scheduling data exists in this extract. The sign holds at every percentile but the significance does not, which is part of why the finding was demoted.">
             <Table>
               <thead>
                 <tr>
@@ -712,18 +712,19 @@ export default async function OverviewPage() {
         </Disclosure>
 
         <Disclosure
-          title="Reproducing and interrogating the numbers"
+          title="How to reproduce and check these numbers"
           hint="seeds, API, standards"
         >
           <ul className="m-0 list-none space-y-2 text-body leading-relaxed">
             <li>
               Every job-level model uses cluster-robust standard errors on
               customer, and no effect is reported without its CI, p, n and
-              SE type: the result records make a bare number impossible.
+              SE type. The result records are typed so a bare number cannot
+              be published.
             </li>
             <li>
-              Thresholds are derived, never chosen, and always reported as a
-              range with a bootstrap interval (crossover:{" "}
+              Thresholds are derived rather than picked, and always reported
+              as a range with a bootstrap interval (crossover:{" "}
               <span className="num">
                 {th.crossover_window_range[0].toFixed(1)}–
                 {th.crossover_window_range[1].toFixed(1)}h window range,{" "}
@@ -733,8 +734,9 @@ export default async function OverviewPage() {
               ).
             </li>
             <li>
-              The as-of date comes from the latest sale in the file, never
-              the clock, so the same file gives the same answers on any day.
+              The as-of date comes from the latest sale in the file rather
+              than the clock, so the same file gives the same answers on any
+              day.
             </li>
             <li>
               Seeds are fixed (

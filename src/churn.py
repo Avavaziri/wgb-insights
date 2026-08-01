@@ -128,7 +128,7 @@ def backtest_rules(
     the history before that cutoff, then score against the one outcome
     the data itself defines: accounts that placed NO order at all in the
     held-out window. "Went fully quiet for a year" is a proxy for churn,
-    not churn itself — but it is the same proxy both rules are judged
+    not churn itself, but it is the same proxy both rules are judged
     on, so the comparison is fair. Outcome counts are small (churn is
     rare at ~50 accounts), so the figures must always be shown with
     their raw counts, never as bare rates.

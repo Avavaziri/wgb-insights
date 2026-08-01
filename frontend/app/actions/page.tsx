@@ -115,9 +115,9 @@ export default async function ActionsPage() {
       <Section
         kicker="Most valuable types of work"
         title="What we print, ranked by what it contributes"
-        note="The £/press-hr column is the constraint view: high-contribution work is not automatically high-rate work."
+        note="The £/press-hr column is the constraint view. Work that contributes a lot is not automatically work that earns a good hourly rate."
       >
-        <TableFrame caption="Small product types roll into 'Other (long tail)' rather than disappearing. Contribution flatters small jobs (no cost-to-serve data): this is a map of where money comes from, not a strategy by itself.">
+        <TableFrame caption="Small product types roll into 'Other (long tail)' instead of disappearing. Contribution flatters small jobs because there is no cost-to-serve data here, so read this as a map of where the money comes from and not as a strategy on its own.">
           <Table>
             <thead>
               <tr>
@@ -160,7 +160,7 @@ export default async function ActionsPage() {
       <Section
         kicker="Retention"
         title="Ranked call list"
-        note="Risk band first, then account value, so the valuable ones get rung first. For overdue accounts the last column shows the date they were already due; no cadence means no date at all — the system never guesses."
+        note="Risk band first, then account value, so the valuable ones get rung first. For overdue accounts the last column shows the date they were already due. Where there is no cadence to work from, there is no date at all."
       >
         <LinkButton href={`${API_BASE}/call-list.csv`} download="call_list.csv">
           <svg aria-hidden viewBox="0 0 16 16" className="size-4">
@@ -217,11 +217,11 @@ export default async function ActionsPage() {
                     {/* For a flagged account the expected date has, by
                         definition, already passed (that is what flagged
                         means), so it is labelled as the date they were
-                        due — never shown as a fresh promise. The band is
+                        due, never as a fresh promise. The band is
                         the API's own category; no date maths happens here. */}
                     <Td num className={r.expected_next_order ? "" : "text-muted"}>
                       {r.expected_next_order === null
-                        ? "not forecastable, no date invented"
+                        ? "no cadence, so no date"
                         : r.risk_band === "normal"
                           ? r.expected_next_order
                           : `was due ${r.expected_next_order}`}
@@ -234,11 +234,11 @@ export default async function ActionsPage() {
         </Panel>
         <p className="measure text-caption leading-relaxed text-muted">
           &ldquo;Own cadence&rdquo; is the account&rsquo;s median gap between
-          order dates, and &ldquo;variability&rdquo; is how steady that rhythm
-          is (statistically, the coefficient of variation; 0 is clockwork).
-          The at-risk rule: silent beyond your own median gap × (1 + 1.5 ×
-          your own variability) — an account is judged against its own
-          rhythm, not a company-wide number of days.
+          order dates. &ldquo;Variability&rdquo; is how steady that rhythm is
+          (statistically, the coefficient of variation, where 0 is clockwork).
+          An account counts as at risk once it has been silent for longer than
+          its own median gap × (1 + 1.5 × its own variability), so it is judged
+          against its own rhythm instead of a company-wide number of days.
         </p>
       </Section>
     </>

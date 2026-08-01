@@ -124,8 +124,8 @@ def trend_context(pr: PipelineResult) -> go.Figure:
     ] + ([f"£{partial_rev / 1e6:.2f}m<br>to {pr.clean_report.as_of}"] if partial_year else [])
 
     fig = _fig(
-        "Growth is value per job, not volume",
-        "Revenue by full year, GBP m (sample); the part year is greyed, not hidden",
+        "Revenue grew because jobs got more valuable",
+        "Revenue by full year, GBP m (sample); the part year is shown in grey",
     )
     fig.add_bar(x=years, y=revenue,
                 marker={"color": colors, "line": EDGE},
@@ -188,7 +188,7 @@ def rep_confounding(pr: PipelineResult) -> go.Figure:
     """Asset 3: what a naive rep dashboard shows vs what survives controls."""
     naive = pr.rep_pair["naive"]
     fig = _fig(
-        "Rep differences are customer mix, not salesmanship",
+        "What looks like a rep effect is inherited accounts",
         "Margin variation explained by rep, out of sample: alone, then once "
         "size, product and account are already accounted for",
     )
@@ -622,7 +622,7 @@ CHARTS: dict[str, Any] = {
 
 # Charts that accept a year slice: descriptive counts and sums only, each
 # recomputed in Python on the year's rows. Model-backed figures are never
-# sliced — a per-year effect estimate would be a new analysis, not a filter.
+# sliced: a per-year effect estimate would be a new analysis, not a filter.
 SLICEABLE: frozenset[str] = frozenset(
     {"override_scale", "capacity_share", "rate_curve"}
 )

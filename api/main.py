@@ -221,7 +221,7 @@ def thresholds() -> schemas.ThresholdsResponse:
             f"pooled across all accounts, a twice-bigger job earns "
             f"{abs(p_pct):.0f}% {'less' if pooled.coef < 0 else 'more'} per "
             f"press-hour; with the account held fixed it still earns "
-            f"{abs(w_pct):.0f}% {'less' if within.coef < 0 else 'more'} — "
+            f"{abs(w_pct):.0f}% {'less' if within.coef < 0 else 'more'}, and "
             f"the gap between the two is customer mix"
         ),
         monotonicity=th["monotonicity"],

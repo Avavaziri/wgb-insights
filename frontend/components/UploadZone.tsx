@@ -90,11 +90,11 @@ export default function UploadZone() {
           <span className="font-semibold">Update with new data.</span>{" "}
           <span className="text-muted">
             Drop the latest <span className="font-mono text-caption">.xlsx</span>{" "}
-            of the same format and these dashboards refresh from it: every
-            figure, threshold and call list recomputes, nothing else changes.
-            The manual drop is only the transport: the same intake can be fed
-            by a scheduled MIS export or a direct API read, making these
-            dashboards live.
+            in the same format and these dashboards refresh from it: every
+            figure, threshold and call list recomputes. The manual drop is only
+            the transport. The same intake can be fed by a scheduled MIS export
+            or a direct API read, which is what would make these dashboards
+            live.
           </span>
         </p>
         <button

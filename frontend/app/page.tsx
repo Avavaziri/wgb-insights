@@ -209,15 +209,15 @@ export default async function OverviewPage() {
               href={f.href}
               className="plain group block border border-line bg-white px-4 py-3 no-underline transition-colors hover:bg-hover"
             >
-              <span className="eyebrow block text-[10px]">{f.area}</span>
-              <span className="mt-1 block text-[14px] font-semibold leading-snug">
+              <span className="eyebrow block">{f.area}</span>
+              <span className="mt-1 block text-emphasis font-semibold leading-snug">
                 {f.claim}
               </span>
-              <span className="mt-1 block text-[12px] leading-snug text-muted">
+              <span className="mt-1 block text-body leading-snug text-muted">
                 <span className="num font-semibold text-ink">{f.figure}</span>{" "}
                 {f.figureLabel}. {f.support}
               </span>
-              <span className="mt-1.5 block text-[12px] font-semibold underline underline-offset-2">
+              <span className="mt-1.5 block text-caption font-semibold underline underline-offset-2">
                 {f.link}
               </span>
             </Link>
@@ -293,10 +293,10 @@ export default async function OverviewPage() {
                   key={g.gap}
                   className="flex flex-col gap-1 px-4 py-2 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
                 >
-                  <p className="text-[13px] font-semibold leading-snug">
+                  <p className="text-body font-semibold leading-snug">
                     {g.gap}
                   </p>
-                  <p className="text-[11.5px] leading-snug text-muted sm:max-w-[16rem] sm:shrink-0 sm:text-right">
+                  <p className="text-caption leading-snug text-muted sm:max-w-[16rem] sm:shrink-0 sm:text-right">
                     {g.blocks}
                   </p>
                 </li>
@@ -429,7 +429,7 @@ export default async function OverviewPage() {
                         {e.status.replace("_", " ")}
                       </Chip>
                     </Td>
-                    <Td muted className="text-[12.5px]">
+                    <Td muted className="text-caption">
                       {e.evidence}
                     </Td>
                   </Tr>
@@ -504,7 +504,7 @@ export default async function OverviewPage() {
               </tbody>
             </Table>
           </TableFrame>
-          <p className="measure text-[13.5px] font-medium leading-relaxed">
+          <p className="measure text-body font-medium leading-relaxed">
             {rp.conclusion}
           </p>
           <Readout
@@ -529,7 +529,7 @@ export default async function OverviewPage() {
           title="The correction that demoted our own finding"
           hint="one BH pass, fixed family"
         >
-          <p className="measure text-[13.5px] leading-relaxed">
+          <p className="measure text-body leading-relaxed">
             One Benjamini-Hochberg pass over a family of seven tests fixed
             before any test was run. Anything failing loses headline status
             automatically and is excluded from the exported slides, so no one
@@ -604,7 +604,7 @@ export default async function OverviewPage() {
           title="Can the overrides be predicted? A negative result"
           hint="the baselines are the proof"
         >
-          <p className="measure text-[13.5px] leading-relaxed">
+          <p className="measure text-body leading-relaxed">
             If a model could predict the override from what is known at quote
             time, the adjustment could be built into the price list. It
             cannot: {m.model_family}, GroupKFold grouped on customer so no
@@ -627,7 +627,7 @@ export default async function OverviewPage() {
               { label: "Jobs / customers", value: `${num(m.n_obs)} / ${num(m.n_clusters)}` },
             ]}
           />
-          <p className="measure text-[13.5px] font-medium leading-relaxed">
+          <p className="measure text-body font-medium leading-relaxed">
             {m.finding}
           </p>
         </Disclosure>
@@ -670,7 +670,7 @@ export default async function OverviewPage() {
           </TableFrame>
           {/* Adjudicated: the descriptive load gradient may only ever appear
               adjacent to the failed interaction test, never on its own. */}
-          <p className="measure text-[13.5px] leading-relaxed">
+          <p className="measure text-body leading-relaxed">
             {rush.interaction.inconclusive}
           </p>
           <Evidence
@@ -695,7 +695,7 @@ export default async function OverviewPage() {
               {rush.interaction.simple_slopes.map((s) => (
                 <span
                   key={String(s.load_bin)}
-                  className="num border border-line bg-white px-3 py-1.5 text-[12.5px]"
+                  className="num border border-line bg-white px-3 py-1.5 text-caption"
                 >
                   <span className="text-muted">
                     load bin {String(s.load_bin)}
@@ -717,7 +717,7 @@ export default async function OverviewPage() {
           title="Reproducing and interrogating the numbers"
           hint="seeds, API, standards"
         >
-          <ul className="m-0 list-none space-y-2 text-[13.5px] leading-relaxed">
+          <ul className="m-0 list-none space-y-2 text-body leading-relaxed">
             <li>
               Every job-level model uses cluster-robust standard errors on
               customer, and no effect is reported without its CI, p, n and

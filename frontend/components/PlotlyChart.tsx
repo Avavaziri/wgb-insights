@@ -25,7 +25,7 @@ const Plot = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex h-full min-h-[228px] items-center justify-center">
-        <span className="flex items-center gap-2.5 text-[12.5px] text-muted">
+        <span className="flex items-center gap-2.5 text-caption text-muted">
           <span className="size-3 animate-spin rounded-full border-2 border-line border-t-ink" />
           Rendering
         </span>
@@ -135,7 +135,7 @@ export default function PlotlyChart({
         </div>
       </div>
       {caption && (
-        <figcaption className="measure text-[13px] leading-relaxed text-muted">
+        <figcaption className="measure text-body leading-relaxed text-muted">
           {caption}
         </figcaption>
       )}

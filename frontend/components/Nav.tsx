@@ -39,7 +39,7 @@ export default function Nav() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className={`plain -mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-3 text-[13px] no-underline transition-colors ${
+              className={`plain -mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-3 text-body no-underline transition-colors ${
                 active
                   ? "border-yellow font-semibold text-ink"
                   : "border-transparent text-muted hover:text-ink"

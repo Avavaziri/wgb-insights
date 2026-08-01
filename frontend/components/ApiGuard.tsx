@@ -7,17 +7,17 @@ export function ApiDown({ message }: { message: string }) {
   return (
     <div className="mx-auto max-w-xl border border-line border-l-[6px] border-l-yellow bg-white p-8">
       <p className="eyebrow">Nothing to show</p>
-      <p className="mt-2 text-[19px] font-semibold">
+      <p className="mt-2 text-heading font-semibold">
         The analysis API is not answering
       </p>
-      <p className="measure mt-2 text-[14px] leading-relaxed text-muted">
+      <p className="measure mt-2 text-body leading-relaxed text-muted">
         {message}
       </p>
-      <p className="mt-4 text-[13px] leading-relaxed">
+      <p className="mt-4 text-body leading-relaxed">
         Every number on this site is computed in Python and fetched, so there is
         nothing cached here to fall back to. Start it and reload:
       </p>
-      <pre className="mt-3 w-fit bg-ink px-4 py-3 font-mono text-[13px] leading-relaxed text-white">
+      <pre className="mt-3 w-fit bg-ink px-4 py-3 font-mono text-body leading-relaxed text-white">
         conda activate wgb-insights{"\n"}make api
       </pre>
     </div>

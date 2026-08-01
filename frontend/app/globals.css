@@ -44,6 +44,28 @@
   --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
 
   --radius-none: 0;
+
+  /* THE TYPE SCALE. Named steps, not px values scattered per component:
+     a design review found 18 distinct arbitrary sizes across the app,
+     83% of all text crowded into a 12-15.4px band that read as flat
+     rather than hierarchical, and the same semantic role (a panel
+     title) set at two different sizes in two components because
+     neither imported the other's number. Six steps, each with one job:
+       micro     10.5px  eyebrows, chip/table-header labels, tiny meta
+       caption   12px    secondary/muted lines, footnote qualifiers
+       body      13px    reading text: paragraphs, table cells, buttons
+       emphasis  15px    claims, panel/tile TITLES, disclosure triggers
+       heading   22px    Section h2, the masthead lockup
+       title     26px    the page h1, the big KPI figure
+     --text-hero (40px, the gauge's one lead figure) stays a component
+     -local one-off in ConstraintGauge.tsx: a true singular moment, not
+     a repeating role, is exactly what a scale should NOT swallow. */
+  --text-micro: 10.5px;
+  --text-caption: 12px;
+  --text-body: 13px;
+  --text-emphasis: 15px;
+  --text-heading: 22px;
+  --text-title: 26px;
 }
 
 @layer base {
@@ -68,7 +90,7 @@
   }
 
   .eyebrow {
-    font-size: 10.5px;
+    font-size: var(--text-micro);
     font-weight: 700;
     letter-spacing: 0.09em;
     text-transform: uppercase;

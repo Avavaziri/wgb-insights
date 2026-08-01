@@ -53,14 +53,14 @@ export default function RootLayout({
               className="h-[50px] w-auto"
             />
             <span className="leading-tight">
-              <span className="block text-[22px] font-bold tracking-[-0.01em]">
+              <span className="block text-heading font-bold tracking-[-0.01em]">
                 Sales Insights
               </span>
-              <span className="eyebrow block text-[10px] text-white/60">
+              <span className="eyebrow block text-white/60">
                 Margin &amp; capacity workspace
               </span>
             </span>
-            <span className="eyebrow ml-auto hidden text-[10.5px] text-white lg:block">
+            <span className="eyebrow ml-auto hidden text-white lg:block">
               Printing since <span className="text-yellow">1862</span>
             </span>
           </div>
@@ -75,7 +75,7 @@ export default function RootLayout({
         <HeronWatermark />
 
         <footer className="relative z-10 mt-4 border-t border-line py-6">
-          <div className="mx-auto max-w-[104rem] px-6 text-[12px] leading-relaxed text-muted">
+          <div className="mx-auto max-w-[104rem] px-6 text-caption leading-relaxed text-muted">
             W&amp;G Baird internal analysis. Figures are computed from the
             uploaded sales extract; this sample covers part of company turnover
             and nothing here extrapolates to company totals.

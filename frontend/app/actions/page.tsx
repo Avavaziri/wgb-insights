@@ -209,7 +209,7 @@ export default async function ActionsPage() {
                       {BAND_TONE[r.risk_band] ? (
                         <Chip tone={BAND_TONE[r.risk_band]}>{r.risk_band}</Chip>
                       ) : (
-                        <span className="text-[13px] text-muted">
+                        <span className="text-body text-muted">
                           {r.risk_band}
                         </span>
                       )}
@@ -232,7 +232,7 @@ export default async function ActionsPage() {
             </Table>
           </div>
         </Panel>
-        <p className="measure text-[12.5px] leading-relaxed text-muted">
+        <p className="measure text-caption leading-relaxed text-muted">
           &ldquo;Own cadence&rdquo; is the account&rsquo;s median gap between
           order dates, and &ldquo;variability&rdquo; is how steady that rhythm
           is (statistically, the coefficient of variation; 0 is clockwork).

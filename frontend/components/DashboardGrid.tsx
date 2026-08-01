@@ -64,7 +64,7 @@ function YearChip({
       onClick={onClick}
       aria-pressed={on}
       title={title}
-      className={`border px-2 py-0.5 text-[11px] font-semibold transition-colors ${
+      className={`border px-2 py-0.5 text-caption font-semibold transition-colors ${
         on
           ? "border-ink bg-ink text-white"
           : "border-line bg-white text-muted hover:border-ink hover:text-ink"
@@ -147,15 +147,15 @@ function SlicedTile({
   return (
     <div className="border border-line bg-white">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line px-3.5 py-2.5">
-        {/* Same semantic role as ui.tsx's PanelHead (a panel title), so
-            the same size: they had drifted to 13px vs 13.5px, found in
-            review. Not literally reusing PanelHead - this header also
-            carries the "comparing N" badge PanelHead's meta slot doesn't
-            model - but the text itself must match. */}
-        <h3 className="text-[13.5px] font-semibold">{tile.title}</h3>
-        <span className="num text-[11.5px] text-muted">
+        {/* Same semantic role as ui.tsx's PanelHead (a panel title): both
+            now text-emphasis, where they had drifted to 13px vs 13.5px
+            (found in review). Not literally reusing PanelHead - this
+            header also carries the "comparing N" badge PanelHead's meta
+            slot doesn't model - but the text itself must match. */}
+        <h3 className="text-emphasis font-semibold">{tile.title}</h3>
+        <span className="num text-caption text-muted">
           {picked.length > 1 && (
-            <span className="mr-2 border border-ink px-1.5 py-px text-[10px] font-semibold uppercase tracking-[0.05em] text-ink">
+            <span className="mr-2 border border-ink px-1.5 py-px text-micro font-semibold uppercase tracking-[0.05em] text-ink">
               comparing {picked.length}
             </span>
           )}
@@ -169,7 +169,7 @@ function SlicedTile({
       <div className="flex flex-wrap items-center gap-1.5 border-b border-line bg-hover/40 px-3.5 py-1.5">
         {tile.sliceable ? (
           <>
-            <span className="eyebrow mr-0.5 text-[9.5px]">Years</span>
+            <span className="eyebrow mr-0.5">Years</span>
             <YearChip
               label="All"
               on={picked.length === 0}
@@ -185,7 +185,7 @@ function SlicedTile({
                 title={`Add or remove ${y}; pick two or more to compare`}
               />
             ))}
-            <span className="ml-auto text-[10.5px] text-muted">
+            <span className="ml-auto text-caption text-muted">
               {picked.length > 1
                 ? "compared, recomputed in Python"
                 : picked.length === 1
@@ -194,7 +194,7 @@ function SlicedTile({
             </span>
           </>
         ) : (
-          <span className="text-[10.5px] text-muted">
+          <span className="text-caption text-muted">
             Full sample always: this panel is model-backed, and a per-year
             estimate would be a new analysis rather than a filter.
           </span>
@@ -206,7 +206,7 @@ function SlicedTile({
           announce unrelated re-renders. */}
       <div aria-live="polite">
         {state === "error" ? (
-          <p className="px-4 py-8 text-center text-[12.5px] text-muted">
+          <p className="px-4 py-8 text-center text-caption text-muted">
             This year&rsquo;s figure did not load. Pick another year or All
             years.
           </p>
@@ -214,7 +214,7 @@ function SlicedTile({
           <div
             className={`flex w-full items-center justify-center ${tile.wide ? "h-[320px]" : "h-[228px]"}`}
           >
-            <span className="flex items-center gap-2.5 text-[12.5px] text-muted">
+            <span className="flex items-center gap-2.5 text-caption text-muted">
               <span className="size-3 animate-spin rounded-full border-2 border-line border-t-ink" />
               Recomputing {picked.join(" vs ")} in Python
             </span>
@@ -274,7 +274,7 @@ export default function DashboardGrid({
                 type="button"
                 onClick={() => toggle(g)}
                 aria-pressed={on}
-                className={`border px-2.5 py-1 text-[12px] font-semibold transition-colors ${
+                className={`border px-2.5 py-1 text-caption font-semibold transition-colors ${
                   on
                     ? "border-ink bg-ink text-white"
                     : "border-line bg-white text-muted hover:border-ink hover:text-ink"
@@ -292,19 +292,19 @@ export default function DashboardGrid({
           <button
             type="button"
             onClick={() => setAll([])}
-            className="border border-line bg-white px-2.5 py-1 text-[12px] font-semibold text-muted transition-colors hover:border-ink hover:text-ink"
+            className="border border-line bg-white px-2.5 py-1 text-caption font-semibold text-muted transition-colors hover:border-ink hover:text-ink"
           >
             All years
           </button>
           <button
             type="button"
             onClick={() => setAll(years)}
-            className="border border-line bg-white px-2.5 py-1 text-[12px] font-semibold text-muted transition-colors hover:border-ink hover:text-ink"
+            className="border border-line bg-white px-2.5 py-1 text-caption font-semibold text-muted transition-colors hover:border-ink hover:text-ink"
           >
             Compare every year
           </button>
         </div>
-        <span className="ml-auto max-w-[26rem] text-[11.5px] text-muted">
+        <span className="ml-auto max-w-[26rem] text-caption text-muted">
           Each panel has its own year slicer: pick one year to slice, two or
           more to compare. Python recomputes every figure from the years you
           pick; nothing is filtered in the browser.
@@ -314,7 +314,7 @@ export default function DashboardGrid({
       {lead}
 
       {visible.length === 0 ? (
-        <p className="border border-line bg-white px-4 py-8 text-center text-[13px] text-muted">
+        <p className="border border-line bg-white px-4 py-8 text-center text-body text-muted">
           Every panel is switched off. Turn one back on above.
         </p>
       ) : (

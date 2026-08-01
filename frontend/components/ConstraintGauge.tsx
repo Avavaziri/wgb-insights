@@ -58,7 +58,7 @@ export default function ConstraintGauge({
     return (
       <div className="border border-line bg-white px-4 py-3">
         <p className="eyebrow">Constraint-hours</p>
-        <p className="measure mt-1.5 text-[13.5px] leading-relaxed">
+        <p className="measure mt-1.5 text-body leading-relaxed">
           The rate curve does not cross the benchmark in this extract, so
           there is no crossover size to split capacity at. {lithoNote}
         </p>
@@ -72,11 +72,11 @@ export default function ConstraintGauge({
   return (
     <figure className="m-0 border border-line bg-white">
       <figcaption className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-2.5">
-        <span className="text-[13px] font-semibold">
+        <span className="text-emphasis font-semibold">
           {width} of press hours sit in jobs that earn below the factory
           average
         </span>
-        <span className="num text-[11.5px] text-muted">
+        <span className="num text-caption text-muted">
           litho press hours, smallest jobs to largest · crossover at{" "}
           {crossoverHrs.toFixed(1)} h
           {/* the headline share carries the crossover's own uncertainty:
@@ -113,8 +113,8 @@ export default function ConstraintGauge({
               style={{ left: `${t}%` }}
             />
           ))}
-          <span className="eyebrow absolute left-0 top-3 text-[9px]">0%</span>
-          <span className="eyebrow absolute right-0 top-3 text-[9px]">
+          <span className="eyebrow absolute left-0 top-3">0%</span>
+          <span className="eyebrow absolute right-0 top-3">
             100% of press hours
           </span>
         </div>
@@ -122,10 +122,10 @@ export default function ConstraintGauge({
         <div className="mt-6 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
           <div>
             <p className="eyebrow">The factory&rsquo;s own average rate</p>
-            <p className="num mt-1.5 text-[19px] font-semibold">
+            <p className="num mt-1.5 text-heading font-semibold">
               {gbp(benchmark)}/hr
             </p>
-            <p className="mt-1 text-[12px] text-muted">
+            <p className="mt-1 text-caption text-muted">
               Hour-weighted mean. Every job is judged against this line, not
               against a target.
             </p>
@@ -133,7 +133,7 @@ export default function ConstraintGauge({
           <div className="text-right">
             <p className="eyebrow">{width} of press hours run at</p>
             <p className="figure-lead mt-1.5 text-[40px]">{gbp(rateAbove)}</p>
-            <p className="mt-1.5 text-[12px] text-muted">
+            <p className="mt-1.5 text-caption text-muted">
               per press-hour, in jobs over {crossoverHrs.toFixed(1)} h
             </p>
           </div>

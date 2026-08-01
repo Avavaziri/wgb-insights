@@ -86,10 +86,10 @@ export default function UploadZone() {
       }`}
     >
       <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-4 py-2.5">
-        <p className="min-w-0 flex-1 text-[13px]">
+        <p className="min-w-0 flex-1 text-body">
           <span className="font-semibold">Update with new data.</span>{" "}
           <span className="text-muted">
-            Drop the latest <span className="font-mono text-[12px]">.xlsx</span>{" "}
+            Drop the latest <span className="font-mono text-caption">.xlsx</span>{" "}
             of the same format and these dashboards refresh from it: every
             figure, threshold and call list recomputes, nothing else changes.
             The manual drop is only the transport: the same intake can be fed
@@ -100,7 +100,7 @@ export default function UploadZone() {
         <button
           onClick={() => input.current?.click()}
           disabled={busy}
-          className="inline-flex shrink-0 items-center gap-2 border-[1.5px] border-ink bg-ink px-4 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-yellow hover:text-ink disabled:cursor-wait"
+          className="inline-flex shrink-0 items-center gap-2 border-[1.5px] border-ink bg-ink px-4 py-1.5 text-body font-semibold text-white transition-colors hover:bg-yellow hover:text-ink disabled:cursor-wait"
         >
           {busy && (
             <span className="size-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -121,7 +121,7 @@ export default function UploadZone() {
       {message && (
         <p
           aria-live="polite"
-          className={`border-t border-line px-4 py-2.5 text-[12.5px] ${
+          className={`border-t border-line px-4 py-2.5 text-body ${
             phase === "error" ? "font-semibold text-ink" : "text-muted"
           }`}
         >

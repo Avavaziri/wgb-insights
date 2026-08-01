@@ -88,7 +88,7 @@ export function TileFooter({
   changes: string;
 }) {
   return (
-    <div className="space-y-0.5 border-t border-line px-3.5 py-2 text-[12.5px] leading-snug text-ink">
+    <div className="space-y-0.5 border-t border-line px-3.5 py-2 text-body leading-snug text-ink">
       {read && (
         <p>
           <span className="font-semibold">How to read it</span> — {read}
@@ -124,16 +124,16 @@ export function PageHeader({
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
         <div className="min-w-0">
           <Eyebrow>{eyebrow}</Eyebrow>
-          <h1 className="mt-1 text-[23px] sm:text-[26px]">{title}</h1>
+          <h1 className="mt-1 text-title">{title}</h1>
         </div>
         {meta && (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pb-0.5 text-[12px] text-muted">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pb-0.5 text-caption text-muted">
             {meta}
           </div>
         )}
       </div>
       {lede && (
-        <p className="measure mt-2 text-[13px] leading-relaxed text-muted">
+        <p className="measure mt-2 text-body leading-relaxed text-muted">
           {lede}
         </p>
       )}
@@ -164,12 +164,12 @@ export function Section({
   return (
     <section className="scroll-mt-4 space-y-3" id={id}>
       <div className="rail">
-        <h2 className="text-[19px]">
+        <h2 className="text-heading">
           {kicker && <span className="eyebrow mr-3 align-[3px]">{kicker}</span>}
           {title}
         </h2>
         {note && (
-          <p className="mt-1 max-w-[80ch] text-[12.5px] leading-snug text-muted">
+          <p className="mt-1 max-w-[80ch] text-caption leading-snug text-muted">
             {note}
           </p>
         )}
@@ -215,8 +215,8 @@ export function PanelHead({
   const Tag = level;
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-2.5">
-      <Tag className="text-[13.5px] font-semibold">{children}</Tag>
-      {meta && <span className="num text-[12px] text-muted">{meta}</span>}
+      <Tag className="text-emphasis font-semibold">{children}</Tag>
+      {meta && <span className="num text-caption text-muted">{meta}</span>}
     </div>
   );
 }
@@ -257,12 +257,12 @@ export function Kpi({
     "border border-line border-t-2 border-t-yellow bg-white px-4 py-3";
   const inner = (
     <>
-      <span className="eyebrow block text-[10px] leading-tight">{label}</span>
-      <span className="num mt-1.5 block text-[26px] font-bold tracking-[-0.02em]">
+      <span className="eyebrow block leading-tight">{label}</span>
+      <span className="num mt-1.5 block text-title font-bold tracking-[-0.02em]">
         {value}
       </span>
       {sub && (
-        <span className="mt-1 block text-[11.5px] leading-snug text-muted">
+        <span className="mt-1 block text-caption leading-snug text-muted">
           {sub}
         </span>
       )}
@@ -309,12 +309,12 @@ export function Readout({
     >
       {items.map((it) => (
         <div key={it.label} className="px-4 py-3">
-          <dt className="eyebrow text-[10px] leading-tight">{it.label}</dt>
+          <dt className="eyebrow leading-tight">{it.label}</dt>
           <dd
             className={`num mt-1.5 ${
               it.tone === "mono"
-                ? "font-mono text-[11.5px] leading-snug text-muted"
-                : "text-[15px] font-semibold"
+                ? "font-mono text-caption leading-snug text-muted"
+                : "text-emphasis font-semibold"
             }`}
           >
             {it.value}
@@ -342,7 +342,7 @@ export function Evidence({
 }) {
   return (
     <details className="group border border-line bg-white">
-      <summary className="flex cursor-pointer items-center gap-2 px-3.5 py-2 text-[12.5px] font-semibold text-muted hover:bg-hover hover:text-ink">
+      <summary className="flex cursor-pointer items-center gap-2 px-3.5 py-2 text-body font-semibold text-muted hover:bg-hover hover:text-ink">
         <svg
           aria-hidden
           viewBox="0 0 12 12"
@@ -379,8 +379,8 @@ export function NoteCard({
   return (
     <div className="border border-line bg-white p-4">
       <Chip tone={tone}>{chip}</Chip>
-      <p className="mt-3 text-[14.5px] font-semibold leading-snug">{claim}</p>
-      <p className="mt-2 text-[13px] leading-relaxed text-muted">{children}</p>
+      <p className="mt-3 text-emphasis font-semibold leading-snug">{claim}</p>
+      <p className="mt-2 text-body leading-relaxed text-muted">{children}</p>
     </div>
   );
 }
@@ -396,7 +396,7 @@ export function Chip({
 }) {
   return (
     <span
-      className={`inline-block whitespace-nowrap border border-ink px-2 py-[2px] text-[10.5px] font-bold tracking-[0.05em] ${
+      className={`inline-block whitespace-nowrap border border-ink px-2 py-[2px] text-micro font-bold tracking-[0.05em] ${
         tone === "outline" ? "bg-white text-ink" : "bg-ink text-white"
       }`}
     >
@@ -418,7 +418,7 @@ export function Disclosure({
 }) {
   return (
     <details className="group border border-line bg-white">
-      <summary className="flex cursor-pointer items-center gap-3 px-4 py-3 text-[14px] font-semibold hover:bg-hover">
+      <summary className="flex cursor-pointer items-center gap-3 px-4 py-3 text-emphasis font-semibold hover:bg-hover">
         <svg
           aria-hidden
           viewBox="0 0 12 12"
@@ -428,7 +428,7 @@ export function Disclosure({
         </svg>
         <span className="flex-1">{title}</span>
         {hint && (
-          <span className="text-[12px] font-normal text-muted">{hint}</span>
+          <span className="text-caption font-normal text-muted">{hint}</span>
         )}
       </summary>
       <div className="space-y-3 border-t border-line p-4">{children}</div>
@@ -453,8 +453,8 @@ export function DefList({
             key={i}
             className="flex items-baseline justify-between gap-4 px-4 py-2.5"
           >
-            <dt className="text-[13px] leading-snug">{r.label}</dt>
-            <dd className="num shrink-0 text-[13px] font-semibold">
+            <dt className="text-body leading-snug">{r.label}</dt>
+            <dd className="num shrink-0 text-body font-semibold">
               {r.value}
             </dd>
           </div>
@@ -483,7 +483,7 @@ export function LinkButton({
     <a
       href={href}
       download={download}
-      className={`plain inline-flex items-center gap-2 border-[1.5px] border-ink px-4 py-2 text-[13px] font-semibold no-underline transition-colors ${
+      className={`plain inline-flex items-center gap-2 border-[1.5px] border-ink px-4 py-2 text-body font-semibold no-underline transition-colors ${
         primary
           ? "bg-ink text-white hover:bg-yellow hover:text-ink"
           : "bg-white text-ink hover:bg-yellow"
@@ -509,7 +509,7 @@ export function TableFrame({
         <div className="overflow-x-auto">{children}</div>
       </Panel>
       {caption && (
-        <p className="measure text-[12px] leading-relaxed text-muted">
+        <p className="measure text-caption leading-relaxed text-muted">
           {caption}
         </p>
       )}
@@ -519,7 +519,7 @@ export function TableFrame({
 
 export function Table({ children }: { children: ReactNode }) {
   return (
-    <table className="w-full border-collapse text-[13.5px]">{children}</table>
+    <table className="w-full border-collapse text-body">{children}</table>
   );
 }
 
@@ -539,7 +539,7 @@ export function Th({
   return (
     <th
       scope="col"
-      className={`whitespace-nowrap border-b-2 border-ink bg-white px-3 py-2 text-[10.5px] font-bold uppercase tracking-[0.06em] text-muted ${
+      className={`whitespace-nowrap border-b-2 border-ink bg-white px-3 py-2 text-micro font-bold uppercase tracking-[0.06em] text-muted ${
         align === "right" ? "text-right" : "text-left"
       } ${className}`}
     >

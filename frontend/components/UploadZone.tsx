@@ -92,6 +92,9 @@ export default function UploadZone() {
             Drop the latest <span className="font-mono text-[12px]">.xlsx</span>{" "}
             of the same format and these dashboards refresh from it: every
             figure, threshold and call list recomputes, nothing else changes.
+            The manual drop is only the transport: the same intake can be fed
+            by a scheduled MIS export or a direct API read, making these
+            dashboards live.
           </span>
         </p>
         <button

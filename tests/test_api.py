@@ -211,9 +211,42 @@ class TestEndpoints:
         title = sliced["layout"]["title"]["text"]
         assert "2024" in title  # the slice names its scope in the figure
         assert "GBP/yr" in title  # a full year is annualised as normal
+        # the curve slices too, but never re-estimates its threshold: the
+        # crossover annotation stays the full-period one and says so
+        curve = json.loads(client.get("/charts/rate_curve?year=2024").text)
+        blob = json.dumps(curve["layout"])
+        assert "2024" in blob and "full period" in blob
         # model-backed charts refuse a slice rather than faking one
-        assert client.get("/charts/rate_curve?year=2024").status_code == 404
+        assert client.get("/charts/rep_confounding?year=2024").status_code == 404
+        assert client.get("/charts/churn_comparison?year=2024").status_code == 404
         assert client.get("/charts/override_scale?year=1999").status_code == 404
+
+    def test_chart_year_comparison(self, client: TestClient) -> None:
+        # Power BI-style multi-select: several years drawn together, all
+        # recomputed in Python. Every compared year must name itself.
+        fig = json.loads(
+            client.get("/charts/override_scale?years=2024,2025").text
+        )
+        blob = json.dumps(fig)
+        assert "2024" in blob and "2025" in blob
+        assert len(fig["data"]) == 2  # one trace per compared year
+        # the curve compares as one line per year
+        curves = json.loads(client.get("/charts/rate_curve?years=2023,2024").text)
+        assert len([t for t in curves["data"] if t.get("mode") == "lines"]) == 2
+        # a comparison TILE keeps its legend: several named lines with no
+        # key would be unreadable, and the tile header cannot name them
+        tile = json.loads(
+            client.get("/charts/rate_curve?years=2023,2024&compact=true").text
+        )
+        assert tile["layout"]["showlegend"] is True
+        single = json.loads(
+            client.get("/charts/rate_curve?compact=true").text
+        )
+        assert single["layout"]["showlegend"] is False
+        # model-backed panels refuse comparison too, not just single slices
+        assert client.get("/charts/rep_confounding?years=2023,2024").status_code == 404
+        assert client.get("/charts/override_scale?years=1999,2000").status_code == 404
+        assert client.get("/charts/override_scale?years=notayear").status_code == 400
 
     def test_partial_year_slice_never_annualised(self, client: TestClient) -> None:
         # Slicing to the incomplete final year must show the observed net

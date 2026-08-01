@@ -424,17 +424,32 @@ def register() -> schemas.RegisterResponse:
 
 
 @app.get("/charts/{name}", response_class=PlainTextResponse)
-def chart(name: str, compact: bool = False, year: int | None = None) -> str:
+def chart(
+    name: str,
+    compact: bool = False,
+    year: int | None = None,
+    years: str | None = None,
+) -> str:
     """Plotly fig.to_json(): the frontend renders, never recomputes.
 
     `compact=true` returns the dashboard-tile variant: same figure, chrome
     stripped and type scaled for a ~240px tile (see charts.to_compact).
-    `year=YYYY` returns the year slice, recomputed in Python; only the
-    descriptive charts in charts.SLICEABLE accept it (404 otherwise).
+    `year=YYYY` returns one year's slice; `years=2023,2024` returns the
+    comparison figure with those years drawn together. Both recompute in
+    Python from the named years' rows - the caller only picks years.
+    Only the descriptive charts in charts.SLICEABLE accept either (404).
     """
     pr = state.active()
     try:
-        fig = build_chart(name, pr, compact=compact, year=year)
+        picked = (
+            [int(y) for y in years.split(",") if y.strip()] if years else None
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400, detail=f"years must be a comma-separated list: {exc}"
+        ) from exc
+    try:
+        fig = build_chart(name, pr, compact=compact, year=year, years=picked)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return str(fig.to_json())

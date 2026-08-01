@@ -96,7 +96,7 @@ export default async function OverviewPage() {
       claim: "The press is filled by the work that pays it least",
       figure: pct(cap.share_of_constraint_hours, 0),
       figureLabel: `of litho press hours sit in jobs over ${th.crossover_hrs.toFixed(1)}h`,
-      support: `Those hours earn ${gbp(cap.pooled_rate_above)}/hr against the factory's own ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average — and it holds within accounts: ${th.within_customer_statement}, so this is pricing, not just customer mix.`,
+      support: `Those hours earn ${gbp(cap.pooled_rate_above)}/hr against the factory's own ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average — and it holds within accounts: ${th.within_customer_statement}, so this is pricing, not just customer mix. Big runs still carry the fixed costs: price them knowingly, don't refuse them.`,
       href: "/dashboards",
       link: "Capacity panels",
     },

@@ -1,22 +1,28 @@
 "use client";
 
-// The dashboard surface: every surviving panel on one page, a year slicer,
-// and panel show/hide toggles.
+// The dashboard surface: every surviving panel on one page, EACH WITH ITS
+// OWN SLICER, plus a page-level "apply to every panel" control and panel
+// show/hide toggles.
 //
-// WHAT THE YEAR SLICER REALLY DOES. Selecting a year refetches the
-// sliceable panels from the API with ?year=YYYY, and Python recomputes
-// those figures from that year's rows. Nothing is filtered in the browser:
-// a number computed in TypeScript is a defect (CLAUDE.md), so the slicer
-// is a parameterised fetch, not a client-side filter. Only descriptive
-// charts are sliceable; model-backed panels keep the full sample (a
-// per-year effect estimate would be a new analysis) and wear a "full
-// period" chip while a year is active, so no one mistakes them for
-// filtered views.
+// WHAT A SLICER REALLY DOES. Years are multi-select, like a Power BI
+// slicer: none selected means the full period, one means that year's
+// slice, two or more means a COMPARISON figure with the years drawn
+// together. Every one of those is a parameterised fetch
+// (?year= / ?years=) that Python recomputes from the named years' rows.
+// Nothing is filtered in the browser: a number computed in TypeScript is
+// a defect (CLAUDE.md), so the slicer picks years and the server does the
+// arithmetic. Per-panel state is the point - two panels can sit on
+// different years so a reader can compare views against each other, not
+// just a single global lens.
+//
+// Only descriptive charts are sliceable; model-backed panels keep the
+// full sample (a per-year effect estimate would be a new analysis) and
+// say so in place of a slicer, so no one mistakes them for filtered views.
 //
 // The panel toggles filter the VIEW only: which tiles are on screen.
 // Series inside a panel can still be toggled with Plotly's own legend.
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PlotlyChart from "@/components/PlotlyChart";
 import { API_BASE } from "@/lib/api";
 
@@ -39,9 +45,49 @@ export interface Tile {
   wide?: boolean;
 }
 
-function SlicedTile({ tile, year }: { tile: Tile; year: number | null }) {
+/** Slicer chip: one year, on or off. Multi-select, Power BI style. */
+function YearChip({
+  label,
+  on,
+  onClick,
+  title,
+}: {
+  label: string;
+  on: boolean;
+  onClick: () => void;
+  title?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      title={title}
+      className={`border px-2 py-0.5 text-[11px] font-semibold transition-colors ${
+        on
+          ? "border-ink bg-ink text-white"
+          : "border-line bg-white text-muted hover:border-ink hover:text-ink"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function SlicedTile({
+  tile,
+  years,
+  selected,
+  onSelect,
+}: {
+  tile: Tile;
+  years: number[];
+  /** Years chosen on THIS panel: empty = full period. */
+  selected: readonly number[];
+  onSelect: (next: number[]) => void;
+}) {
   // The displayed figure is DERIVED: the server-fetched full-period figure
-  // unless a year slice applies, in which case it comes from the slice
+  // unless a selection applies, in which case it comes from the slice
   // cache. State changes only happen in fetch callbacks, never
   // synchronously in the effect body.
   const [slices, setSlices] = useState<ReadonlyMap<string, unknown>>(
@@ -49,8 +95,13 @@ function SlicedTile({ tile, year }: { tile: Tile; year: number | null }) {
   );
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set());
 
-  const key =
-    tile.sliceable && year !== null ? `${tile.chart}:${year}` : null;
+  // memoised: the effect below depends on it, and a fresh array each
+  // render would refetch forever
+  const picked = useMemo(
+    () => (tile.sliceable ? [...selected].sort((a, b) => a - b) : []),
+    [tile.sliceable, selected],
+  );
+  const key = picked.length ? `${tile.chart}:${picked.join(",")}` : null;
   const figure = key ? slices.get(key) : tile.figure;
   const state: "ready" | "loading" | "error" =
     key === null || slices.has(key)
@@ -62,7 +113,13 @@ function SlicedTile({ tile, year }: { tile: Tile; year: number | null }) {
   useEffect(() => {
     if (key === null || slices.has(key) || failed.has(key)) return;
     let cancelled = false;
-    fetch(`${API_BASE}/charts/${tile.chart}?compact=true&year=${year}`)
+    // one year -> ?year=; several -> ?years=, the comparison figure.
+    // Either way Python does the computing.
+    const q =
+      picked.length === 1
+        ? `year=${picked[0]}`
+        : `years=${picked.join(",")}`;
+    fetch(`${API_BASE}/charts/${tile.chart}?compact=true&${q}`)
       .then((r) => {
         if (!r.ok) throw new Error(String(r.status));
         return r.json();
@@ -77,25 +134,65 @@ function SlicedTile({ tile, year }: { tile: Tile; year: number | null }) {
     return () => {
       cancelled = true;
     };
-  }, [key, slices, failed, tile.chart, year]);
+  }, [key, slices, failed, tile.chart, picked]);
+
+  const toggle = (y: number) =>
+    onSelect(
+      selected.includes(y)
+        ? selected.filter((x) => x !== y)
+        : [...selected, y],
+    );
 
   return (
     <div className="border border-line bg-white">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line px-3.5 py-2.5">
         <h3 className="text-[13px] font-semibold">{tile.title}</h3>
         <span className="num text-[11.5px] text-muted">
-          {year !== null &&
-            (tile.sliceable ? (
-              <span className="mr-2 border border-line px-1.5 py-px text-[10px] font-semibold uppercase tracking-[0.05em]">
-                {year}
-              </span>
-            ) : (
-              <span className="mr-2 border border-line px-1.5 py-px text-[10px] font-semibold uppercase tracking-[0.05em]">
-                full period
-              </span>
-            ))}
+          {picked.length > 1 && (
+            <span className="mr-2 border border-ink px-1.5 py-px text-[10px] font-semibold uppercase tracking-[0.05em] text-ink">
+              comparing {picked.length}
+            </span>
+          )}
           {tile.note}
         </span>
+      </div>
+
+      {/* THE PANEL'S OWN SLICER. Sliceable panels get years; the rest say
+          why they can't be sliced, in place, rather than silently
+          ignoring the control. */}
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-line bg-hover/40 px-3.5 py-1.5">
+        {tile.sliceable ? (
+          <>
+            <span className="eyebrow mr-0.5 text-[9.5px]">Years</span>
+            <YearChip
+              label="All"
+              on={picked.length === 0}
+              onClick={() => onSelect([])}
+              title="Full period"
+            />
+            {years.map((y) => (
+              <YearChip
+                key={y}
+                label={String(y)}
+                on={picked.includes(y)}
+                onClick={() => toggle(y)}
+                title={`Add or remove ${y}; pick two or more to compare`}
+              />
+            ))}
+            <span className="ml-auto text-[10.5px] text-muted">
+              {picked.length > 1
+                ? "compared, recomputed in Python"
+                : picked.length === 1
+                  ? "one year, recomputed in Python"
+                  : "pick two or more to compare"}
+            </span>
+          </>
+        ) : (
+          <span className="text-[10.5px] text-muted">
+            Full sample always: this panel is model-backed, and a per-year
+            estimate would be a new analysis rather than a filter.
+          </span>
+        )}
       </div>
       {state === "error" ? (
         <p className="px-4 py-8 text-center text-[12.5px] text-muted">
@@ -108,7 +205,7 @@ function SlicedTile({ tile, year }: { tile: Tile; year: number | null }) {
         >
           <span className="flex items-center gap-2.5 text-[12.5px] text-muted">
             <span className="size-3 animate-spin rounded-full border-2 border-line border-t-ink" />
-            Recomputing {year} in Python
+            Recomputing {picked.join(" vs ")} in Python
           </span>
         </div>
       ) : (
@@ -144,37 +241,19 @@ export default function DashboardGrid({
 }) {
   const groups = [...new Set(tiles.map((t) => t.group))];
   const [hidden, setHidden] = useState<string[]>([]);
-  const [year, setYear] = useState<number | null>(null);
+  // Years chosen PER PANEL, keyed by tile id. Absent = full period.
+  const [picked, setPicked] = useState<Record<string, number[]>>({});
 
   const visible = tiles.filter((t) => !hidden.includes(t.group));
   const toggle = (g: string) =>
     setHidden((h) => (h.includes(g) ? h.filter((x) => x !== g) : [...h, g]));
+  const setAll = (ys: number[]) =>
+    setPicked(Object.fromEntries(tiles.map((t) => [t.id, ys])));
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border border-line bg-white px-3 py-2.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="eyebrow mr-1">Year</span>
-          {[null, ...years].map((y) => {
-            const on = year === y;
-            return (
-              <button
-                key={y ?? "all"}
-                type="button"
-                onClick={() => setYear(y)}
-                aria-pressed={on}
-                className={`border px-2.5 py-1 text-[12px] font-semibold transition-colors ${
-                  on
-                    ? "border-ink bg-ink text-white"
-                    : "border-line bg-white text-muted hover:border-ink hover:text-ink"
-                }`}
-              >
-                {y ?? "All years"}
-              </button>
-            );
-          })}
-        </div>
-        <div className="flex flex-wrap items-center gap-2 border-l border-line pl-4">
           <span className="eyebrow mr-1">Panels</span>
           {groups.map((g) => {
             const on = !hidden.includes(g);
@@ -195,9 +274,29 @@ export default function DashboardGrid({
             );
           })}
         </div>
-        <span className="ml-auto text-[11.5px] text-muted">
-          Year slicing recomputes the descriptive panels in Python; modelled
-          panels always use the full sample and say so.
+        {/* Convenience only: every panel keeps its own slicer, this just
+            sets them together for a quick whole-page view. */}
+        <div className="flex flex-wrap items-center gap-2 border-l border-line pl-4">
+          <span className="eyebrow mr-1">Set every panel</span>
+          <button
+            type="button"
+            onClick={() => setAll([])}
+            className="border border-line bg-white px-2.5 py-1 text-[12px] font-semibold text-muted transition-colors hover:border-ink hover:text-ink"
+          >
+            All years
+          </button>
+          <button
+            type="button"
+            onClick={() => setAll(years)}
+            className="border border-line bg-white px-2.5 py-1 text-[12px] font-semibold text-muted transition-colors hover:border-ink hover:text-ink"
+          >
+            Compare every year
+          </button>
+        </div>
+        <span className="ml-auto max-w-[26rem] text-[11.5px] text-muted">
+          Each panel has its own year slicer: pick one year to slice, two or
+          more to compare. Python recomputes every figure from the years you
+          pick; nothing is filtered in the browser.
         </span>
       </div>
 
@@ -211,7 +310,14 @@ export default function DashboardGrid({
         <div className="grid gap-3 xl:grid-cols-2">
           {visible.map((t) => (
             <div key={t.id} className={t.wide ? "xl:col-span-2" : ""}>
-              <SlicedTile tile={t} year={year} />
+              <SlicedTile
+                tile={t}
+                years={years}
+                selected={picked[t.id] ?? []}
+                onSelect={(next) =>
+                  setPicked((p) => ({ ...p, [t.id]: next }))
+                }
+              />
             </div>
           ))}
         </div>

@@ -29,7 +29,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from src.pricing import override_scale as pricing_override_scale
-from src.thresholds import capacity_share_above, pct_per_doubling
+from src.thresholds import capacity_share_above, pct_per_doubling, rolling_rate_curve
 
 if TYPE_CHECKING:  # pipeline imports charts nowhere; avoid cycles
     from src.pipeline import PipelineResult
@@ -80,6 +80,20 @@ def _fig(title: str, subtitle: str = "", **layout: Any) -> go.Figure:
     merged = {**_LAYOUT, **layout, "title": {**_LAYOUT["title"], "text": text}}
     fig.update_layout(**merged)
     return fig
+
+
+def _year_shades(n: int) -> list[str]:
+    """One fill per compared year, ink -> light grey, so the comparison
+    reads as an ordered series and the yellow stays the brand outline."""
+    ramp = [INK, "#6B7178", "#9AA0A6", PARTIAL, FAINT]
+    return [ramp[i % len(ramp)] for i in range(n)]
+
+
+def _year_label(pr: PipelineResult, year: int) -> str:
+    """A compared year names itself, and the partial one says so."""
+    return (
+        f"{year} (partial)" if year == pr.clean_report.partial_year else str(year)
+    )
 
 
 def _scope_label(pr: PipelineResult, year: int | None) -> str:
@@ -203,6 +217,126 @@ def rep_confounding(pr: PipelineResult) -> go.Figure:
     return fig
 
 
+def override_scale_compare(pr: PipelineResult, years: list[int]) -> go.Figure:
+    """Override direction split with several years side by side.
+
+    Each year is the same descriptive computation on that year's rows,
+    run in Python; the browser only asks for the years. Net figures are
+    deliberately absent from the comparison title because the partial
+    year's net is not comparable to a full year's.
+    """
+    tol = float(pr.config["clean"]["override_tolerance_gbp"])
+    shades = _year_shades(len(years))
+    fig = _fig(
+        "Hand-pricing by direction, year against year",
+        "Manual price overrides, Litho constraint frame; each year "
+        "recomputed on that year's jobs",
+    )
+    for y, shade in zip(years, shades, strict=True):
+        s = pricing_override_scale(pr.constraint[pr.constraint["year"] == y], tol)
+        fig.add_bar(
+            name=f"{_year_label(pr, y)} ({s['override_rate']:.0%} of jobs)",
+            x=["Priced up", "Priced down"],
+            y=[s["n_up"], s["n_down"]],
+            marker={"color": shade, "line": EDGE},
+            text=[f"{s['n_up']:,}", f"{s['n_down']:,}"],
+            textposition="outside", textfont={"size": 13},
+        )
+    fig.update_layout(showlegend=True, barmode="group",
+                      legend={"orientation": "h", "y": -0.18})
+    fig.update_yaxes(title="Jobs (Litho constraint frame)", rangemode="tozero")
+    return fig
+
+
+def capacity_share_compare(pr: PipelineResult, years: list[int]) -> go.Figure:
+    """Share of constraint-hours above the crossover, year against year.
+
+    The crossover stays the full-period estimate for every year: a
+    per-year threshold would be a new analysis, and comparing years
+    against a moving line would compare nothing.
+    """
+    xover = pr.thresholds["crossover_hrs"]
+    shades = _year_shades(len(years))
+    labels, shares, texts = [], [], []
+    for y in years:
+        cf = pr.constraint[pr.constraint["year"] == y]
+        cs = capacity_share_above(cf, xover)
+        labels.append(_year_label(pr, y))
+        shares.append(cs["share_of_constraint_hours"])
+        texts.append(
+            f"{cs['share_of_constraint_hours']:.0%}<br>"
+            f"@ {cs['pooled_rate_above']:,.0f} GBP/hr"
+        )
+    fig = _fig(
+        "Capacity below the factory average, year against year",
+        f"Share of Litho constraint-hours in jobs over the full-period "
+        f"{xover:.1f}h crossover",
+    )
+    fig.add_bar(
+        x=labels, y=shares,
+        marker={"color": shades, "line": EDGE},
+        text=texts, textposition="outside", textfont={"size": 13},
+    )
+    fig.add_annotation(
+        text=f"Benchmark (hour-weighted factory average): "
+             f"{pr.thresholds['benchmark_rate']:,.0f} GBP/hr. Descriptive "
+             "only: without capacity data, no displaced-work GBP figure "
+             "is defensible.",
+        xref="paper", yref="paper", x=0.02, y=1.06, showarrow=False,
+        font={"size": 13, "color": MUTED}, align="left",
+    )
+    fig.update_yaxes(title="Share of constraint-hours", tickformat=".0%",
+                     range=[0, max(shares) * 1.3 if shares else 1])
+    return fig
+
+
+def rate_curve_compare(pr: PipelineResult, years: list[int]) -> go.Figure:
+    """The size-rate curve drawn per year, against the full-period
+    benchmark and crossover.
+
+    No per-year crossover or CI is reported: a threshold may never be a
+    bare point here, and bootstrapping one per year is a new analysis
+    rather than a filter. The comparison answers 'has the shape moved?',
+    which is a reading question, not a new estimate.
+    """
+    tcfg = pr.config["thresholds"]
+    window, step = int(tcfg["rolling_window"]), int(tcfg["rolling_step"])
+    bench = pr.thresholds["benchmark_rate"]
+    xover = pr.thresholds["crossover_hrs"]
+    shades = _year_shades(len(years))
+    fig = _fig(
+        "Does the size-rate curve move between years?",
+        "Pooled contribution per constraint-hour by job size, each year "
+        "recomputed; full-period benchmark and crossover shown for reference",
+    )
+    for y, shade in zip(years, shades, strict=True):
+        cf = pr.constraint[pr.constraint["year"] == y]
+        if cf.empty:
+            continue
+        curve = rolling_rate_curve(cf, window, step)
+        fig.add_trace(
+            go.Scatter(x=curve["size_hrs"], y=curve["rate"], mode="lines",
+                       line={"color": shade, "width": 2.5},
+                       name=_year_label(pr, y))
+        )
+    fig.add_hline(y=bench, line={"color": MUTED, "width": 2, "dash": "dash"})
+    fig.add_shape(
+        type="line", x0=xover, x1=xover, y0=0, y1=1, yref="paper",
+        line={"color": INK, "width": 2, "dash": "dot"},
+    )
+    fig.add_annotation(
+        text=f"full-period benchmark {bench:,.0f} GBP/hr, crossover "
+             f"{xover:.1f}h (no per-year threshold is estimated)",
+        xref="paper", yref="paper", x=0.02, y=1.06, showarrow=False,
+        font={"size": 13, "color": MUTED}, align="left",
+    )
+    fig.update_layout(showlegend=True, legend={"orientation": "h", "y": -0.2})
+    fig.update_xaxes(title="Job size (press hours, log scale)", type="log")
+    fig.update_yaxes(title="Contribution per constraint-hour (GBP)",
+                     rangemode="tozero")
+    return fig
+
+
 def override_scale(pr: PipelineResult, year: int | None = None) -> go.Figure:
     """Asset 4: override rate, direction split, net GBP/yr.
 
@@ -253,11 +387,27 @@ def override_scale(pr: PipelineResult, year: int | None = None) -> go.Figure:
     return fig
 
 
-def rate_curve(pr: PipelineResult) -> go.Figure:
+def rate_curve(pr: PipelineResult, year: int | None = None) -> go.Figure:
     """Asset 5: the §5.3 curve, benchmark, crossover + CI band, monotone
-    decline visible. The centrepiece chart."""
+    decline visible. The centrepiece chart.
+
+    Sliceable by year: the curve is a descriptive rolling pooled rate, so
+    a year is the same computation on that year's rows. The threshold is
+    NOT re-estimated per year - a bare per-year crossover would break the
+    range-plus-CI standard, and bootstrapping one is a new analysis, not
+    a filter - so a slice keeps the full-period benchmark and crossover
+    as reference lines and says so.
+    """
     th = pr.thresholds
-    curve = th["curve"]
+    if year is None:
+        curve = th["curve"]
+    else:
+        tcfg = pr.config["thresholds"]
+        curve = rolling_rate_curve(
+            pr.constraint[pr.constraint["year"] == year],
+            int(tcfg["rolling_window"]),
+            int(tcfg["rolling_step"]),
+        )
     ci_lo, ci_hi = th["crossover_ci"]
     bench = th["benchmark_rate"]
     xover = th["crossover_hrs"]
@@ -265,8 +415,9 @@ def rate_curve(pr: PipelineResult) -> go.Figure:
 
     fig = _fig(
         "Bigger jobs earn less per press-hour, and there is no optimal size",
-        "Pooled contribution per constraint-hour by job size, rolling window, "
-        "Litho only",
+        f"Pooled contribution per constraint-hour by job size, rolling window, "
+        f"Litho only, {_scope_label(pr, year)}"
+        + ("" if year is None else "; full-period benchmark and crossover shown"),
     )
     # Plotly log-axis quirk (verified by rendering): SHAPES take raw data
     # coords, ANNOTATIONS take log10 coords. Mixing them up either blows
@@ -288,7 +439,8 @@ def rate_curve(pr: PipelineResult) -> go.Figure:
     fig.add_annotation(x=log10(xover), y=1.02, yref="paper", showarrow=False,
                        text=f"crossover {xover:.1f}h "
                             f"(windows {sens.min():.1f}-{sens.max():.1f}, "
-                            f"95% CI {ci_lo:.1f}-{ci_hi:.1f})",
+                            f"95% CI {ci_lo:.1f}-{ci_hi:.1f})"
+                            + ("" if year is None else ", full period"),
                        font={"size": 15})
     fig.add_annotation(x=0.99, xref="paper", y=bench, xanchor="right",
                        yanchor="bottom", showarrow=False,
@@ -471,7 +623,17 @@ CHARTS: dict[str, Any] = {
 # Charts that accept a year slice: descriptive counts and sums only, each
 # recomputed in Python on the year's rows. Model-backed figures are never
 # sliced — a per-year effect estimate would be a new analysis, not a filter.
-SLICEABLE: frozenset[str] = frozenset({"override_scale", "capacity_share"})
+SLICEABLE: frozenset[str] = frozenset(
+    {"override_scale", "capacity_share", "rate_curve"}
+)
+
+# Comparison builders: same descriptive computation, several years drawn
+# together. Keyed by chart name; a chart without an entry cannot compare.
+COMPARE: dict[str, Any] = {
+    "override_scale": override_scale_compare,
+    "capacity_share": capacity_share_compare,
+    "rate_curve": rate_curve_compare,
+}
 
 
 def _scale_font(obj: Any, factor: float, floor: int = 9) -> None:
@@ -514,8 +676,22 @@ def to_compact(fig: go.Figure) -> go.Figure:
     _scale_font(layout, 0.68)
     _scale_font(layout.get("annotations", []), 1.0, floor=10)
 
-    layout["margin"] = {"l": 46, "r": 14, "t": 10, "b": 34}
-    layout["showlegend"] = False
+    # A COMPARISON tile keeps its legend: several named traces with no key
+    # is an unreadable figure, and the tile header cannot name them. Single
+    # -series tiles still drop it, since the header already says what it is.
+    named = [t for t in fig.data if getattr(t, "name", None)]
+    comparing = len(named) > 1
+    layout["margin"] = (
+        {"l": 46, "r": 14, "t": 10, "b": 52}
+        if comparing
+        else {"l": 46, "r": 14, "t": 10, "b": 34}
+    )
+    layout["showlegend"] = comparing
+    if comparing:
+        layout["legend"] = {
+            "orientation": "h", "y": -0.28, "x": 0,
+            "font": {"size": 10}, "bgcolor": "rgba(0,0,0,0)",
+        }
     for axis in ("xaxis", "yaxis"):
         ax = dict(layout.get(axis) or {})
         ax["automargin"] = True
@@ -539,19 +715,31 @@ def build_chart(
     *,
     compact: bool = False,
     year: int | None = None,
+    years: list[int] | None = None,
 ) -> go.Figure:
+    """Named figure, optionally sliced to one year or compared across
+    several. Both paths recompute in Python from the year's rows; the
+    caller only names years. Model-backed charts refuse both."""
     if name not in CHARTS:
         raise KeyError(f"unknown chart {name!r}; available: {sorted(CHARTS)}")
-    if year is not None:
-        if name not in SLICEABLE:
-            raise KeyError(
-                f"chart {name!r} does not take a year slice; "
-                f"sliceable: {sorted(SLICEABLE)}"
-            )
-        years = set(pd.unique(pr.jobs["year"]))
-        if year not in years:
-            raise KeyError(f"year {year} not in the data ({sorted(years)})")
-        fig = CHARTS[name](pr, year=year)
+    wanted = [year] if year is not None else list(years or [])
+    if not wanted:
+        return to_compact(CHARTS[name](pr)) if compact else CHARTS[name](pr)
+
+    if name not in SLICEABLE:
+        raise KeyError(
+            f"chart {name!r} does not take a year slice; "
+            f"sliceable: {sorted(SLICEABLE)}"
+        )
+    present = set(pd.unique(pr.jobs["year"]))
+    for y in wanted:
+        if y not in present:
+            raise KeyError(f"year {y} not in the data ({sorted(present)})")
+
+    if len(wanted) == 1:
+        fig = CHARTS[name](pr, year=wanted[0])
     else:
-        fig = CHARTS[name](pr)
+        if name not in COMPARE:
+            raise KeyError(f"chart {name!r} cannot compare years")
+        fig = COMPARE[name](pr, sorted(wanted))
     return to_compact(fig) if compact else fig

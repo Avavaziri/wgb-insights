@@ -56,6 +56,24 @@ class TestDatasets:
         assert resp.status_code == 422
         assert "missing expected columns" in resp.json()["detail"]
 
+    def test_wrong_sheet_rejected_422_not_500(self, client: TestClient) -> None:
+        # Found live in review: a workbook without the expected sheet blew
+        # past the IngestError handler and 500ed. ANY unprocessable file
+        # must come back as the stable 422 JSON shape, active data intact.
+        import io
+
+        import openpyxl
+
+        wb = openpyxl.Workbook()  # default sheet name, wrong everything
+        wb.active.append(["Nonsense", "Columns"])
+        buf = io.BytesIO()
+        wb.save(buf)
+        resp = client.post("/datasets", files={"file": ("junk.xlsx", buf.getvalue(), "x")})
+        assert resp.status_code == 422
+        assert "previous dataset is still active" in resp.json()["detail"]
+        # and the app still answers from the previously active dataset
+        assert client.get("/overview").json()["validation"]["n_rows"] == 400
+
     def test_no_bare_numbers_in_effect_reports(self, client: TestClient) -> None:
         # the structural guarantee: every effect carries CI, p, n together
         body = client.get("/rush").json()

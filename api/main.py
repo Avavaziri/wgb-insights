@@ -67,6 +67,19 @@ async def upload_dataset(file: UploadFile) -> schemas.DatasetResponse:
         key, pr = state.ingest_bytes(data, file.filename or "upload.xlsx")
     except IngestError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        # A file that is not the expected extract can fail anywhere in
+        # the pipeline (found in review: a wrong-schema file 500ed).
+        # Whatever it is, the client gets the stable JSON error shape,
+        # never a stack trace, and the active dataset is untouched.
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "The file could not be processed as a sales extract of "
+                f"the expected format ({type(exc).__name__}). The "
+                "previous dataset is still active; nothing was replaced."
+            ),
+        ) from exc
     return schemas.DatasetResponse(
         dataset_hash=key, validation=_validation(pr), clean_report=_clean(pr),
         gaps=_gaps(pr),

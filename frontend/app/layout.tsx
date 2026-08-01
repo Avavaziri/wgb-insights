@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Inter } from "next/font/google";
-import { HeronWatermark } from "@/components/Heron";
 import Nav from "@/components/Nav";
 import "./globals.css";
 
@@ -71,8 +70,6 @@ export default function RootLayout({
         <main id="main" className="mx-auto max-w-[104rem] space-y-6 px-6 py-6">
           {children}
         </main>
-
-        <HeronWatermark />
 
         <footer className="relative z-10 mt-4 border-t border-line py-6">
           <div className="mx-auto max-w-[104rem] px-6 text-caption leading-relaxed text-muted">

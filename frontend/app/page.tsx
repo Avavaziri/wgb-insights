@@ -1,7 +1,6 @@
 import Link from "next/link";
 import PlotlyChart from "@/components/PlotlyChart";
 import { ApiDown } from "@/components/ApiGuard";
-import HeroBand from "@/components/HeroBand";
 import UploadZone from "@/components/UploadZone";
 import {
   Chip,
@@ -123,7 +122,6 @@ export default async function OverviewPage() {
 
   return (
     <>
-      <HeroBand />
       <UploadZone />
 
       <PageHeader

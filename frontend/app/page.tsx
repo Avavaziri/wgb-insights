@@ -247,9 +247,14 @@ export default async function OverviewPage() {
                     {num(Number(v.n_identity2_checked))} rows)
                   </>
                 ),
-                value: v.identity2_ok
-                  ? expo(Number(v.identity2_max_err))
-                  : "FAILED, pricing withheld",
+                // The one ingest check that can stop the pricing module
+                // reporting, so a failure is a genuine alert rather than a
+                // number. The word carries it; the colour only speeds it up.
+                value: v.identity2_ok ? (
+                  expo(Number(v.identity2_max_err))
+                ) : (
+                  <Chip tone="critical">FAILED, pricing withheld</Chip>
+                ),
               },
               {
                 label: (

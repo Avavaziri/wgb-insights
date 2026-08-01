@@ -1,6 +1,7 @@
 import { ApiDown } from "@/components/ApiGuard";
 import {
   Chip,
+  type ChipTone,
   LinkButton,
   MetaSep,
   PageHeader,
@@ -21,12 +22,15 @@ import type { CallList, Value } from "@/lib/types";
 // descriptive ranking or a rule-based list; the modelling lives behind the
 // Overview's evidence fold.
 
-// A filled chip is a call to make; an outlined one is recorded with no
-// action, which is what "watch (irregular)" means: the account has no
-// reliable cadence to be late against.
-const BAND_TONE: Record<string, "solid" | "outline" | undefined> = {
-  high: "solid",
-  elevated: "solid",
+// Risk band to chip tone. The two bands that are a call to make now carry
+// the authorised status colours (globals.css) so the ranking is visible at
+// a glance; "watch (irregular)" stays neutral and outlined because it is
+// recorded with no action, the account having no reliable cadence to be
+// late against. The band WORD is always rendered next to the colour, so
+// none of this is encoded in colour alone.
+const BAND_TONE: Record<string, ChipTone | undefined> = {
+  high: "critical",
+  elevated: "warning",
   "watch (irregular)": "outline",
 };
 

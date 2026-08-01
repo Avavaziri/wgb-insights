@@ -47,7 +47,13 @@ import type { ReactNode } from "react";
  * yellow gone, the old names left "watch, no action needed" filled and
  * "high risk" outlined, so the quiet rows shouted.
  */
-export type ChipTone = "solid" | "outline";
+/**
+ * Chip tones. `solid`/`outline` are the neutral pair and carry category.
+ * `critical`/`warning` are the authorised status colours (see globals.css):
+ * use them for state a reader should act on, never for a category, and
+ * only ever alongside the status word itself.
+ */
+export type ChipTone = "solid" | "outline" | "critical" | "warning";
 
 /*
  * There is no hover-reveal on this site any more. Detail is disclosed by
@@ -394,11 +400,18 @@ export function Chip({
   children: ReactNode;
   tone?: ChipTone;
 }) {
+  // Status tones fill, so the row reads at a glance from across a room in
+  // a screen recording; the neutral pair keeps the ink border.
+  const TONE: Record<ChipTone, string> = {
+    solid: "border-ink bg-ink text-white",
+    outline: "border-ink bg-white text-ink",
+    critical: "border-critical bg-critical text-white",
+    warning: "border-warning bg-warning text-white",
+  };
+
   return (
     <span
-      className={`inline-block whitespace-nowrap border border-ink px-2 py-[2px] text-micro font-bold tracking-[0.05em] ${
-        tone === "outline" ? "bg-white text-ink" : "bg-ink text-white"
-      }`}
+      className={`inline-block whitespace-nowrap border px-2 py-[2px] text-micro font-bold tracking-[0.05em] ${TONE[tone]}`}
     >
       {children}
     </span>

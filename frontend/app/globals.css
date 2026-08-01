@@ -39,6 +39,27 @@
   --color-muted: #555555; /* captions and helper text only */
   --color-hover: #f1f1ef; /* row hover and quiet fills: never yellow */
 
+  /* STATUS COLOURS: a deliberate, authorised departure from the house web
+     system, which is yellow/ink/white and explicitly no red. Added on
+     request so at-risk state reads at a glance the way a conventional BI
+     dashboard's does.
+
+     Kept as narrow as possible:
+       - Reserved for STATUS ONLY. Never a chart series (the Plotly figures
+         are pytest-tested against the ink/yellow contract), never chrome,
+         never decoration.
+       - Additive, never the whole signal. Every status that wears one of
+         these also carries its word ("high", "elevated"), so nothing is
+         encoded in colour alone: WCAG 1.4.1, and it still works printed
+         in mono or read by someone colourblind.
+       - One new hue, not two. --color-warning is the BRAND yellow
+         darkened to carry text (hue 50.5 against #ffe600's 54.1), so it
+         reads as family rather than as a traffic-light amber. Only red is
+         genuinely foreign to the palette.
+     Both are AA on white and carry white text: computed, not eyeballed. */
+  --color-critical: #a4161a; /* 7.75:1 on white. High risk, hard failures. */
+  --color-warning: #5f5000; /* 7.97:1 on white. Elevated risk, cautions.  */
+
   /* next/font supplies --font-body-src on <html>. */
   --font-body: var(--font-body-src), Inter, Arial, Helvetica, sans-serif;
   --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;

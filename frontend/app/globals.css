@@ -1,32 +1,45 @@
 @import "tailwindcss";
 
-/* W&G Baird web design system (~/.claude/wgb-web-design-system.md), derived
-   from the 360 Jobs dashboard stylesheet, the reference implementation.
-   Not the deck system: that one is Arial Black on true black. Type here is
-   Inter only, weights carrying the hierarchy, matching the Tender Assistant
-   app rather than the design system's Fraunces; see layout.tsx.
+/* W&G Baird web design system (~/.claude/wgb-web-design-system.md), applied
+   in the register of the Tender Assistant, the house reference dashboard.
+   Not the deck system: that one is Arial Black on true black.
 
-   THREE COLOURS ONLY: yellow, charcoal, white. True black is reserved for
-   the brand marks (the masthead bar and the wordmark) so the identity
-   stays exact while the interface reads softer. Everything else is --ink.
-   The two greys are functional exceptions: hairlines and caption text.
-   Text on yellow is always ink; text on ink is white; never yellow text on
-   white. There is no red. Flat: no shadows, gradients or opacity tricks,
-   and radius stays 0 everywhere.
+   THE TENDER ASSISTANT REGISTER, in five rules:
 
-   Deliberately single-theme, like the reference: the Plotly figures are
-   rendered in Python on a light paper and double as the slide assets. */
+     1. White ground, air, flat. Panels are white with hairline borders;
+        structure comes from rules and fills, never elevation. Radius 0.
+     2. One face. Inter carries everything; weight carries the hierarchy.
+        (Fraunces was tried for display twice and read as editorial print,
+        a newspaper, both times. Bold sans is what makes it read as
+        software.)
+     3. True black is reserved for the brand: the masthead bar and the
+        wordmark. Everything else is --ink, a soft charcoal, so the
+        interface never goes darker than the brand mark itself.
+     4. Yellow is the ACCENT SYSTEM, not a surface and not a data channel:
+        the masthead badge and rule, the section rail, the 2px top border
+        on KPI cards, the active nav underline, and the outline on chart
+        marks (drawn in Python). Each instance is small, linear, and
+        encodes nothing, so a page carries many of them without any one
+        shouting.
+     5. Fills carry data. Inside figures, category identity lives in the
+        charcoal/grey lightness scale; the yellow outline is uniform
+        across all marks, so stripping it changes no reading.
+
+   Text on yellow is always ink; text on ink is white; never yellow text
+   on white. There is no red. Deliberately single-theme, like the
+   reference: figures are rendered in Python on white paper and double as
+   the slide assets. */
 @theme {
   --color-yellow: #ffe600;
   --color-black: #000000; /* brand marks only: masthead bar, wordmark */
   --color-ink: #3f454d; /* everything else: 9.7:1 on white, 7.6:1 on yellow */
-  --color-canvas: #f7f7f5; /* page ground */
+  --color-canvas: #ffffff; /* page ground: white, like the reference */
   --color-white: #ffffff;
   --color-line: #d9d9d9; /* hairlines and inactive tracks only */
   --color-muted: #555555; /* captions and helper text only */
-  --color-hover: #f4f4f4; /* table row hover: deliberately not yellow */
+  --color-hover: #f1f1ef; /* row hover and quiet fills: never yellow */
 
-  /* next/font supplies the two --font-*-src variables on <html>. */
+  /* next/font supplies --font-body-src on <html>. */
   --font-body: var(--font-body-src), Inter, Arial, Helvetica, sans-serif;
   --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
 
@@ -42,8 +55,9 @@
     line-height: 1.5;
   }
 
-  /* Sentence case at normal tracking; uppercase is for eyebrows, labels and
-     chips only, never headings and never button labels. */
+  /* Sentence case at normal tracking; heavy weights carry the hierarchy.
+     Uppercase is for eyebrows, labels and chips only: never headings,
+     never body text, never a button. */
   h1,
   h2,
   h3 {
@@ -53,45 +67,46 @@
     margin: 0;
   }
 
-  /* Figures: bold and tabular, so a column of numbers lines up and a
-     changing value never reflows its neighbours. */
-  .display {
+  .eyebrow {
+    font-size: 10.5px;
     font-weight: 700;
-    line-height: 1.05;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  /* Any figure that changes gets tabular numerals, or the digits jitter
+     as values update and a column stops lining up. */
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The one large figure on a page: bold, tight, tabular. */
+  .figure-lead {
+    font-weight: 700;
+    line-height: 1;
     letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
   }
 
-  /* Heading rail: a 4px yellow bar to the left of a section heading. The
-     web system forbids a thin accent rule *under* a title; this is the
-     Tender Assistant's device instead, and it reads as structure. */
+  /* The section rail: the Tender Assistant's device for opening a block,
+     a 4px yellow bar to the left of a bold heading. It marks structure
+     the way the house system's yellow does everywhere: a thin line, not
+     a surface. */
   .rail {
     border-left: 4px solid var(--color-yellow);
     padding-left: 12px;
   }
 
-  .eyebrow {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-muted);
-  }
-
-  /* Any figure that changes gets tabular numerals, or digits jitter as
-     values update and columns stop lining up. */
-  .num {
-    font-variant-numeric: tabular-nums;
-  }
-
   .measure {
-    max-width: 68ch;
+    max-width: 66ch;
   }
 
   a:not(.plain) {
     color: var(--color-ink);
     text-decoration: underline;
     text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
   }
   a:not(.plain):hover {
     background: var(--color-yellow);
@@ -100,7 +115,7 @@
 
   code {
     font-family: var(--font-mono);
-    font-size: 0.9em;
+    font-size: 0.88em;
     background: var(--color-hover);
     padding: 0.05em 0.3em;
   }
@@ -112,9 +127,9 @@
     display: none;
   }
 
-  /* On yellow a yellow ring is invisible, so it is inverted per-element in the
-     components themselves, never across a whole dark region (that bug hid
-     keyboard focus against the masthead once already). */
+  /* On a yellow surface a yellow ring is invisible, so it is inverted per
+     element in the component itself, never across a whole dark region:
+     that bug hid keyboard focus against the masthead once already. */
   :focus-visible {
     outline: 3px solid var(--color-yellow);
     outline-offset: 1px;
@@ -125,23 +140,15 @@
     color: var(--color-ink);
   }
 
-  /* --- Progressive disclosure -------------------------------------------
-     The board view shows conclusions; the qualification appears on hover or
-     keyboard focus. Both states are composed from Tailwind utilities on the
-     element itself (see REVEAL / WIPE in components/ui.tsx) rather than
-     custom classes here, for two reasons learned the hard way:
-
-       · A custom class in @layer base and a group-* variant in @layer
-         utilities are a cascade trap, and worse, mixing `transform:
-         scaleX(0)` in base with Tailwind's `scale-x-100` (which sets the
-         separate `scale` property) does not override at all, it composes.
-         The two transforms multiplied out to zero and the rule never drew.
-       · One property per state, one layer, so the collapsed and expanded
-         rules are the same declaration and the cascade is unambiguous.
-
-     The detail stays in the DOM and in the accessibility tree, collapsed
-     with max-height and never display:none, so a screen reader still reads
-     the caveat that a mouse user has to hover for. */
+  /* --- Motion ------------------------------------------------------------
+     No load animation, and that is a decision rather than an omission: a
+     CSS entrance animation was built once and measured in a renderer that
+     does not composite, where it reported playState "running" with
+     currentTime pinned at 0 forever, leaving the page's one data mark at
+     scaleX(0), invisible. Motion that can fail closed has no business on
+     a page shown to a board. Transitions on discrete properties are safe:
+     a stalled transition applies its end state at once, so the worst case
+     is an instant change rather than a missing figure. */
 
   @media (prefers-reduced-motion: reduce) {
     * {

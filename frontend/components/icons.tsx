@@ -30,7 +30,7 @@ export function IconGrid({ className }: IconProps) {
   );
 }
 
-/** Where margin lives: contribution stacked by source. */
+/** Dashboards: bars of decreasing length. */
 export function IconLayers({ className }: IconProps) {
   return (
     <svg {...S} className={className}>
@@ -40,7 +40,7 @@ export function IconLayers({ className }: IconProps) {
   );
 }
 
-/** Pricing & overrides: a price tag. */
+/** Customers & actions: a price tag. */
 export function IconTag({ className }: IconProps) {
   return (
     <svg {...S} className={className}>
@@ -50,34 +50,3 @@ export function IconTag({ className }: IconProps) {
   );
 }
 
-/** Size & the constraint: a press cylinder. */
-export function IconPress({ className }: IconProps) {
-  return (
-    <svg {...S} className={className}>
-      <ellipse cx="10" cy="5.5" rx="6.5" ry="2.5" />
-      <path d="M3.5 5.5v6a6.5 2.5 0 0 0 13 0v-6" />
-      <path d="M3.5 11.5v3a6.5 2.5 0 0 0 13 0v-3" opacity="0.4" />
-    </svg>
-  );
-}
-
-/** Retention risk: days since the last order. */
-export function IconClock({ className }: IconProps) {
-  return (
-    <svg {...S} className={className}>
-      <circle cx="10" cy="10" r="7.25" />
-      <path d="M10 6v4.25l3 1.75" />
-    </svg>
-  );
-}
-
-/** Method & data: the audit trail. */
-export function IconChecklist({ className }: IconProps) {
-  return (
-    <svg {...S} className={className}>
-      <path d="M4.5 2.5h11v15h-11z" />
-      <path d="M7.25 7.25l1.5 1.5 3-3" />
-      <path d="M7.5 12.5h5" />
-    </svg>
-  );
-}

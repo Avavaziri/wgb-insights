@@ -145,6 +145,51 @@ export interface Rush {
   };
 }
 
+export interface ValueRow {
+  name: string;
+  jobs: number;
+  revenue_gbp: number;
+  contribution_gbp: number;
+  share_of_contribution: number;
+  contribution_per_press_hr: number | null;
+}
+
+export interface CustomerValueRow extends ValueRow {
+  rep: string;
+  industry: string;
+}
+
+export interface Value {
+  as_of: string;
+  top_customers: CustomerValueRow[];
+  work_types: ValueRow[];
+  caveat: string;
+  litho_note: string;
+}
+
+export interface CallListRow {
+  customer: string;
+  rep: string;
+  industry: string;
+  last_order: string;
+  days_since: number;
+  own_median_interval: number | null;
+  interval_cv: number | null;
+  forecastable: boolean;
+  gap_ratio: number | null;
+  historic_contribution_gbp: number;
+  contribution_per_constraint_hr: number | null;
+  override_rate: number;
+  risk_band: string;
+  reason_code: string;
+  expected_next_order: string | null;
+}
+
+export interface CallList {
+  as_of: string;
+  rows: CallListRow[];
+}
+
 export interface Churn {
   as_of: string;
   gate: string;

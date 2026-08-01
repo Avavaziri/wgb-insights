@@ -1,21 +1,24 @@
-// Overview header. With a press-floor photograph present it becomes the
-// brand's caption-box motif: a yellow block with black type overlapping the
-// image, flush to a corner. Without one it falls back to the plain page head,
-// so the page is never waiting on an asset.
+// A press-floor photograph as a thin band above the overview's title, and
+// nothing else. Renders only when the artwork is actually present, so a
+// missing file is a quietly absent band rather than a broken image on a page
+// being shown to a board.
 //
 // Drop the photograph at:
 //
 //     frontend/public/brand/press-floor.jpg
 //
-// 2400x800 landscape, ~85% quality. Machinery, paper or ink detail rather
-// than faces, because the repo is public and faces would need consent. Used in this
-// one place only: a photograph behind live figures is decoration, but a
-// photograph behind the page title is the brand.
+// 2400x600 landscape, ~85% quality. Machinery, paper or ink detail rather
+// than faces: the repo is public and faces would need consent.
+//
+// Deliberately a band and not a hero. The brand's caption-box motif (a
+// yellow block with black type overlapping the image) is the obvious thing
+// to do here and it is the wrong thing to do on this page: a yellow block
+// that size would outweigh the constraint gauge below it, and the gauge is
+// the only mark on the page that is carrying a number. The photograph gets
+// to be atmosphere; the finding keeps the accent.
 
 import fs from "node:fs";
 import path from "node:path";
-import type { ReactNode } from "react";
-import { Eyebrow, PageHeader } from "@/components/ui";
 
 const FILE = "brand/press-floor.jpg";
 
@@ -27,46 +30,15 @@ function photoExists(): boolean {
   }
 }
 
-export default function HeroBand({
-  eyebrow,
-  title,
-  lede,
-  meta,
-}: {
-  eyebrow: string;
-  title: ReactNode;
-  lede?: ReactNode;
-  meta?: ReactNode;
-}) {
-  if (!photoExists()) {
-    return <PageHeader eyebrow={eyebrow} title={title} lede={lede} meta={meta} />;
-  }
+export default function HeroBand() {
+  if (!photoExists()) return null;
 
   return (
-    <header className="space-y-4">
-      <div className="relative">
-        <div
-          className="h-[168px] w-full bg-ink bg-cover bg-center sm:h-[196px]"
-          style={{ backgroundImage: `url(/${FILE})` }}
-          role="img"
-          aria-label="W&G Baird press floor"
-        />
-        {/* Caption box: overlaps the image, flush left, black on yellow. */}
-        <div className="relative -mt-px sm:absolute sm:bottom-0 sm:left-0 sm:max-w-[46rem]">
-          <div className="bg-yellow px-5 py-4">
-            <Eyebrow>{eyebrow}</Eyebrow>
-            <h1 className="mt-1 text-[24px] text-ink sm:text-[28px]">{title}</h1>
-          </div>
-        </div>
-      </div>
-      {lede && (
-        <p className="measure text-[15px] leading-relaxed">{lede}</p>
-      )}
-      {meta && (
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line pt-3 text-[12px] text-muted">
-          {meta}
-        </div>
-      )}
-    </header>
+    <div
+      className="h-[104px] w-full border border-line bg-ink bg-cover bg-center sm:h-[132px]"
+      style={{ backgroundImage: `url(/${FILE})` }}
+      role="img"
+      aria-label="W&G Baird press floor"
+    />
   );
 }

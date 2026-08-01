@@ -1,8 +1,19 @@
 "use client";
 
-// The dynamic-system control: drop a new .xlsx of the same schema and every
-// page refreshes from the recomputed results. POSTs to /datasets, shows the
-// validation verdict, then refreshes all server components.
+// The dynamic-system control. Dropping a new .xlsx UPDATES the existing
+// dashboards in place: POST /datasets recomputes the full pipeline, makes
+// the new file the active dataset, and router.refresh() re-renders every
+// page from it. Nothing new is created and no old dashboard survives
+// alongside: same views, new numbers. The copy says "update" throughout
+// because "run on another extract" once read as spawning a second,
+// separate analysis, which is not what happens.
+//
+// Styled as one hairline row rather than a large dashed drop zone. It sits
+// at the top of the overview because it is the first thing a reviewer will
+// want to try, and a quiet row keeps it there without competing with the
+// finding underneath. The drop state is the exception: yellow, because a
+// live drag target should be unmistakable, and it exists only while a file
+// is over the window.
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -19,15 +30,22 @@ export default function UploadZone() {
 
   async function upload(file: File) {
     setPhase("uploading");
-    setMessage(`Running the full pipeline on ${file.name}. Every module recomputes.`);
+    setMessage(
+      `Updating from ${file.name}: the full pipeline is recomputing.`,
+    );
     const body = new FormData();
     body.append("file", file);
     try {
-      const resp = await fetch(`${API_BASE}/datasets`, { method: "POST", body });
+      const resp = await fetch(`${API_BASE}/datasets`, {
+        method: "POST",
+        body,
+      });
       if (!resp.ok) {
         const detail = (await resp.json()) as { detail?: string };
         setPhase("error");
-        setMessage(detail.detail ?? `The file was not accepted (${resp.status}).`);
+        setMessage(
+          detail.detail ?? `The file was not accepted (${resp.status}).`,
+        );
         return;
       }
       const data = (await resp.json()) as {
@@ -36,13 +54,15 @@ export default function UploadZone() {
       };
       setPhase("done");
       setMessage(
-        `Loaded ${data.validation.n_rows.toLocaleString()} rows ` +
-          `(dataset ${data.dataset_hash}). Every page now reads from it.`,
+        `Updated: ${data.validation.n_rows.toLocaleString()} rows ` +
+          `(dataset ${data.dataset_hash}). Every dashboard now shows this data.`,
       );
       router.refresh();
     } catch {
       setPhase("error");
-      setMessage("The API is not answering. Start it with make api, then try again.");
+      setMessage(
+        "The API is not answering. Start it with make api, then try again.",
+      );
     }
   }
 
@@ -61,30 +81,28 @@ export default function UploadZone() {
         const f = e.dataTransfer.files[0];
         if (f) void upload(f);
       }}
-      className={`border-[1.5px] border-dashed p-4 transition-colors ${
+      className={`border transition-colors ${
         dragging ? "border-ink bg-yellow" : "border-line bg-white"
       }`}
     >
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-semibold">
-            Drop an <span className="font-mono text-[13px]">.xlsx</span> of the
-            same shape here
-          </p>
-          <p className="mt-0.5 text-[12.5px] text-muted">
-            Every statistic, chart, threshold and call list is recomputed from
-            the file. Nothing on this site is hardcoded.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-4 py-2.5">
+        <p className="min-w-0 flex-1 text-[13px]">
+          <span className="font-semibold">Update with new data.</span>{" "}
+          <span className="text-muted">
+            Drop the latest <span className="font-mono text-[12px]">.xlsx</span>{" "}
+            of the same format and these dashboards refresh from it: every
+            figure, threshold and call list recomputes, nothing else changes.
+          </span>
+        </p>
         <button
           onClick={() => input.current?.click()}
           disabled={busy}
-          className="inline-flex items-center gap-2 border-[1.5px] border-ink bg-yellow px-4 py-2 text-[13.5px] font-semibold text-ink hover:bg-ink hover:text-white disabled:cursor-wait"
+          className="inline-flex shrink-0 items-center gap-2 border-[1.5px] border-ink bg-ink px-4 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-yellow hover:text-ink disabled:cursor-wait"
         >
           {busy && (
             <span className="size-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
           )}
-          {busy ? "Recomputing" : "Choose file"}
+          {busy ? "Updating" : "Choose file"}
         </button>
         <input
           ref={input}
@@ -100,7 +118,7 @@ export default function UploadZone() {
       {message && (
         <p
           aria-live="polite"
-          className={`mt-3 border-t border-line pt-3 text-[12.5px] ${
+          className={`border-t border-line px-4 py-2.5 text-[12.5px] ${
             phase === "error" ? "font-semibold text-ink" : "text-muted"
           }`}
         >

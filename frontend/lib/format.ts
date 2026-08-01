@@ -13,6 +13,10 @@ export const pctPoints = (x: number | null, dp = 1): string =>
 
 export const gbp = (x: number): string => `£${Math.round(x).toLocaleString()}`;
 
+/** Millions for table columns: £2.97m reads, £2,972,614 doesn't. */
+export const gbpM = (x: number): string =>
+  x >= 1e6 ? `£${(x / 1e6).toFixed(2)}m` : `£${Math.round(x / 1e3).toLocaleString()}k`;
+
 export const gbpK = (x: number): string =>
   `${x >= 0 ? "+" : "-"}£${Math.abs(Math.round(x / 1000)).toLocaleString()}k`;
 

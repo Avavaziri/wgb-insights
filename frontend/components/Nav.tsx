@@ -4,28 +4,23 @@
 // ground rather than inside the black bar, so the masthead stays a clean
 // brand lockup.
 //
-// "Method & data" is the discovery tab: every statement about how the system
-// works (standards, ingest checks, the hypothesis register, the API) lives
-// there, off the pages a manager reads for conclusions.
+// Three tabs, named for what the reader does there rather than for how the
+// analysis is organised: read the summary, explore the charts, act on the
+// lists. Everything methodological folds into the Overview's evidence
+// section, so no tab exists for the system's own machinery.
+//
+// The active tab is the one persistent yellow mark on a page besides the
+// masthead: a 2px underline. It earns the accent because it answers "where
+// am I", which is the only question the nav exists to answer.
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  IconChecklist,
-  IconClock,
-  IconGrid,
-  IconLayers,
-  IconPress,
-  IconTag,
-} from "@/components/icons";
+import { IconGrid, IconLayers, IconTag } from "@/components/icons";
 
 const NAV = [
   { href: "/", label: "Overview", Icon: IconGrid },
-  { href: "/margin", label: "Where margin lives", Icon: IconLayers },
-  { href: "/pricing", label: "Pricing & overrides", Icon: IconTag },
-  { href: "/constraint", label: "Size & the constraint", Icon: IconPress },
-  { href: "/retention", label: "Retention risk", Icon: IconClock },
-  { href: "/method", label: "Method & data", Icon: IconChecklist },
+  { href: "/dashboards", label: "Dashboards", Icon: IconLayers },
+  { href: "/actions", label: "Customers & actions", Icon: IconTag },
 ];
 
 export default function Nav() {
@@ -35,7 +30,7 @@ export default function Nav() {
     <div className="border-b border-line bg-white">
       <nav
         aria-label="Sections"
-        className="mx-auto flex max-w-[104rem] gap-1 overflow-x-auto px-6"
+        className="mx-auto flex max-w-[104rem] overflow-x-auto px-6"
       >
         {NAV.map(({ href, label, Icon }) => {
           const active = pathname === href;
@@ -44,13 +39,13 @@ export default function Nav() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className={`plain -mb-px flex items-center gap-2 whitespace-nowrap border-b-[3px] px-3 py-2.5 text-[13.5px] no-underline transition-colors ${
+              className={`plain -mb-px flex items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-3 text-[13px] no-underline transition-colors ${
                 active
                   ? "border-yellow font-semibold text-ink"
-                  : "border-transparent text-muted hover:border-line hover:text-ink"
+                  : "border-transparent text-muted hover:text-ink"
               }`}
             >
-              <Icon className="size-[18px] shrink-0" />
+              <Icon className="size-4 shrink-0" />
               {label}
             </Link>
           );

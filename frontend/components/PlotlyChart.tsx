@@ -43,6 +43,7 @@ export default function PlotlyChart({
   figure,
   caption,
   compact = false,
+  tall = false,
 }: {
   figure: unknown;
   /** Reading note beneath the figure, never a restated number. */
@@ -53,12 +54,17 @@ export default function PlotlyChart({
    * A fixed short height, no frame: the tile supplies the frame and header.
    */
   compact?: boolean;
+  /**
+   * The headline-tile size: same stripped-chrome figure as compact, in a
+   * taller box so its labels stay legible in a 1080p screen recording.
+   */
+  tall?: boolean;
 }) {
   const fig = figure as FigureJson;
 
-  if (compact) {
+  if (compact || tall) {
     return (
-      <div className="h-[228px] w-full">
+      <div className={`w-full ${tall ? "h-[320px]" : "h-[228px]"}`}>
         <Plot
           data={fig.data}
           layout={{
@@ -83,7 +89,9 @@ export default function PlotlyChart({
   return (
     <figure className="space-y-2">
       <div className="border border-line bg-white">
-        <div className="aspect-[16/9] min-h-[380px] w-full">
+        {/* 16:9 keeps the export-tuned type in proportion, capped so a wide
+            monitor does not turn one figure into a full screen of chart. */}
+        <div className="aspect-[16/9] max-h-[460px] min-h-[340px] w-full">
           <Plot
             data={fig.data}
             layout={{

@@ -92,11 +92,17 @@ export default async function OverviewPage() {
       claim: "The press is filled by the work that pays it least",
       // The headline panel above already carries the 65%; this card leads
       // on the threshold instead, which is the number an estimator can
-      // actually act on at the quote screen.
-      figure: `${th.crossover_hrs.toFixed(1)}h`,
+      // actually act on at the quote screen. On an extract whose rate
+      // curve never crosses the benchmark the API reports no crossover
+      // (null), and the card says so instead of a number.
+      figure:
+        th.crossover_hrs === null ? "—" : `${th.crossover_hrs.toFixed(1)}h`,
       // The bootstrap interval rides with the threshold, here rather than
       // in the headline panel: one threshold, one place, never bare.
-      figureLabel: `is where a job starts earning less than the factory average, likely ${th.crossover_ci95[0].toFixed(1)}–${th.crossover_ci95[1].toFixed(1)}h`,
+      figureLabel:
+        th.crossover_hrs === null || th.crossover_ci95 === null
+          ? "no crossover in this extract: the rate curve stays on one side of the factory average, so there is no size threshold to flag quotes at"
+          : `is where a job starts earning less than the factory average, likely ${th.crossover_ci95[0].toFixed(1)}–${th.crossover_ci95[1].toFixed(1)}h`,
       support: `The same pattern holds inside individual accounts (${th.within_customer_statement}), so it is about how work gets priced rather than which customers we happen to have. Big runs still carry the factory's fixed costs, so the point is to price them knowingly, not to turn them away.`,
       href: "/dashboards",
       link: "Capacity panels",
@@ -740,10 +746,18 @@ export default async function OverviewPage() {
               Thresholds are derived rather than picked, and always reported
               as a range with a bootstrap interval (crossover:{" "}
               <span className="num">
-                {th.crossover_window_range[0].toFixed(1)}–
-                {th.crossover_window_range[1].toFixed(1)}h window range,{" "}
-                {th.crossover_ci95[0].toFixed(1)}–{th.crossover_ci95[1].toFixed(1)}h
-                95% CI
+                {th.crossover_hrs === null ||
+                th.crossover_window_range === null ||
+                th.crossover_ci95 === null ? (
+                  <>none in this extract</>
+                ) : (
+                  <>
+                    {th.crossover_window_range[0].toFixed(1)}–
+                    {th.crossover_window_range[1].toFixed(1)}h window range,{" "}
+                    {th.crossover_ci95[0].toFixed(1)}–
+                    {th.crossover_ci95[1].toFixed(1)}h 95% CI
+                  </>
+                )}
               </span>
               ).
             </li>

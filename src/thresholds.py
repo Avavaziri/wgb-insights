@@ -89,6 +89,10 @@ def crossover_ci(
         points.append(crossover_point(curve, benchmark_rate(sample)))
     arr = np.array(points)
     arr = arr[~np.isnan(arr)]
+    if len(arr) == 0:
+        # no draw crossed: there is no interval, mirror the point
+        # estimate's NaN rather than crashing on an empty percentile
+        return float("nan"), float("nan")
     lo, hi = np.percentile(arr, [2.5, 97.5])
     return float(lo), float(hi)
 

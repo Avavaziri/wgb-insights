@@ -90,10 +90,16 @@ export default async function DashboardsPage() {
       group: "Capacity",
       chart: "rate_curve",
       title: "Bigger jobs earn less per press-hour",
-      note: `crossover ${th.crossover_hrs.toFixed(1)}h`,
+      note:
+        th.crossover_hrs === null
+          ? "no crossover in this extract"
+          : `crossover ${th.crossover_hrs.toFixed(1)}h`,
       sliceable: true,
       read: `Left to right is job size, and the line is what one hour of press time earns at that size. It falls the whole way, so there is no best size to aim for, only the point where it crosses the factory's own average (the dashed line). The yellow band is the uncertainty on that point. The same pattern shows up inside individual accounts: ${th.size_mix_statement}.`,
-      changes: `Quotes expected to run past ${th.crossover_hrs.toFixed(1)}h get checked against the ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average before they go out. Treat that as a review trigger rather than a rule. Big runs carry the factory's fixed costs, and an hour at a lower rate still beats an idle hour, so the aim is to price large work knowingly wherever there is room to.`,
+      changes:
+        th.crossover_hrs === null
+          ? `The rate curve stays on one side of the factory's own ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average in this extract, so there is no size threshold to flag quotes at. Job-by-job pricing against that average still applies.`
+          : `Quotes expected to run past ${th.crossover_hrs.toFixed(1)}h get checked against the ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average before they go out. Treat that as a review trigger rather than a rule. Big runs carry the factory's fixed costs, and an hour at a lower rate still beats an idle hour, so the aim is to price large work knowingly wherever there is room to.`,
       figure: fRate,
       wide: true,
     },

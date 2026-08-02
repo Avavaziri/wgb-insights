@@ -1,7 +1,9 @@
 import { ApiDown } from "@/components/ApiGuard";
+import PlotlyChart from "@/components/PlotlyChart";
 import {
   Chip,
   type ChipTone,
+  Disclosure,
   LinkButton,
   MetaSep,
   PageHeader,
@@ -14,7 +16,7 @@ import {
   Tr,
 } from "@/components/ui";
 import { dash, dp, gbp, gbpM, num, pct } from "@/lib/format";
-import { API_BASE, ApiDownError, getJson } from "@/lib/api";
+import { API_BASE, ApiDownError, getChart, getJson } from "@/lib/api";
 import type { CallList, Value } from "@/lib/types";
 
 // The actionable outputs, one tab: who the money comes from, what work
@@ -37,10 +39,12 @@ const BAND_TONE: Record<string, ChipTone | undefined> = {
 export default async function ActionsPage() {
   let value: Value;
   let calls: CallList;
+  let workFig: unknown;
   try {
-    [value, calls] = await Promise.all([
+    [value, calls, workFig] = await Promise.all([
       getJson<Value>("/value"),
       getJson<CallList>("/call-list"),
+      getChart("work_type_value"),
     ]);
   } catch (e) {
     if (e instanceof ApiDownError) return <ApiDown message={e.message} />;
@@ -119,8 +123,20 @@ export default async function ActionsPage() {
       <Section
         kicker="Most valuable types of work"
         title="What we print, ranked by what it contributes"
-        note="The £/press-hr column is the constraint view. Work that contributes a lot is not automatically work that earns a good hourly rate."
+        note="The £/press-hr figures are the constraint view. Work that contributes a lot is not automatically work that earns a good hourly rate."
       >
+        {/* The ranking as a figure (top 10, computed and drawn in Python);
+            the complete list keeps its table form one click below, so the
+            dashboard read and the full detail are both one screen. */}
+        <PlotlyChart
+          figure={workFig}
+          title="Top ten types of work ranked by total contribution, with contribution per press-hour on each bar"
+          caption="Top 10 shown. Contribution flatters small jobs because there is no cost-to-serve data here, so read this as a map of where the money comes from and not as a strategy on its own."
+        />
+        <Disclosure
+          title="See the full list as a table"
+          hint="every work type, including the long tail"
+        >
         <TableFrame caption="Small product types roll into 'Other (long tail)' instead of disappearing. Contribution flatters small jobs because there is no cost-to-serve data here, so read this as a map of where the money comes from and not as a strategy on its own.">
           <Table>
             <thead>
@@ -159,6 +175,7 @@ export default async function ActionsPage() {
             </tbody>
           </Table>
         </TableFrame>
+        </Disclosure>
       </Section>
 
       <Section

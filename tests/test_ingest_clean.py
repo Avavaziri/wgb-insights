@@ -48,14 +48,14 @@ class TestIngest:
     def test_undocumented_nulls_counted(
         self, loaded: tuple[pd.DataFrame, ValidationReport]
     ) -> None:
-        # real export: manadj/mupnett null x64, Puchases null x12 — fixture plants 5 and 2
+        # real export: manadj/mupnett null x64, Puchases null x12; the fixture plants 5 and 2
         _, report = loaded
         assert report.n_null_manadj == 5
         assert report.n_null_purchases == 2
         assert report.n_identity2_checked == report.n_rows - 5
 
     def test_error_cells_counted_before_pandas(self) -> None:
-        # the fixture writes 8 '#DIV/0!' as native error cells — pandas sees NaN
+        # the fixture writes 8 '#DIV/0!' as native error cells, pandas sees NaN
         assert count_error_cells(FIXTURE, "VA%") == 8
 
     def test_broken_identity2_flagged_not_raised(

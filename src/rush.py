@@ -1,14 +1,14 @@
 """Short-notice (rush) jobs and the constraint (§5.5).
 
 Rush is a *dwell-time proxy*: bottom-percentile dwell (SalesIn → Ship)
-WITHIN size band — a big job turned around fast is rush, a small job
+WITHIN size band: a big job turned around fast is rush, a small job
 with the same dwell may not be. No scheduling-system data exists (§6),
 so this proxies expediting, it does not measure it.
 
 The main effect is a headline candidate. The rush × load interaction is
 computed and displayed with its p-value; the descriptive load gradient
 may appear ONLY adjacent to that failed test (§1), never in exported
-assets. Load bins are RELATIVE weekly booked hours — never utilisation
+assets. Load bins are RELATIVE weekly booked hours: never utilisation
 percentages (no capacity data).
 """
 
@@ -23,7 +23,7 @@ from src.stats_core import EffectReport, effect, fit_reported
 # Full controls (B4 claims robustness to them): size, run features,
 # product, YEAR and CUSTOMER fixed effects. Note: with customer FE and
 # the mandated cluster-robust SEs the rush p is ~0.04, far weaker than
-# the scope's exploratory 2e-5 — that value is only reproducible with
+# the scope's exploratory 2e-5, that value is only reproducible with
 # nonrobust SEs, which §2.3 forbids. Flagged, not tuned toward.
 _CONTROLS = (
     "np.log(press_hrs) + np.log1p(quantity) + np.log1p(impressions)"
@@ -55,7 +55,7 @@ def rush_effect(
 
 def load_quantiles(data: pd.DataFrame, n_bins: int) -> pd.Series:
     """Relative load: total booked press hours in each job's SalesIn week,
-    binned into n quantiles (0 = quietest). RELATIVE only — without
+    binned into n quantiles (0 = quietest). RELATIVE only, without
     capacity data these are never utilisation percentages."""
     week_key = data["sales_in"].dt.strftime("%G-%V")
     weekly_hours = data.groupby(week_key)["press_hrs"].transform("sum")
@@ -101,8 +101,9 @@ def rush_load_interaction(
         )
         srep = effect(sfit, "is_rush", logged_outcome=True)
         slopes.append(
-            {"load_bin": int(b), "pct_effect": srep.pct_effect, "p_value": srep.p_value,
-             "n": srep.n_obs}
+            {"load_bin": int(b), "pct_effect": srep.pct_effect,
+             "ci_low_pct": srep.ci_low_pct, "ci_high_pct": srep.ci_high_pct,
+             "p_value": srep.p_value, "n": srep.n_obs}
         )
     return {"interaction": interaction, "simple_slopes": slopes}
 
@@ -118,6 +119,8 @@ def percentile_sensitivity(
             {
                 "percentile": p,
                 "pct_effect": rep.pct_effect,
+                "ci_low_pct": rep.ci_low_pct,
+                "ci_high_pct": rep.ci_high_pct,
                 "p_value": rep.p_value,
                 "n_rush": int(flag_rush(data, p, size_bands).sum()),
             }

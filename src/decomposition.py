@@ -4,11 +4,11 @@ Target: log(contribution per constraint-hour), clipped at the config
 floor (GBP/hr). Blocks are added cumulatively in config order; each step
 reports the full §2.1 quartet plus increments and a nested F-test
 against the previous step. The run-features block tests the
-run-length-economics mechanism — does job size still matter once
+run-length-economics mechanism, does job size still matter once
 quantity, impressions and plates are controlled? Either answer ships.
 
 Increments are order-dependent; the run uses config order only (the
-reversed pass was an adjudicated cut — one README appendix sentence).
+reversed pass was an adjudicated cut: one README appendix sentence).
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ def nested_decomposition(
 
     Columns: block, r2, r2_adj, r2_cv, n_params, adj_increment,
     cv_increment, f_p_vs_prev, in_sample_only. `in_sample_only` marks
-    blocks that pass the F-test but add < the config CV-R² increment —
+    blocks that pass the F-test but add < the config CV-R² increment:
     statistically present, predictively useless (§2.4).
     """
     unknown = [b for b in blocks if b not in BLOCK_TERMS]

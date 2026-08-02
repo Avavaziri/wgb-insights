@@ -1,8 +1,8 @@
-"""The ranked retention call list (§7.2) — the churn module's actionable output.
+"""The ranked retention call list (§7.2): the churn module's actionable output.
 
 One row per customer: cadence, gate status, risk, value context (historic
 contribution, contribution per constraint-hour, override rate), and
-expected_next_order (null where not forecastable — never invented).
+expected_next_order (null where not forecastable: never invented).
 """
 
 from __future__ import annotations

@@ -87,6 +87,15 @@
   --text-emphasis: 15px;
   --text-heading: 22px;
   --text-title: 26px;
+
+  /* DISPLAY TIER. The scale above tops out at 26px, which is why the page
+     read as uniform grey texture: a board has nowhere to land. Inter is
+     the only family (Fraunces was tried and rejected twice), so the
+     personality has to come from the JUMP, not from a second face. 13px
+     body against a ~120px figure is the whole idea. Exactly one --text-
+     display per page; a second one cancels the first. */
+  --text-display: clamp(4rem, 10vw, 8.5rem);
+  --text-lede: clamp(1.15rem, 2vw, 1.75rem);
 }
 
 @layer base {

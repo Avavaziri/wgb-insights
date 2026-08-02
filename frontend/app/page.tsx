@@ -1,6 +1,7 @@
 import Link from "next/link";
 import PlotlyChart from "@/components/PlotlyChart";
 import { ApiDown } from "@/components/ApiGuard";
+import HeadlineFinding from "@/components/HeadlineFinding";
 import UploadZone from "@/components/UploadZone";
 import {
   Chip,
@@ -11,7 +12,6 @@ import {
   KpiBand,
   MetaSep,
   NoteCard,
-  PageHeader,
   Panel,
   PanelHead,
   Readout,
@@ -93,9 +93,12 @@ export default async function OverviewPage() {
     {
       area: "Act 1 · Where the margin leaks",
       claim: "The press is filled by the work that pays it least",
-      figure: pct(cap.share_of_constraint_hours, 0),
-      figureLabel: `of litho press hours sit in jobs over ${th.crossover_hrs.toFixed(1)}h`,
-      support: `Those hours earn ${gbp(cap.pooled_rate_above)}/hr against the factory's own ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average. The same pattern holds inside individual accounts (${th.within_customer_statement}), so it is about how work gets priced rather than which customers we happen to have. Big runs still carry the factory's fixed costs, so the point is to price them knowingly, not to turn them away.`,
+      // The headline panel above already carries the 65%; this card leads
+      // on the threshold instead, which is the number an estimator can
+      // actually act on at the quote screen.
+      figure: `${th.crossover_hrs.toFixed(1)}h`,
+      figureLabel: "is where a job starts earning less than the factory average",
+      support: `The same pattern holds inside individual accounts (${th.within_customer_statement}), so it is about how work gets priced rather than which customers we happen to have. Big runs still carry the factory's fixed costs, so the point is to price them knowingly, not to turn them away.`,
       href: "/dashboards",
       link: "Capacity panels",
     },
@@ -122,28 +125,70 @@ export default async function OverviewPage() {
 
   return (
     <>
+      {/* The thesis, before anything else. The upload row used to sit here
+          and it is plumbing, not the finding, so it now follows. */}
+      <HeadlineFinding
+        share={cap.share_of_constraint_hours}
+        crossoverHrs={th.crossover_hrs}
+        benchmark={th.benchmark_rate_gbp_per_hr}
+        rateAbove={cap.pooled_rate_above}
+        lithoNote={th.litho_only_note}
+      />
+
+      {/* What the figures were computed from. Was an h1 block of its own;
+          the headline panel owns the h1 now, so this is a quiet strip. */}
+      <p className="flex flex-wrap items-center gap-x-1 gap-y-1 text-caption text-muted">
+        <span className="font-mono">{data.source_name}</span>
+        <MetaSep />
+        <span>
+          {num(Number(v.n_rows))} jobs · {v.n_customers} customers ·{" "}
+          {v.n_reps} reps
+        </span>
+        <MetaSep />
+        <span>
+          to <span className="num">{data.as_of}</span>
+        </span>
+        <MetaSep />
+        <span>~{pct(data.sample_share_of_turnover, 0)} of turnover</span>
+      </p>
+
       <UploadZone />
 
-      <PageHeader
-        eyebrow="Overview"
-        title="Print-job sales, live from the file"
-        meta={
-          <>
-            <span className="font-mono">{data.source_name}</span>
-            <MetaSep />
-            <span>
-              {num(Number(v.n_rows))} jobs · {v.n_customers} customers ·{" "}
-              {v.n_reps} reps
-            </span>
-            <MetaSep />
-            <span>
-              to <span className="num">{data.as_of}</span>
-            </span>
-            <MetaSep />
-            <span>~{pct(data.sample_share_of_turnover, 0)} of turnover</span>
-          </>
-        }
-      />
+      {/* The three acts, in argument order, at full width. They were a
+          cramped third-column beside the chart, which is part of why the
+          page read as uniform texture. The thick ink rule gives each one
+          weight without leaving the flat, radius-0 house style. */}
+      <section aria-labelledby="acts">
+        <h2 id="acts" className="sr-only">
+          The three findings
+        </h2>
+        <div className="grid gap-3 lg:grid-cols-3">
+          {findings.map((f) => (
+            <Link
+              key={f.claim}
+              href={f.href}
+              className="plain group flex flex-col border border-line border-t-[3px] border-t-ink bg-white px-4 py-4 no-underline transition-colors hover:bg-hover"
+            >
+              <span className="eyebrow block">{f.area}</span>
+              <span className="mt-2 block text-emphasis font-semibold leading-snug">
+                {f.claim}
+              </span>
+              <span className="num mt-3 block text-title font-extrabold leading-none tracking-[-0.02em]">
+                {f.figure}
+              </span>
+              <span className="mt-1.5 block text-body leading-snug text-muted">
+                {f.figureLabel}
+              </span>
+              <span className="mt-2 block text-body leading-snug text-muted">
+                {f.support}
+              </span>
+              <span className="mt-3 block text-caption font-semibold underline underline-offset-2">
+                {f.link}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       <KpiBand>
         <Kpi
@@ -184,44 +229,19 @@ export default async function OverviewPage() {
         />
       </KpiBand>
 
-      <div className="grid gap-3 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <Panel>
-            <PanelHead
-              level="h2"
-              meta={`CAGR ${pct(data.growth.revenue_cagr)} · ${data.partial_year} partial greyed`}
-            >
-              Revenue grew because jobs got more valuable
-            </PanelHead>
-            <PlotlyChart
-              figure={trendFig}
-              tall
-              title={`Revenue grew because jobs got more valuable: revenue by year, GBP millions, sample. CAGR ${pct(data.growth.revenue_cagr)}, ${data.partial_year} partial and greyed.`}
-            />
-          </Panel>
-        </div>
-        <div className="grid content-start gap-3">
-          {findings.map((f) => (
-            <Link
-              key={f.claim}
-              href={f.href}
-              className="plain group block border border-line bg-white px-4 py-3 no-underline transition-colors hover:bg-hover"
-            >
-              <span className="eyebrow block">{f.area}</span>
-              <span className="mt-1 block text-emphasis font-semibold leading-snug">
-                {f.claim}
-              </span>
-              <span className="mt-1 block text-body leading-snug text-muted">
-                <span className="num font-semibold text-ink">{f.figure}</span>{" "}
-                {f.figureLabel}. {f.support}
-              </span>
-              <span className="mt-1.5 block text-caption font-semibold underline underline-offset-2">
-                {f.link}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
+      <Panel>
+        <PanelHead
+          level="h2"
+          meta={`CAGR ${pct(data.growth.revenue_cagr)} · ${data.partial_year} partial greyed`}
+        >
+          Revenue grew because jobs got more valuable
+        </PanelHead>
+        <PlotlyChart
+          figure={trendFig}
+          tall
+          title={`Revenue grew because jobs got more valuable: revenue by year, GBP millions, sample. CAGR ${pct(data.growth.revenue_cagr)}, ${data.partial_year} partial and greyed.`}
+        />
+      </Panel>
 
       <Section
         kicker="Data health"

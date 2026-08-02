@@ -79,12 +79,25 @@ export function MetaSep() {
 }
 
 /**
- * The interpretation layer every dashboard figure carries: how to read
- * it, then the one decision it informs. One shared component so
- * ConstraintGauge and every dashboard tile render the identical thing
- * rather than two copies that can drift (found in review: they had).
- * `read` is optional because the gauge folds its own reading into
- * labels elsewhere and only needs the decision line.
+ * The interpretation layer every dashboard figure carries. One shared
+ * component so ConstraintGauge and every dashboard tile render the
+ * identical thing rather than two copies that can drift (found in
+ * review: they had).
+ *
+ * The decision the figure informs is ALWAYS visible; how to read the
+ * figure sits behind a click. Six panels carrying both meant twelve
+ * paragraphs of prose on one screen, which is the main reason the page
+ * read as dense. The decision is what a board is there for, the reading
+ * note is instruction, and instruction can wait to be asked for.
+ *
+ * A native <details> rather than a hover: this app gets demonstrated in a
+ * screen recording, where a click is deliberate and visible on camera and
+ * a hover is neither. It is also keyboard-operable and needs no JS. The
+ * chart's own aria-label still carries the reading note in full, so a
+ * screen-reader user never depends on opening this.
+ *
+ * `read` is optional because the gauge folds its reading into labels
+ * elsewhere and only needs the decision line.
  */
 export function TileFooter({
   read,
@@ -94,15 +107,27 @@ export function TileFooter({
   changes: string;
 }) {
   return (
-    <div className="space-y-0.5 border-t border-line px-3.5 py-2 text-body leading-snug text-ink">
-      {read && (
-        <p>
-          <span className="font-semibold">How to read it.</span> {read}
-        </p>
-      )}
+    <div className="border-t border-line px-3.5 py-2 text-body leading-snug text-ink">
       <p>
         <span className="font-semibold">What it changes.</span> {changes}
       </p>
+      {read && (
+        <details className="group mt-1.5">
+          <summary className="w-fit cursor-pointer list-none text-caption font-semibold underline decoration-line underline-offset-2 hover:decoration-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
+            How to read it
+            <span aria-hidden className="ml-1 inline-block group-open:hidden">
+              +
+            </span>
+            <span
+              aria-hidden
+              className="ml-1 hidden group-open:inline-block"
+            >
+              &minus;
+            </span>
+          </summary>
+          <p className="mt-1.5">{read}</p>
+        </details>
+      )}
     </div>
   );
 }

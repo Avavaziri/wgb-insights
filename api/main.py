@@ -58,6 +58,32 @@ def _effect(e: Any) -> schemas.EffectReportSchema:
     return schemas.EffectReportSchema(**dataclasses.asdict(e))
 
 
+def _nan_to_none(x: float) -> float | None:
+    """Pipeline NaN (no crossover exists) becomes an honest null on the
+    wire instead of relying on the JSON encoder's NaN handling."""
+    return None if np.isnan(x) else float(x)
+
+
+def _capacity_statement(cs: dict[str, float], no_crossover: bool) -> str:
+    """Board-voice capacity sentence, composed in Python (§7.1). On a
+    no-crossover extract the shares are NaN, so the sentence says the
+    split doesn't exist rather than formatting 'nan%'."""
+    if no_crossover:
+        return (
+            f"The rate curve never settles below the factory's own average "
+            f"of {cs['benchmark']:,.0f} GBP/hr in this extract, so no "
+            "crossover exists and there is no capacity split to report. "
+            "Descriptive only: no counterfactual GBP figure is defensible "
+            "without capacity data."
+        )
+    return (
+        f"{cs['share_of_constraint_hours']:.0%} of constraint-hours run at "
+        f"{cs['pooled_rate_above']:,.0f} GBP/hr vs the factory's own average "
+        f"of {cs['benchmark']:,.0f} GBP/hr. Descriptive only: no "
+        "counterfactual GBP figure is defensible without capacity data."
+    )
+
+
 @app.post("/datasets", response_model=schemas.DatasetResponse)
 async def upload_dataset(file: UploadFile) -> schemas.DatasetResponse:
     """THE dynamic-system endpoint: a new .xlsx of the same schema fully
@@ -201,17 +227,31 @@ def thresholds() -> schemas.ThresholdsResponse:
     shares = sorted(
         v for v in (share_ci["at_ci_low"], share_ci["at_ci_high"])
         if not np.isnan(v)
-    ) or [float("nan"), float("nan")]
+    )
+    no_crossover = np.isnan(th["crossover_hrs"])
+    ci_lo, ci_hi = th["crossover_ci"]
     return schemas.ThresholdsResponse(
         benchmark_rate_gbp_per_hr=float(th["benchmark_rate"]),
-        crossover_hrs=float(th["crossover_hrs"]),
-        crossover_window_range=(float(sens.min()), float(sens.max())),
-        crossover_ci95=(float(th["crossover_ci"][0]), float(th["crossover_ci"][1])),
+        crossover_hrs=_nan_to_none(th["crossover_hrs"]),
+        # pandas min/max skip NaN, so the range covers the windows that
+        # crossed; None only when no window crossed at all
+        crossover_window_range=(
+            None if sens.isna().all() else (float(sens.min()), float(sens.max()))
+        ),
+        # the CI conditions on a crossover existing (bootstrap draws that
+        # never cross carry no interval), so it goes None with the point
+        crossover_ci95=(
+            None
+            if no_crossover or np.isnan(ci_lo)
+            else (float(ci_lo), float(ci_hi))
+        ),
         within_customer_size=_effect(within),
         within_customer_pct_per_doubling=w_pct,
         pooled_size=_effect(pooled),
         pooled_pct_per_doubling=p_pct,
-        share_range_across_crossover_ci=(float(shares[0]), float(shares[-1])),
+        share_range_across_crossover_ci=(
+            (float(shares[0]), float(shares[-1])) if shares else None
+        ),
         within_customer_statement=(
             f"the same customer's twice-bigger job earns "
             f"{abs(w_pct):.0f}% "
@@ -225,13 +265,13 @@ def thresholds() -> schemas.ThresholdsResponse:
             f"the gap between the two is customer mix"
         ),
         monotonicity=th["monotonicity"],
-        capacity_share={k: float(v) for k, v in cs.items()},
-        capacity_statement=(
-            f"{cs['share_of_constraint_hours']:.0%} of constraint-hours run at "
-            f"{cs['pooled_rate_above']:,.0f} GBP/hr vs the factory's own average "
-            f"of {cs['benchmark']:,.0f} GBP/hr. Descriptive only: no "
-            "counterfactual GBP figure is defensible without capacity data."
+        capacity_share=schemas.CapacityShareSchema(
+            share_of_constraint_hours=_nan_to_none(cs["share_of_constraint_hours"]),
+            pooled_rate_above=_nan_to_none(cs["pooled_rate_above"]),
+            benchmark=float(cs["benchmark"]),
+            n_jobs_above=float(cs["n_jobs_above"]),
         ),
+        capacity_statement=_capacity_statement(cs, no_crossover),
         litho_only_note=(
             "Press hrs = 0 for Digital/Outwork/Wide Format: constraint analysis "
             "is Litho-only."

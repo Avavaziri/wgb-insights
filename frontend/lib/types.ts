@@ -121,18 +121,25 @@ export interface Pricing {
 
 export interface Thresholds {
   benchmark_rate_gbp_per_hr: number;
-  crossover_hrs: number;
-  crossover_window_range: [number, number];
-  crossover_ci95: [number, number];
+  // The rate curve does not always cross the benchmark: on an extract
+  // where it stays on one side, the pipeline reports NaN and the wire
+  // carries null. Everything keyed off the crossover must handle that.
+  crossover_hrs: number | null;
+  // The window range and bootstrap CI ride with the point estimate:
+  // null alongside crossover_hrs when nothing crosses.
+  crossover_window_range: [number, number] | null;
+  crossover_ci95: [number, number] | null;
   within_customer_size: EffectReport;
   within_customer_pct_per_doubling: number;
   pooled_size: EffectReport;
   pooled_pct_per_doubling: number;
-  share_range_across_crossover_ci: [number, number];
+  share_range_across_crossover_ci: [number, number] | null;
   within_customer_statement: string;
   size_mix_statement: string;
   monotonicity: Record<string, number | boolean>;
-  capacity_share: Record<string, number>;
+  // share_of_constraint_hours / pooled_rate_above are null when there is
+  // no crossover to split capacity at (same extract condition as above).
+  capacity_share: Record<string, number | null>;
   capacity_statement: string;
   litho_only_note: string;
 }

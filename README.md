@@ -2,12 +2,12 @@
 
 Dynamic analytics over W&G Baird print-job sales data. Upload a new
 `.xlsx` of the same schema and every result (statistics, charts, call
-list, hypothesis register) recomputes with no code change.
+list, hypothesis register) recomputes.
 
 ## Executive summary
 
 **The problem.** The business sees margin per invoice, never per hour of
-press time — the one resource a factory cannot stretch. Churn is watched
+press time: The one resource a factory cannot stretch.Churn is watched
 by gut feel; the pricing judgement of the estimators is recorded nowhere.
 
 **The findings.** 65% of litho press hours are sold below the factory's
@@ -24,8 +24,7 @@ rule misses one.
 own rate; log the reason behind each manual override; ring the thirteen,
 most valuable first. **The ask:** a sequenced two-year programme —
 year 1 measurement (capacity instrumentation, cost-to-serve sampling;
-mostly process and staff time), year 2 pricing-knowledge capture with a
-university partner, each phase gating the next.
+mostly process and staff time), year 2 pricing-knowledge capture; each phase gating the next.
 
 **Objectives it was built to, each with its test:** (1) refreshes from a
 new extract with no code change — enforced by the upload path and its
@@ -177,9 +176,10 @@ harden into a pricing rule if left unattended, so it should be
 re-derived on each new extract (it is, automatically) and re-read by a
 person quarterly; adoption — a call list nobody rings is a report, not
 a system; key-person dependency — the build is currently understood by
-one person, which the README's runbook style is meant to mitigate;
+one person, which the README's style is meant to mitigate;
 local-only scope — no auth and no deployment hardening, so putting this
-on a network as-is would be a defect, not a feature.
+on a network as-is would be a defect, not a feature. 
+AUTH WOULD BE NECESSARY AFTER HOSTING THIS LOCALLY OR ON THE CLOUD.
 
 **Threats to validity, and where each is handled:** selection (the
 override→margin effect is computed and excluded — overridden jobs are

@@ -94,7 +94,7 @@
      personality has to come from the JUMP, not from a second face. 13px
      body against a ~120px figure is the whole idea. Exactly one --text-
      display per page; a second one cancels the first. */
-  --text-display: clamp(4rem, 10vw, 8.5rem);
+  --text-display: clamp(3.5rem, 7.5vw, 6.75rem);
   --text-lede: clamp(1.3rem, 2.6vw, 2.35rem);
 }
 

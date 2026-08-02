@@ -95,7 +95,7 @@
      body against a ~120px figure is the whole idea. Exactly one --text-
      display per page; a second one cancels the first. */
   --text-display: clamp(4rem, 10vw, 8.5rem);
-  --text-lede: clamp(1.15rem, 2vw, 1.75rem);
+  --text-lede: clamp(1.3rem, 2.6vw, 2.35rem);
 }
 
 @layer base {

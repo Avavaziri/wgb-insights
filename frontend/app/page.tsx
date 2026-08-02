@@ -94,7 +94,9 @@ export default async function OverviewPage() {
       // on the threshold instead, which is the number an estimator can
       // actually act on at the quote screen.
       figure: `${th.crossover_hrs.toFixed(1)}h`,
-      figureLabel: "is where a job starts earning less than the factory average",
+      // The bootstrap interval rides with the threshold, here rather than
+      // in the headline panel: one threshold, one place, never bare.
+      figureLabel: `is where a job starts earning less than the factory average, likely ${th.crossover_ci95[0].toFixed(1)}–${th.crossover_ci95[1].toFixed(1)}h`,
       support: `The same pattern holds inside individual accounts (${th.within_customer_statement}), so it is about how work gets priced rather than which customers we happen to have. Big runs still carry the factory's fixed costs, so the point is to price them knowingly, not to turn them away.`,
       href: "/dashboards",
       link: "Capacity panels",
@@ -127,7 +129,6 @@ export default async function OverviewPage() {
       <HeadlineFinding
         share={cap.share_of_constraint_hours}
         crossoverHrs={th.crossover_hrs}
-        crossoverCi95={th.crossover_ci95}
         shareRange={th.share_range_across_crossover_ci}
         benchmark={th.benchmark_rate_gbp_per_hr}
         rateAbove={cap.pooled_rate_above}
@@ -181,7 +182,10 @@ export default async function OverviewPage() {
               <span className="mt-2 block text-body leading-snug text-muted">
                 {f.support}
               </span>
-              <span className="mt-3 block text-caption font-semibold underline underline-offset-2">
+              {/* mt-auto pins the link to the bottom of every card, so the
+                  row reads as one band. The three supports are different
+                  lengths and without it Act 3's link floated halfway up. */}
+              <span className="mt-auto block pt-3 text-caption font-semibold underline underline-offset-2">
                 {f.link}
               </span>
             </Link>
@@ -195,105 +199,47 @@ export default async function OverviewPage() {
           uniform texture. Its two bootstrap ranges moved into the headline
           panel and its value-per-job figure moved onto the trend panel,
           next to the claim it actually supports. */}
-      <Panel>
-        <PanelHead
-          level="h2"
-          meta={`revenue ${pct(data.growth.revenue_cagr)}/yr · value per job ${pct(data.growth.revenue_per_job_cagr)}/yr · ${data.partial_year} partial greyed`}
-        >
-          Revenue grew because jobs got more valuable
-        </PanelHead>
-        <PlotlyChart
-          figure={trendFig}
-          tall
-          title={`Revenue grew because jobs got more valuable: revenue by year, GBP millions, sample. CAGR ${pct(data.growth.revenue_cagr)}, ${data.partial_year} partial and greyed.`}
-        />
-      </Panel>
-
-      <Section
-        kicker="Data health"
-        title="Checks on the current file"
-        note="If the pricing identity fails on an upload, the pricing analysis withholds its numbers instead of guessing what a column means."
-      >
-        <div className="grid gap-3 lg:grid-cols-2">
-          <DefList
-            title="Ingest checks"
-            rows={[
-              {
-                label: (
-                  <>
-                    <code>VA/24</code> identity, max error
-                  </>
-                ),
-                value: expo(Number(v.identity1_max_err)),
-              },
-              {
-                label: (
-                  <>
-                    <code>mupnett = labmup + manadj</code>, max error (
-                    {num(Number(v.n_identity2_checked))} rows)
-                  </>
-                ),
-                // The one ingest check that can stop the pricing module
-                // reporting, so a failure is a genuine alert rather than a
-                // number. The word carries it; the colour only speeds it up.
-                value: v.identity2_ok ? (
-                  expo(Number(v.identity2_max_err))
-                ) : (
-                  <Chip tone="critical">FAILED, pricing withheld</Chip>
-                ),
-              },
-              {
-                label: (
-                  <>
-                    <code>#DIV/0!</code> cells counted before coercion
-                  </>
-                ),
-                value: num(Number(v.va_pct_error_cells)),
-              },
-              {
-                label: (
-                  <>
-                    Blank <code>manadj</code>, held out of overrides
-                  </>
-                ),
-                value: num(Number(v.n_null_manadj)),
-              },
-              {
-                label: "Blank binding means outsourced, so it is kept",
-                value: num(Number(v.n_null_binding)),
-              },
-              {
-                label: "Zero press-hours jobs (capacity is Litho-only)",
-                value: num(Number(v.n_press_hrs_zero)),
-              },
-              {
-                label: "Credits set aside for review",
-                value: num(Number(c.n_quarantined_credits)),
-              },
-            ]}
+      {/* Chart two-thirds, gaps one-third. Full width turned four bars into
+          slabs at a 4:1 aspect, and the pairing earns its keep: growth is
+          healthy, and here is what the data still cannot tell you. The
+          gaps panel used to sit in Data health below, which buried the
+          investment ask under a table of ingest counts. */}
+      <div className="grid gap-3 xl:grid-cols-3">
+        <Panel className="xl:col-span-2">
+          <PanelHead
+            level="h2"
+            meta={`revenue ${pct(data.growth.revenue_cagr)}/yr · value per job ${pct(data.growth.revenue_per_job_cagr)}/yr · ${data.partial_year} partial greyed`}
+          >
+            Revenue grew because jobs got more valuable
+          </PanelHead>
+          <PlotlyChart
+            figure={trendFig}
+            tall
+            title={`Revenue grew because jobs got more valuable: revenue by year, GBP millions, sample. CAGR ${pct(data.growth.revenue_cagr)}, ${data.partial_year} partial and greyed.`}
           />
-          <Panel>
-            <PanelHead meta="the investment ask">
-              What the data cannot answer
-            </PanelHead>
-            <ul className="m-0 divide-y divide-line">
-              {data.gaps.map((g) => (
-                <li
-                  key={g.gap}
-                  className="flex flex-col gap-1 px-4 py-2 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
-                >
-                  <p className="text-body font-semibold leading-snug">
-                    {g.gap}
-                  </p>
-                  <p className="text-caption leading-snug text-muted sm:max-w-[16rem] sm:shrink-0 sm:text-right">
-                    {g.blocks}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </Panel>
-        </div>
-      </Section>
+        </Panel>
+        <Panel>
+          <PanelHead level="h2" meta="the investment ask">
+            What the data cannot answer
+          </PanelHead>
+          <ul className="m-0 divide-y divide-line">
+            {data.gaps.map((g) => (
+              <li key={g.gap} className="px-4 py-2">
+                <p className="text-body font-semibold leading-snug">{g.gap}</p>
+                <p className="mt-0.5 text-caption leading-snug text-muted">
+                  {g.blocks}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      </div>
+
+      {/* The Data health section was a top-level block here, between the
+          findings and the KTP programme. It is methodology, not a board
+          message, so it now folds into the evidence section below with
+          every other proof: still one click from the front page, no
+          longer sitting between a director and the argument. */}
 
       {/* The KTP arc: the data gaps above are not confessions, they are
           the work programme. Each row names the build, the company
@@ -700,6 +646,74 @@ export default async function OverviewPage() {
               ))}
             </div>
           </Evidence>
+        </Disclosure>
+
+        <Disclosure
+          title="What the loader checked on this file"
+          hint="ingest identities and anomaly counts"
+        >
+          <p className="measure text-body leading-relaxed">
+            If the pricing identity ever fails on an upload, the pricing
+            analysis withholds its numbers instead of guessing what a column
+            means.
+          </p>
+          <DefList
+            title="Ingest checks"
+            rows={[
+              {
+                label: (
+                  <>
+                    <code>VA/24</code> identity, max error
+                  </>
+                ),
+                value: expo(Number(v.identity1_max_err)),
+              },
+              {
+                label: (
+                  <>
+                    <code>mupnett = labmup + manadj</code>, max error (
+                    {num(Number(v.n_identity2_checked))} rows)
+                  </>
+                ),
+                // The one ingest check that can stop the pricing module
+                // reporting, so a failure is a genuine alert rather than a
+                // number. The word carries it; the colour only speeds it up.
+                value: v.identity2_ok ? (
+                  expo(Number(v.identity2_max_err))
+                ) : (
+                  <Chip tone="critical">FAILED, pricing withheld</Chip>
+                ),
+              },
+              {
+                label: (
+                  <>
+                    <code>#DIV/0!</code> cells counted before coercion
+                  </>
+                ),
+                value: num(Number(v.va_pct_error_cells)),
+              },
+              {
+                label: (
+                  <>
+                    Blank <code>manadj</code>, held out of overrides
+                  </>
+                ),
+                value: num(Number(v.n_null_manadj)),
+              },
+              {
+                label: "Blank binding means outsourced, so it is kept",
+                value: num(Number(v.n_null_binding)),
+              },
+              {
+                label: "Zero press-hours jobs (capacity is Litho-only)",
+                value: num(Number(v.n_press_hrs_zero)),
+              },
+              {
+                label: "Credits set aside for review",
+                value: num(Number(c.n_quarantined_credits)),
+              },
+            ]}
+          />
         </Disclosure>
 
         <Disclosure

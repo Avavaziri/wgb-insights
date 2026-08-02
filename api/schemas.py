@@ -188,25 +188,42 @@ class PricingResponse(Strict):
     override_effect: CautionWrapped
 
 
+class CapacityShareSchema(Strict):
+    """Descriptive capacity split (§1: no counterfactual GBP). Share and
+    rate are None when the rate curve never crosses the benchmark: there
+    is no crossover to split capacity at, and null — not a fake zero —
+    is what crosses the wire."""
+
+    share_of_constraint_hours: float | None
+    pooled_rate_above: float | None
+    benchmark: float
+    n_jobs_above: float
+
+
 class ThresholdsResponse(Strict):
     benchmark_rate_gbp_per_hr: float
-    crossover_hrs: float
-    crossover_window_range: tuple[float, float]
-    crossover_ci95: tuple[float, float]
+    # None when the curve stays on one side of the benchmark for the
+    # whole size range: NaN in the pipeline, null on the wire. The window
+    # range and CI ride with the point estimate and go None alongside it,
+    # never a NaN dressed up as a float.
+    crossover_hrs: float | None
+    crossover_window_range: tuple[float, float] | None
+    crossover_ci95: tuple[float, float] | None
     # the composition check: size gradient with the account held fixed
     within_customer_size: EffectReportSchema
     within_customer_pct_per_doubling: float
     pooled_size: EffectReportSchema
     pooled_pct_per_doubling: float
     # the headline share evaluated at the crossover CI bounds, ordered
-    # (low share, high share), so the 65% carries the crossover's interval
-    share_range_across_crossover_ci: tuple[float, float]
+    # (low share, high share), so the 65% carries the crossover's interval;
+    # None when there is no crossover to evaluate at
+    share_range_across_crossover_ci: tuple[float, float] | None
     # board-voice sentences, composed in Python so no client strips a
     # sign, takes an absolute value, or subtracts the two slopes
     within_customer_statement: str
     size_mix_statement: str
     monotonicity: dict[str, Any]
-    capacity_share: dict[str, float]
+    capacity_share: CapacityShareSchema
     capacity_statement: str
     litho_only_note: str
 

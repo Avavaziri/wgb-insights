@@ -12,15 +12,20 @@ import type {
   Thresholds,
 } from "@/lib/types";
 
-// One tab, every surviving panel. Six charts made the cut; the
-// decomposition table and the BH diagnostic live in the Overview's
-// evidence fold instead, because a table and a methodology chart are not
-// dashboard panels. Each figure arrives from Python already laid out for
-// its tile size (`compact`), so nothing here is a scaled-down poster.
+// One tab, every surviving panel. Five charts plus the gauge made the
+// cut; the decomposition table and the BH diagnostic live in the
+// Overview's evidence fold instead, because a table and a methodology
+// chart are not dashboard panels. The capacity_share tile was cut in a
+// minimalism review: the gauge directly above it draws the same split
+// at the same crossover with both rates, so the tile was the one panel
+// telling a story the page had already told (the chart itself is still
+// computed, tested and exported; only the tile is gone). Every panel
+// left maps to one of the three acts. Each figure arrives from Python
+// already laid out for its tile size (`compact`), so nothing here is a
+// scaled-down poster.
 const CHART_NAMES = [
   "trend_context",
   "rate_curve",
-  "capacity_share",
   "override_scale",
   "rep_confounding",
   "churn_comparison",
@@ -53,7 +58,7 @@ export default async function DashboardsPage() {
 
   const cap = th.capacity_share;
   const rep = dec.rows.find((r) => r.block === "rep");
-  const [fTrend, fRate, fCapacity, fOverride, fRep, fChurn] = figures;
+  const [fTrend, fRate, fOverride, fRep, fChurn] = figures;
 
   // Years offered by the slicer: every year present in the trend plus the
   // partial one; the API decides what each chart does with them.
@@ -91,17 +96,6 @@ export default async function DashboardsPage() {
       changes: `Quotes expected to run past ${th.crossover_hrs.toFixed(1)}h get checked against the ${gbp(th.benchmark_rate_gbp_per_hr)}/hr average before they go out. Treat that as a review trigger rather than a rule. Big runs carry the factory's fixed costs, and an hour at a lower rate still beats an idle hour, so the aim is to price large work knowingly wherever there is room to.`,
       figure: fRate,
       wide: true,
-    },
-    {
-      id: "capacity",
-      group: "Capacity",
-      chart: "capacity_share",
-      title: "Press hours either side of the crossover",
-      note: `benchmark ${gbp(th.benchmark_rate_gbp_per_hr)}/hr`,
-      read: "All litho press hours, split at the crossover size, with each bar showing what those hours earned. Press time is the resource that cannot be bought quickly, which is why hours are the denominator here instead of revenue.",
-      changes: "Re-pricing attention pays off on the big-job share of hours. No '£ at stake' figure is claimed, because without capacity data a displaced-work number would be invented.",
-      figure: fCapacity,
-      sliceable: true,
     },
     {
       id: "override",

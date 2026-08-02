@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import Nav from "@/components/Nav";
 import ThemeToggle from "@/components/ThemeToggle";
 import "./globals.css";
@@ -46,7 +47,9 @@ export default function RootLayout({
           mode, hardened browser) falls through to the dark default rather
           than throwing before the app mounts.
         */}
-        <script
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `try{var t=localStorage.getItem('wgb-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t}}catch(e){}`,
           }}

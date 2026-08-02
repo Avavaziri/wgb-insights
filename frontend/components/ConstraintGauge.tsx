@@ -140,8 +140,11 @@ export default function ConstraintGauge({
         </div>
       </div>
 
+      {/* Carries the no-£-at-stake refusal since the capacity_share tile
+          was cut: the adjudicated rule is that the refusal stays adjacent
+          to the capacity claim, and this gauge is now that claim's home. */}
       <TileFooter
-        changes={`The margin question in one figure. Most of the scarce resource is sold below the factory's own average rate, so large quotes earn a review against that rate. ${lithoNote}`}
+        changes={`The margin question in one figure. Most of the scarce resource is sold below the factory's own average rate, so large quotes earn a review against that rate. No "£ at stake" figure is claimed: without capacity data a displaced-work number would be invented. ${lithoNote}`}
       />
     </figure>
   );

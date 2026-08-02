@@ -41,25 +41,32 @@ export default function HeadlineFinding({
   rateAbove,
   lithoNote,
 }: {
-  /** Proportion of constraint-hours in jobs above the crossover, 0 to 1. */
-  share: number;
+  /** Proportion of constraint-hours in jobs above the crossover, 0 to 1.
+      Null when the rate curve never crosses the benchmark. */
+  share: number | null;
   /** Only used to anchor the band's two ends. The crossover's own CI is
-      reported on the Act 1 card, where the threshold is the headline. */
-  crossoverHrs: number;
+      reported on the Act 1 card, where the threshold is the headline.
+      Null when the curve never crosses. */
+  crossoverHrs: number | null;
   /** Share evaluated at both crossover CI bounds, from the API. */
   shareRange: [number, number];
   /** The factory's own hour-weighted mean rate, GBP per press-hour. */
   benchmark: number;
-  /** Pooled rate earned by the hours above the crossover, GBP per hour. */
-  rateAbove: number;
+  /** Pooled rate earned by the hours above the crossover, GBP per hour.
+      Null alongside share/crossover when there is no crossover. */
+  rateAbove: number | null;
   lithoNote: string;
 }) {
   // The rate curve does not always cross the benchmark. When it does not
   // there is no split to draw, so the panel states that rather than
   // inventing a band of unknown width.
-  const measured = Number.isFinite(share) && Number.isFinite(crossoverHrs);
-
-  if (!measured) {
+  if (
+    share === null ||
+    crossoverHrs === null ||
+    rateAbove === null ||
+    !Number.isFinite(share) ||
+    !Number.isFinite(crossoverHrs)
+  ) {
     return (
       <section className="border-b border-line pb-8">
         <p className="eyebrow">The margin question</p>

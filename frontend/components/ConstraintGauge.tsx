@@ -40,21 +40,29 @@ export default function ConstraintGauge({
   shareRange,
   lithoNote,
 }: {
-  /** Proportion of constraint-hours in jobs above the crossover, 0 to 1. */
-  share: number;
-  crossoverHrs: number;
+  /** Proportion of constraint-hours in jobs above the crossover, 0 to 1.
+      Null when the rate curve never crosses the benchmark. */
+  share: number | null;
+  crossoverHrs: number | null;
   /** The factory's own hour-weighted mean rate, GBP per press-hour. */
   benchmark: number;
-  /** Pooled rate earned by the hours above the crossover, GBP per hour. */
-  rateAbove: number;
+  /** Pooled rate earned by the hours above the crossover, GBP per hour.
+      Null alongside share/crossover when there is no crossover. */
+  rateAbove: number | null;
   /** Share evaluated at the crossover CI bounds (low, high), from the API. */
   shareRange?: [number, number];
   lithoNote: string;
 }) {
   // The curve does not always cross the benchmark. When it does not, the
-  // share is NaN by design rather than a convenient zero, so the gauge says
-  // so instead of drawing a band of unknown width.
-  if (!Number.isFinite(share) || !Number.isFinite(crossoverHrs)) {
+  // share is NaN/null by design rather than a convenient zero, so the
+  // gauge says so instead of drawing a band of unknown width.
+  if (
+    share === null ||
+    crossoverHrs === null ||
+    rateAbove === null ||
+    !Number.isFinite(share) ||
+    !Number.isFinite(crossoverHrs)
+  ) {
     return (
       <div className="border border-line bg-surface px-4 py-3">
         <p className="eyebrow">Constraint-hours</p>

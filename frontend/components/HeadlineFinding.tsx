@@ -98,7 +98,7 @@ export default function HeadlineFinding({
           uniform yellow brand outline. The anchors matter: without them
           this is a two-tone bar with no stated meaning. */}
       <div className="mt-9 flex h-7 border border-ink" aria-hidden>
-        <div className="flex-1 bg-white" />
+        <div className="flex-1 bg-surface" />
         <div
           className="border-[1.5px] border-yellow bg-ink"
           style={{ width: pct(share, 0) }}

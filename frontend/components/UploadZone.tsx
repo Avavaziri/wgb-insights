@@ -82,7 +82,7 @@ export default function UploadZone() {
         if (f) void upload(f);
       }}
       className={`border transition-colors ${
-        dragging ? "border-ink bg-yellow" : "border-line bg-white"
+        dragging ? "border-ink bg-yellow" : "border-line bg-surface"
       }`}
     >
       <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-4 py-2.5">
@@ -100,7 +100,7 @@ export default function UploadZone() {
         <button
           onClick={() => input.current?.click()}
           disabled={busy}
-          className="inline-flex shrink-0 items-center gap-2 border-[1.5px] border-ink bg-ink px-4 py-1.5 text-body font-semibold text-white transition-colors hover:bg-yellow hover:text-ink disabled:cursor-wait"
+          className="inline-flex shrink-0 items-center gap-2 border-[1.5px] border-ink bg-ink px-4 py-1.5 text-body font-semibold text-canvas transition-colors hover:bg-yellow hover:text-ink disabled:cursor-wait"
         >
           {busy && (
             <span className="size-3 animate-spin rounded-full border-2 border-current border-t-transparent" />

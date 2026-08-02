@@ -221,7 +221,7 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <div className={`border border-line bg-white ${className}`}>{children}</div>
+    <div className={`border border-line bg-surface ${className}`}>{children}</div>
   );
 }
 
@@ -275,7 +275,7 @@ export function Readout({
 }) {
   return (
     <dl
-      className={`m-0 grid divide-line bg-white sm:grid-cols-2 sm:divide-x lg:grid-cols-3 xl:grid-cols-6 ${
+      className={`m-0 grid divide-line bg-surface sm:grid-cols-2 sm:divide-x lg:grid-cols-3 xl:grid-cols-6 ${
         frame ? "border border-line" : ""
       }`}
     >
@@ -313,7 +313,7 @@ export function Evidence({
   children?: ReactNode;
 }) {
   return (
-    <details className="group border border-line bg-white">
+    <details className="group border border-line bg-surface">
       <summary className="flex cursor-pointer items-center gap-2 px-3.5 py-2 text-body font-semibold text-muted hover:bg-hover hover:text-ink">
         <svg
           aria-hidden
@@ -349,7 +349,7 @@ export function NoteCard({
   children: ReactNode;
 }) {
   return (
-    <div className="border border-line bg-white p-4">
+    <div className="border border-line bg-surface p-4">
       <Chip tone={tone}>{chip}</Chip>
       <p className="mt-3 text-emphasis font-semibold leading-snug">{claim}</p>
       <p className="mt-2 text-body leading-relaxed text-muted">{children}</p>
@@ -369,8 +369,8 @@ export function Chip({
   // Status tones fill, so the row reads at a glance from across a room in
   // a screen recording; the neutral pair keeps the ink border.
   const TONE: Record<ChipTone, string> = {
-    solid: "border-ink bg-ink text-white",
-    outline: "border-ink bg-white text-ink",
+    solid: "border-ink bg-ink text-canvas",
+    outline: "border-ink bg-surface text-ink",
     critical: "border-critical bg-critical text-white",
     warning: "border-warning bg-warning text-white",
   };
@@ -396,7 +396,7 @@ export function Disclosure({
   children: ReactNode;
 }) {
   return (
-    <details className="group border border-line bg-white">
+    <details className="group border border-line bg-surface">
       <summary className="flex cursor-pointer items-center gap-3 px-4 py-3 text-emphasis font-semibold hover:bg-hover">
         <svg
           aria-hidden
@@ -464,8 +464,8 @@ export function LinkButton({
       download={download}
       className={`plain inline-flex items-center gap-2 border-[1.5px] border-ink px-4 py-2 text-body font-semibold no-underline transition-colors ${
         primary
-          ? "bg-ink text-white hover:bg-yellow hover:text-ink"
-          : "bg-white text-ink hover:bg-yellow"
+          ? "bg-ink text-canvas hover:bg-yellow hover:text-ink"
+          : "bg-surface text-ink hover:bg-yellow"
       }`}
     >
       {children}
@@ -518,7 +518,7 @@ export function Th({
   return (
     <th
       scope="col"
-      className={`whitespace-nowrap border-b-2 border-ink bg-white px-3 py-2 text-micro font-bold uppercase tracking-[0.06em] text-muted ${
+      className={`whitespace-nowrap border-b-2 border-ink bg-surface px-3 py-2 text-micro font-bold uppercase tracking-[0.06em] text-muted ${
         align === "right" ? "text-right" : "text-left"
       } ${className}`}
     >

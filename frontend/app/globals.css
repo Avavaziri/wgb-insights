@@ -25,19 +25,46 @@
         charcoal/grey lightness scale; the yellow outline is uniform
         across all marks, so stripping it changes no reading.
 
-   Text on yellow is always ink; text on ink is white; never yellow text
-   on white. There is no red. Deliberately single-theme, like the
-   reference: figures are rendered in Python on white paper and double as
-   the slide assets. */
+   Text on yellow is always ink; never yellow text on a light ground.
+
+   TWO THEMES, DARK BY DEFAULT. The reference dashboard is single-theme
+   white; this one is not, on request. Three roles have to stay separate
+   for a theme swap to work at all, because the old palette had them
+   collapsed:
+
+     --canvas  the page ground
+     --surface the panel ground (was --white, which ALSO meant literal
+               white for type sitting on a dark fill; one token cannot
+               flip and stay put at the same time)
+     --ink     primary type AND the strong fill. Type on an ink fill is
+               therefore --canvas, never --white, so it inverts with the
+               theme. --white stays literal #fff for the masthead, whose
+               true black is a brand mark in both themes.
+
+   --paper is always white, whatever the theme: the Plotly figures are
+   generated in Python with ink axes on a transparent ground and are
+   pytest-tested against that colour contract, so recolouring them per
+   theme would break the tests and the exported slide assets. Instead the
+   chart box keeps its paper. For a commercial printer a dark interface
+   with figures on paper is the right way round anyway. */
 @theme {
   --color-yellow: #ffe600;
   --color-black: #000000; /* brand marks only: masthead bar, wordmark */
-  --color-ink: #3f454d; /* everything else: 9.7:1 on white, 7.6:1 on yellow */
-  --color-canvas: #ffffff; /* page ground: white, like the reference */
-  --color-white: #ffffff;
-  --color-line: #d9d9d9; /* hairlines and inactive tracks only */
-  --color-muted: #555555; /* captions and helper text only */
-  --color-hover: #f1f1ef; /* row hover and quiet fills: never yellow */
+  --color-white: #ffffff; /* literal white: type on the black masthead */
+  --color-paper: #ffffff; /* chart ground, both themes. See above. */
+  /* Type drawn ON paper. Constant, because paper is: a theme-following
+     muted grey would sit at ~2:1 on white in dark mode. */
+  --color-paper-ink: #3f454d;
+  --color-paper-line: #d9d9d9;
+
+  /* Dark is the default theme. Never true black: the masthead bar is the
+     brand mark and nothing else may go darker than it. */
+  --color-canvas: #15181b;
+  --color-surface: #1c2024;
+  --color-ink: #e9ebed; /* 13.9:1 on canvas */
+  --color-line: #343a40;
+  --color-muted: #9aa2aa; /* 7.4:1 on canvas */
+  --color-hover: #23282d;
 
   /* STATUS COLOURS: a deliberate, authorised departure from the house web
      system, which is yellow/ink/white and explicitly no red. Added on
@@ -96,6 +123,24 @@
      display per page; a second one cancels the first. */
   --text-display: clamp(3.5rem, 7.5vw, 6.75rem);
   --text-lede: clamp(1.3rem, 2.6vw, 2.35rem);
+}
+
+/* LIGHT THEME. The original single-theme palette, now an override: the
+   toggle in the masthead stamps data-theme on <html>, and an inline script
+   in the layout applies the stored choice before first paint so the page
+   never flashes the wrong ground. Tailwind v4 utilities compile to var()
+   references, so redefining the variables here is enough; every utility
+   follows without being rewritten.
+
+   Status colours are NOT overridden. Both were computed against white and
+   carry white type on their own fill, so they hold in either theme. */
+:root[data-theme="light"] {
+  --color-canvas: #ffffff;
+  --color-surface: #ffffff;
+  --color-ink: #3f454d; /* 9.7:1 on white, 7.6:1 on yellow */
+  --color-line: #d9d9d9;
+  --color-muted: #555555; /* 7.5:1 on white */
+  --color-hover: #f1f1ef;
 }
 
 @layer base {

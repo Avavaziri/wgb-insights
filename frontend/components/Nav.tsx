@@ -27,7 +27,7 @@ export default function Nav() {
   const pathname = usePathname();
 
   return (
-    <div className="border-b border-line bg-white">
+    <div className="border-b border-line bg-surface">
       <nav
         aria-label="Sections"
         className="mx-auto flex max-w-[104rem] overflow-x-auto px-6"

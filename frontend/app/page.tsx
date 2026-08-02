@@ -167,7 +167,7 @@ export default async function OverviewPage() {
             <Link
               key={f.claim}
               href={f.href}
-              className="plain group flex flex-col border border-line border-t-[3px] border-t-ink bg-white px-4 py-4 no-underline transition-colors hover:bg-hover"
+              className="plain group flex flex-col border border-line border-t-[3px] border-t-ink bg-surface px-4 py-4 no-underline transition-colors hover:bg-hover"
             >
               <span className="eyebrow block">{f.area}</span>
               <span className="mt-2 block text-emphasis font-semibold leading-snug">
@@ -630,7 +630,7 @@ export default async function OverviewPage() {
               {rush.interaction.simple_slopes.map((s) => (
                 <span
                   key={String(s.load_bin)}
-                  className="num border border-line bg-white px-3 py-1.5 text-caption"
+                  className="num border border-line bg-surface px-3 py-1.5 text-caption"
                 >
                   <span className="text-muted">
                     load bin {String(s.load_bin)}

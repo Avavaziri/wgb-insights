@@ -23,10 +23,13 @@ const Plot = dynamic(
   },
   {
     ssr: false,
+    // This fallback renders INSIDE the paper box, so its type and spinner
+    // use the constant paper colours. Theme-following muted grey would sit
+    // at about 2:1 on white once the dark theme is on.
     loading: () => (
-      <div className="flex h-full min-h-[228px] items-center justify-center">
-        <span className="flex items-center gap-2.5 text-caption text-muted">
-          <span className="size-3 animate-spin rounded-full border-2 border-line border-t-ink" />
+      <div className="flex h-full min-h-[228px] items-center justify-center bg-paper">
+        <span className="flex items-center gap-2.5 text-caption text-paper-ink">
+          <span className="size-3 animate-spin rounded-full border-2 border-paper-line border-t-paper-ink" />
           Rendering
         </span>
       </div>
@@ -76,7 +79,7 @@ export default function PlotlyChart({
       <div
         role={title ? "img" : undefined}
         aria-label={title}
-        className={`w-full ${tall ? "h-[320px]" : "h-[228px]"}`}
+        className={`w-full bg-paper ${tall ? "h-[320px]" : "h-[228px]"}`}
       >
         <Plot
           data={fig.data}
@@ -101,7 +104,7 @@ export default function PlotlyChart({
 
   return (
     <figure className="space-y-2">
-      <div className="border border-line bg-white">
+      <div className="border border-line bg-paper">
         {/* 16:9 keeps the export-tuned type in proportion, capped so a wide
             monitor does not turn one figure into a full screen of chart. */}
         <div

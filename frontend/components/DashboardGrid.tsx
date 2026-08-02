@@ -72,8 +72,8 @@ function YearChip({
       title={title}
       className={`border px-2 py-0.5 text-caption font-semibold transition-colors ${
         on
-          ? "border-ink bg-ink text-white"
-          : "border-line bg-white text-muted hover:border-ink hover:text-ink"
+          ? "border-ink bg-ink text-canvas"
+          : "border-line bg-surface text-muted hover:border-ink hover:text-ink"
       }`}
     >
       {label}
@@ -151,7 +151,7 @@ function SlicedTile({
     );
 
   return (
-    <div className="border border-line bg-white">
+    <div className="border border-line bg-surface">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line px-3.5 py-2.5">
         {/* Same semantic role as ui.tsx's PanelHead (a panel title): both
             now text-emphasis, where they had drifted to 13px vs 13.5px
@@ -269,7 +269,7 @@ export default function DashboardGrid({
           heading suits this page's design, so this is the sr-only
           landmark WCAG's own technique recommends for that case. */}
       <h2 className="sr-only">Panels and year filters</h2>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border border-line bg-white px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border border-line bg-surface px-3 py-2.5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="eyebrow mr-1">Panels</span>
           {groups.map((g) => {
@@ -282,8 +282,8 @@ export default function DashboardGrid({
                 aria-pressed={on}
                 className={`border px-2.5 py-1 text-caption font-semibold transition-colors ${
                   on
-                    ? "border-ink bg-ink text-white"
-                    : "border-line bg-white text-muted hover:border-ink hover:text-ink"
+                    ? "border-ink bg-ink text-canvas"
+                    : "border-line bg-surface text-muted hover:border-ink hover:text-ink"
                 }`}
               >
                 {g}
@@ -298,14 +298,14 @@ export default function DashboardGrid({
           <button
             type="button"
             onClick={() => setAll([])}
-            className="border border-line bg-white px-2.5 py-1 text-caption font-semibold text-muted transition-colors hover:border-ink hover:text-ink"
+            className="border border-line bg-surface px-2.5 py-1 text-caption font-semibold text-muted transition-colors hover:border-ink hover:text-ink"
           >
             All years
           </button>
           <button
             type="button"
             onClick={() => setAll(years)}
-            className="border border-line bg-white px-2.5 py-1 text-caption font-semibold text-muted transition-colors hover:border-ink hover:text-ink"
+            className="border border-line bg-surface px-2.5 py-1 text-caption font-semibold text-muted transition-colors hover:border-ink hover:text-ink"
           >
             Compare every year
           </button>
@@ -321,7 +321,7 @@ export default function DashboardGrid({
       {lead}
 
       {visible.length === 0 ? (
-        <p className="border border-line bg-white px-4 py-8 text-center text-body text-muted">
+        <p className="border border-line bg-surface px-4 py-8 text-center text-body text-muted">
           All panels are hidden. Turn one back on above.
         </p>
       ) : (

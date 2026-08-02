@@ -56,7 +56,7 @@ export default function ConstraintGauge({
   // so instead of drawing a band of unknown width.
   if (!Number.isFinite(share) || !Number.isFinite(crossoverHrs)) {
     return (
-      <div className="border border-line bg-white px-4 py-3">
+      <div className="border border-line bg-surface px-4 py-3">
         <p className="eyebrow">Constraint-hours</p>
         <p className="measure mt-1.5 text-body leading-relaxed">
           The rate curve does not cross the benchmark in this extract, so
@@ -70,7 +70,7 @@ export default function ConstraintGauge({
   const ticks = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 
   return (
-    <figure className="m-0 border border-line bg-white">
+    <figure className="m-0 border border-line bg-surface">
       <figcaption className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-line px-4 py-2.5">
         <span className="text-emphasis font-semibold">
           {width} of press hours sit in jobs that earn below the factory

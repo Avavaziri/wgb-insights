@@ -68,7 +68,7 @@ export default async function ActionsPage() {
         title={`Top ${value.top_customers.length} accounts by contribution`}
         note={value.caveat}
       >
-        <TableFrame caption="Contribution is sell price net of purchases, summed over the whole period, closed jobs only. Share is of this sample's total contribution, so the column does not sum to 100% across ten rows.">
+        <TableFrame caption="Contribution is sell price net of purchases (paper, ink, outwork), summed over the whole period, closed jobs only. It does not net internal labour or handling: there is no cost-to-serve data here, so an account whose jobs are harder to run reads no worse than one whose jobs aren't. Share is of this sample's total contribution, so the column does not sum to 100% across ten rows.">
           <Table>
             <thead>
               <tr>

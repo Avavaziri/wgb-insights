@@ -125,13 +125,15 @@ export interface Thresholds {
   // where it stays on one side, the pipeline reports NaN and the wire
   // carries null. Everything keyed off the crossover must handle that.
   crossover_hrs: number | null;
-  crossover_window_range: [number, number];
-  crossover_ci95: [number, number];
+  // The window range and bootstrap CI ride with the point estimate:
+  // null alongside crossover_hrs when nothing crosses.
+  crossover_window_range: [number, number] | null;
+  crossover_ci95: [number, number] | null;
   within_customer_size: EffectReport;
   within_customer_pct_per_doubling: number;
   pooled_size: EffectReport;
   pooled_pct_per_doubling: number;
-  share_range_across_crossover_ci: [number, number];
+  share_range_across_crossover_ci: [number, number] | null;
   within_customer_statement: string;
   size_mix_statement: string;
   monotonicity: Record<string, number | boolean>;

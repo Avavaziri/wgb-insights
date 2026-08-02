@@ -559,6 +559,60 @@ def churn_comparison(pr: PipelineResult) -> go.Figure:
     return fig
 
 
+def work_type_value_chart(pr: PipelineResult) -> go.Figure:
+    """Top 10 work types by contribution, the Actions tab's ranking as a
+    figure (the full list stays available as a table behind it).
+
+    Descriptive only, same frame as /value: closed jobs, whole period,
+    contribution = sell price net of purchases (flatters small jobs, no
+    cost-to-serve data). One measure, one axis: the bar is contribution;
+    GBP-per-press-hour rides as a text label because it is the constraint
+    view of the SAME row, not a second series (a second axis would be the
+    classic dual-axis defect). Categories under the long-tail floor are
+    already rolled into "Other (long tail)" upstream, so a top-10 here
+    hides nothing silently.
+    """
+    from src.trend import work_type_value
+
+    min_jobs = int(pr.config["long_tail_min_jobs"])
+    work = work_type_value(pr.jobs, min_jobs=min_jobs).head(10)
+    top2 = float(work["share_of_contribution"].head(2).sum())
+    title = (
+        f"The top two work types carry {top2:.0%} of contribution"
+        if len(work) >= 2
+        else "Contribution by type of work"
+    )
+    fig = _fig(
+        title,
+        "Contribution (GBP m) by type of work, closed jobs, whole period · "
+        "labels carry GBP/press-hr where the type has Litho press hours",
+        margin={"l": 230, "r": 110, "t": 130, "b": 70},
+    )
+    # Reverse so the biggest contributor draws at the top of the axis.
+    rows = work.iloc[::-1]
+    labels = [
+        (
+            f"£{r.contribution_gbp / 1e6:.2f}m · £{r.contribution_per_press_hr:,.0f}/hr"
+            if pd.notna(r.contribution_per_press_hr)
+            else f"£{r.contribution_gbp / 1e6:.2f}m · no press hrs"
+        )
+        for r in rows.itertuples()
+    ]
+    fig.add_bar(
+        x=(rows["contribution_gbp"] / 1e6).tolist(),
+        y=rows["name"].tolist(),
+        orientation="h",
+        marker={"color": INK, "line": EDGE},
+        text=labels,
+        textposition="outside",
+        textfont={"size": 13},
+        cliponaxis=False,
+    )
+    fig.update_xaxes(title="Contribution (GBP m, sample)", rangemode="tozero")
+    fig.update_yaxes(title=None)
+    return fig
+
+
 def bh_family(pr: PipelineResult) -> go.Figure:
     """Replaces the cut rush asset (adjudicated): the BH pass itself. The
     system demoting one of its own findings is the methodology story."""
@@ -618,6 +672,7 @@ CHARTS: dict[str, Any] = {
     "capacity_share": capacity_share,
     "churn_comparison": churn_comparison,
     "bh_family": bh_family,
+    "work_type_value": work_type_value_chart,
 }
 
 # Charts that accept a year slice: descriptive counts and sums only, each

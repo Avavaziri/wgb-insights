@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Inter } from "next/font/google";
-import Script from "next/script";
 import Nav from "@/components/Nav";
 import ThemeToggle from "@/components/ThemeToggle";
 import "./globals.css";
@@ -42,14 +41,16 @@ export default function RootLayout({
           Applies a saved theme BEFORE first paint, so a light-theme user
           never sees a dark flash. It has to be an inline blocking script:
           anything in React runs after paint, by which point the flash has
-          already happened. Reads only its own key, writes only the
+          already happened. A plain <script> rather than next/script:
+          beforeInteractive does not support inline bodies in the App
+          Router, and React never executes script tags it client-renders,
+          so next/script here both warned in dev and silently did nothing
+          on client navigations. Reads only its own key, writes only the
           attribute, and swallows errors so a blocked localStorage (private
           mode, hardened browser) falls through to the dark default rather
           than throwing before the app mounts.
         */}
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive"
+        <script
           dangerouslySetInnerHTML={{
             __html: `try{var t=localStorage.getItem('wgb-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t}}catch(e){}`,
           }}

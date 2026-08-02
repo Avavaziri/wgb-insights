@@ -121,6 +121,103 @@ class TestEndpoints:
         lo, hi = body["share_range_across_crossover_ci"]
         assert lo <= hi  # headline share evaluated at the CI bounds
 
+    def test_thresholds_no_crossover_surfaces(self) -> None:
+        # Regression: on an extract where the rate curve never settles
+        # below the benchmark the pipeline emits NaN, which must reach
+        # the wire as null (nullable schema fields, so /docs tells the
+        # truth) and never as "nan%" in the board-voice sentence.
+        from typing import get_args
+
+        from api import schemas
+        from api.main import _capacity_statement, _nan_to_none
+
+        assert _nan_to_none(float("nan")) is None
+        assert _nan_to_none(3.5) == 3.5
+        cs = {
+            "share_of_constraint_hours": float("nan"),
+            "pooled_rate_above": float("nan"),
+            "benchmark": 118.0,
+            "n_jobs_above": 0.0,
+        }
+        stmt = _capacity_statement(cs, no_crossover=True)
+        assert "no crossover exists" in stmt
+        assert "nan" not in stmt.lower()
+        assert "no counterfactual" in stmt.lower()
+        schemas.CapacityShareSchema(
+            share_of_constraint_hours=None,
+            pooled_rate_above=None,
+            benchmark=118.0,
+            n_jobs_above=0.0,
+        )
+        crossover_ann = schemas.ThresholdsResponse.model_fields["crossover_hrs"].annotation
+        assert type(None) in get_args(crossover_ann)
+
+    def test_thresholds_endpoint_no_crossover_wire_shape(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # The same class of extract, exercised through the real endpoint:
+        # every crossover-conditioned field must arrive as an honest null
+        # (as /docs now declares), and no "nan" may appear anywhere in
+        # the body. Stubs state.active() because the checked-in fixture,
+        # like the real extract, does cross.
+        from types import SimpleNamespace
+
+        import pandas as pd
+
+        from api import state
+        from src.stats_core import EffectReport
+
+        eff = EffectReport(
+            name="np.log(press_hrs)",
+            coef=-0.14,
+            pct_effect=-9.3,
+            ci_low=-0.2,
+            ci_high=-0.08,
+            ci_low_pct=-13.0,
+            ci_high_pct=-5.4,
+            p_value=0.001,
+            p_value_adj=None,
+            n_obs=100,
+            n_clusters=10,
+            se_type="cluster-robust (customer)",
+        )
+        nan = float("nan")
+        stub = SimpleNamespace(
+            thresholds={
+                "benchmark_rate": 118.0,
+                "crossover_hrs": nan,
+                "crossover_ci": (nan, nan),
+                "window_sensitivity": pd.DataFrame(
+                    {"window": [150, 200], "crossover_hrs": [nan, nan]}
+                ),
+                "within_customer_size": eff,
+                "pooled_size": eff,
+                "capacity_share_at_ci": {"at_ci_low": nan, "at_ci_high": nan},
+                "monotonicity": {"interior_optimum": False},
+                "capacity_share": {
+                    "share_of_constraint_hours": nan,
+                    "pooled_rate_above": nan,
+                    "benchmark": 118.0,
+                    "n_jobs_above": 0.0,
+                },
+            }
+        )
+        monkeypatch.setattr(state, "active", lambda: stub)
+        resp = client.get("/thresholds")
+        assert resp.status_code == 200
+        body = resp.json()
+        for field in (
+            "crossover_hrs",
+            "crossover_window_range",
+            "crossover_ci95",
+            "share_range_across_crossover_ci",
+        ):
+            assert body[field] is None, field
+        assert body["capacity_share"]["share_of_constraint_hours"] is None
+        assert body["capacity_share"]["pooled_rate_above"] is None
+        assert "no crossover exists" in body["capacity_statement"]
+        assert "nan" not in json.dumps(body).lower()
+
     def test_rush_interaction_inconclusive_wrapped(self, client: TestClient) -> None:
         body = client.get("/rush").json()
         assert body["bh_status"] in ("headline", "not_headline")

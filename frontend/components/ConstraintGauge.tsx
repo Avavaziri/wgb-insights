@@ -49,8 +49,9 @@ export default function ConstraintGauge({
   /** Pooled rate earned by the hours above the crossover, GBP per hour.
       Null alongside share/crossover when there is no crossover. */
   rateAbove: number | null;
-  /** Share evaluated at the crossover CI bounds (low, high), from the API. */
-  shareRange?: [number, number];
+  /** Share evaluated at the crossover CI bounds (low, high), from the API.
+      Null when there is no crossover to evaluate at. */
+  shareRange?: [number, number] | null;
   lithoNote: string;
 }) {
   // The curve does not always cross the benchmark. When it does not, the

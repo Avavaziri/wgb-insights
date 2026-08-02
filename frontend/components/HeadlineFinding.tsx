@@ -48,8 +48,9 @@ export default function HeadlineFinding({
       reported on the Act 1 card, where the threshold is the headline.
       Null when the curve never crosses. */
   crossoverHrs: number | null;
-  /** Share evaluated at both crossover CI bounds, from the API. */
-  shareRange: [number, number];
+  /** Share evaluated at both crossover CI bounds, from the API.
+      Null when there is no crossover to evaluate at. */
+  shareRange: [number, number] | null;
   /** The factory's own hour-weighted mean rate, GBP per press-hour. */
   benchmark: number;
   /** Pooled rate earned by the hours above the crossover, GBP per hour.
@@ -64,6 +65,7 @@ export default function HeadlineFinding({
     share === null ||
     crossoverHrs === null ||
     rateAbove === null ||
+    shareRange === null ||
     !Number.isFinite(share) ||
     !Number.isFinite(crossoverHrs)
   ) {

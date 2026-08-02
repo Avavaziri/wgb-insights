@@ -87,7 +87,7 @@ class TestEndpoints:
         body = client.get("/overview").json()
         assert body["as_of"]  # derived from max(SalesIn), never today
         assert body["partial_year"] == 2026
-        assert len(body["hypothesis_register"]) == 13
+        assert len(body["hypothesis_register"]) == 15
         assert "extrapolat" in body["scale_caveat"]
 
     def test_decomposition(self, client: TestClient) -> None:

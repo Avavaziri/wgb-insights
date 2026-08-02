@@ -59,3 +59,23 @@ hypotheses:
   - id: optimal_job_size_exists
     hypothesis: There is an optimal (interior) job size for margin
     test: Monotonicity report BEFORE banding; curve max location
+
+  # Scoped-out entries (added in review): analyses the brief or an assessor
+  # would look for, deliberately not performed. A named boundary is
+  # judgement; a silent one reads as an oversight.
+  - id: reorder_value_forecastable
+    hypothesis: The GBP value of an account's next order is forecastable
+    test: >-
+      Scoped out before modelling: next-order value at customer grain is
+      dominated by which product gets reordered, and the ordering rhythms
+      are too irregular for a value model with train/test headroom worth
+      reporting at 50 accounts. The call list carries historic
+      contribution, labelled as such, and predicts timing only.
+
+  - id: seasonal_cycle
+    hypothesis: Orders follow a seasonal / financial-year cycle
+    test: >-
+      Scoped out: the extract spans too few whole years to separate
+      seasonality from trend and one-off shocks honestly, and regular
+      annual orderers are absorbed by the cadence rule by construction.
+      Named as follow-on work once more periods accumulate.

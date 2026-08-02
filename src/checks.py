@@ -233,7 +233,8 @@ def attach_register(
             "outcome": "rejected",
             "status": "register_only",
             "evidence": (
-                f"Gini = {concentration_stats['gini']:.2f}, top-1 "
+                f"Gini = {concentration_stats['gini']:.2f} (0 = revenue "
+                f"evenly spread, 1 = one customer is everything), top-1 "
                 f"{concentration_stats['top_1_share']:.0%}, top-10 "
                 f"{concentration_stats['top_10_share']:.0%}; not a material risk"
             ),
@@ -262,6 +263,30 @@ def attach_register(
             "evidence": (
                 "monotonic decline (see margin_by_size); no interior optimum, "
                 "'crossover threshold' is the only defensible framing"
+            ),
+        },
+        # Scoped-out entries: not tested, and the reason is the record.
+        # The evidence field carries the live numbers that motivated the
+        # boundary, so the reason updates with the data like everything
+        # else in the register.
+        "reorder_value_forecastable": {
+            "outcome": "scoped_out",
+            "status": "register_only",
+            "evidence": (
+                f"not attempted: median interval CV {median_cv:.2f} across "
+                f"{len(cadence)} accounts leaves no headroom for a "
+                "next-order value model; the call list reports historic "
+                "contribution, labelled as such, and predicts timing only"
+            ),
+        },
+        "seasonal_cycle": {
+            "outcome": "scoped_out",
+            "status": "register_only",
+            "evidence": (
+                "not attempted: too few whole years to separate seasonality "
+                "from trend honestly; regular annual orderers are absorbed "
+                "by the cadence rule by construction; follow-on work once "
+                "more periods accumulate"
             ),
         },
     }

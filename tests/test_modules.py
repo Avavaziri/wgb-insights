@@ -6,7 +6,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.churn import cadence_stats, compare_fixed_rule, regularity_gate, risk_table
+from src.churn import (
+    cadence_stats,
+    compare_fixed_rule,
+    multiplier_sensitivity,
+    regularity_gate,
+    risk_table,
+)
 from src.pricing import (
     OverrideIdentityError,
     override_effect,
@@ -224,6 +230,24 @@ class TestChurn:
         )
         gate = regularity_gate(cadence, cv_max=0.75, min_orders=4)
         assert gate.tolist() == [True, False, False]
+
+    def test_multiplier_sensitivity_sweeps_the_backtest(self) -> None:
+        # The configured 1.5 must be defended, not asserted: the sweep
+        # reruns the identical held-out backtest per candidate value.
+        df = self.cadence_data()
+        rows = multiplier_sensitivity(
+            df, [1.0, 1.5, 2.0], cv_max=0.75, min_orders=4
+        )
+        assert [r["multiplier"] for r in rows] == [1.0, 1.5, 2.0]
+        # a stricter (higher) multiplier can only flag the same or fewer
+        flagged = [r["n_flagged"] for r in rows]
+        assert flagged == sorted(flagged, reverse=True)
+        # the outcome set is the same whatever the multiplier: it comes
+        # from the held-out window, not from the rule under test
+        assert len({r["n_went_quiet"] for r in rows}) == 1
+        for r in rows:
+            assert r["n_caught"] <= r["n_flagged"]
+            assert r["n_caught"] <= r["n_went_quiet"]
 
 
 class TestTrend:

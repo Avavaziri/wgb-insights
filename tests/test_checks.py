@@ -99,6 +99,8 @@ class TestRegister:
             "overrides_learnable", "rush_costs_margin", "rush_cost_depends_on_load",
             "revenue_concentrated", "reorder_forecastable", "growth_volume_driven",
             "optimal_job_size_exists",
+            # scoped-out entries: named boundaries, not tested hypotheses
+            "reorder_value_forecastable", "seasonal_cycle",
         }
 
     def test_every_entry_has_hypothesis_and_test(self) -> None:
@@ -118,7 +120,7 @@ class TestPipelineOnFixture:
 
     def test_bundle_complete(self, result) -> None:  # type: ignore[no-untyped-def]
         assert len(result.bh_table) == 7
-        assert len(result.register) == 13
+        assert len(result.register) == 15
         assert result.rush_effect.p_value_adj is not None  # BH pass filled it
         assert result.pricing_effect.p_value_adj is not None
 

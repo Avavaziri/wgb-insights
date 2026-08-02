@@ -161,6 +161,45 @@ def backtest_rules(
     }
 
 
+def multiplier_sensitivity(
+    data: pd.DataFrame,
+    multipliers: list[float],
+    cv_max: float,
+    min_orders: int,
+    holdout_days: int = 365,
+) -> list[dict[str, Any]]:
+    """The gap multiplier swept across the same held-out backtest.
+
+    Added in review: every other threshold in this project (crossover
+    window, rush percentile, override tolerance) ships with a sensitivity
+    sweep, and the churn rule's 1.5 was a bare configured point, which
+    breaks the project's own reporting standard. This runs the identical
+    backtest at each candidate multiplier so the choice can be stated as
+    "the smallest value that still catches every account that truly went
+    quiet" rather than asserted. Same caveat as the backtest itself:
+    outcome counts are tiny, so results carry raw counts, never rates.
+    """
+    as_of = data["sales_in"].max()
+    cutoff = as_of - pd.Timedelta(days=holdout_days)
+    past = data[data["sales_in"] <= cutoff]
+    active_after = set(data.loc[data["sales_in"] > cutoff, "customer_id"].unique())
+
+    rows: list[dict[str, Any]] = []
+    for mult in multipliers:
+        table = risk_table(past, mult, cv_max, min_orders, as_of=cutoff)
+        went_quiet = set(table.index) - active_after
+        flags = set(table.index[table["at_risk_personalised"]])
+        rows.append(
+            {
+                "multiplier": float(mult),
+                "n_flagged": int(len(flags)),
+                "n_caught": int(len(flags & went_quiet)),
+                "n_went_quiet": int(len(went_quiet)),
+            }
+        )
+    return rows
+
+
 def compare_fixed_rule(
     data: pd.DataFrame,
     fixed_days: int,

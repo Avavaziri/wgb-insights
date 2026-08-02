@@ -4,6 +4,36 @@ Dynamic analytics over W&G Baird print-job sales data. Upload a new
 `.xlsx` of the same schema and every result (statistics, charts, call
 list, hypothesis register) recomputes with no code change.
 
+## Executive summary
+
+**The problem.** The business sees margin per invoice, never per hour of
+press time — the one resource a factory cannot stretch. Churn is watched
+by gut feel; the pricing judgement of the estimators is recorded nowhere.
+
+**The findings.** 65% of litho press hours are sold below the factory's
+own average rate, concentrated in jobs over ~4.3 press-hours, and the
+gradient survives with the customer held fixed — it is pricing, not
+account mix. 61% of litho jobs are re-priced by hand (net ~£97k/yr) and
+a fairly-tested model cannot reproduce those overrides for an unseen
+account: the knowledge is tacit and at risk. Thirteen accounts are
+silent beyond their own ordering rhythm; a backtested per-account rule
+catches all of the accounts that truly went quiet where a flat 90-day
+rule misses one.
+
+**The actions.** Review quotes past the crossover against the factory's
+own rate; log the reason behind each manual override; ring the thirteen,
+most valuable first. **The ask:** a sequenced two-year programme —
+year 1 measurement (capacity instrumentation, cost-to-serve sampling;
+mostly process and staff time), year 2 pricing-knowledge capture with a
+university partner, each phase gating the next.
+
+**Objectives it was built to, each with its test:** (1) refreshes from a
+new extract with no code change — enforced by the upload path and its
+tests; (2) no headline ships unless it survives a fixed multiple-testing
+checkpoint — enforced in `checks.py`, which demoted one of this
+project's own findings; (3) every number on screen is computed in
+Python, never in the browser — enforced by the typed API boundary.
+
 **Margin metric:** contribution per constraint-hour (Theory of
 Constraints; press hours are the capacity-constrained resource).
 **Architecture:** Python owns every number (pandas + statsmodels +
@@ -11,6 +41,24 @@ scikit-learn), FastAPI serves typed results, Next.js renders them.
 No analysis logic exists in TypeScript; charts ship as Plotly
 `fig.to_json()` from Python. Local only: no deployment, no auth, no
 database.
+
+### Why this stack, and what was rejected
+
+The brief asks for a *system* that updates itself, read by a
+non-technical board and auditable by a research audience. That ruled
+out, in order: **Excel** (not re-runnable, no clustered inference,
+formulas are the analysis and the presentation at once); **an
+off-the-shelf BI tool** (Power BI/Tableau render aggregates well but
+GroupKFold, cluster bootstraps and BH corrections do not live inside
+them, so the statistics would sit in an unaudited sidecar); **a
+notebook** (runs once, for the author); **Streamlit** (the original
+scope sketch — fine for a demo, but it offers no typed contract between
+the numbers and their display, and the one non-negotiable here is that
+no figure can be silently recomputed in the view layer). The shipped
+split — Python behind a documented, schema-validated API, a frontend
+that only renders JSON — is the smallest architecture in which the
+pipeline that feeds the browser is byte-identical to the one that feeds
+the exported slides and any future MIS intake.
 
 ```
 xlsx ──▶ ingest (schema + identity checks) ──▶ clean (FX, quarantine, canonicalise)
@@ -110,11 +158,28 @@ The build follows the six Design Science Research Methodology activities
    API and app in this repo; the artifact type is an instantiation.
 4. **Demonstration** — it runs on the real company extract; every upload
    is a fresh demonstration.
-5. **Evaluation** — ex-post and naturalistic: 24 regression checks
-   against pre-agreed values (`make verify`), the test suite, one BH
-   pass that demoted the author's own finding, and negative results
-   recorded with reasons in the register.
+5. **Evaluation** — ex-post and **technical/artificial** (in FEDS
+   terms): 24 regression checks against pre-agreed values
+   (`make verify`), the test suite, one BH pass that demoted the
+   author's own finding, a held-out-year backtest for the churn rules,
+   and negative results recorded with reasons in the register. What has
+   NOT happened is naturalistic evaluation — no estimator, salesperson
+   or director has used the artifact on a real task yet; that is
+   deliberately the year-1 activity of the programme below, not a claim
+   made in advance.
 6. **Communication** — the board video, this README, and `/docs`.
+
+**Implementation risks** (distinct from the statistical threats below):
+schema drift — a future MIS export that renames a column is rejected at
+upload with the reason, but someone must own updating the mapping;
+rule ossification — the 4.3h crossover is a *review trigger* and will
+harden into a pricing rule if left unattended, so it should be
+re-derived on each new extract (it is, automatically) and re-read by a
+person quarterly; adoption — a call list nobody rings is a report, not
+a system; key-person dependency — the build is currently understood by
+one person, which the README's runbook style is meant to mitigate;
+local-only scope — no auth and no deployment hardening, so putting this
+on a network as-is would be a defect, not a feature.
 
 **Threats to validity, and where each is handled:** selection (the
 override→margin effect is computed and excluded — overridden jobs are
@@ -194,6 +259,14 @@ joint output.
   fixed 90-day rule caught 2 of 3 (flagging 6). "Went quiet for a year"
   is a proxy for churn and the outcome count is small, so the result
   always ships with its raw counts, never as bare rates.
+  **The ×1.5 multiplier is derived, not picked** — the same standard
+  every other threshold here gets: `churn.multiplier_sensitivity` sweeps
+  ×1.0/×1.25/×1.5/×2.0 through the identical backtest, and 1.5 is the
+  strictest setting that still catches all 3 quiet accounts (×2.0 drops
+  to 2 of 3; looser settings flag 11–12 accounts to catch the same 3).
+  The sweep rides inside `churn_backtest` so it recomputes with every
+  upload. The CV gate (0.75) and minimum order count (4) remain
+  judgement calls at n=50 — stated as such rather than dressed up.
 - **Override learnability:** ridge + GroupKFold grouped on customer
   (plain KFold would leak account pricing patterns) vs the mandatory
   baselines. Result: not learnable for an unseen account (R² −0.07 vs
@@ -203,6 +276,26 @@ joint output.
   design rules out cold-start prediction; the deployment question —
   the next quote for an existing customer — needs a forward-chaining
   temporal split, which is named as follow-on work rather than claimed.
+  **Why one linear model with defaults is the deliberate capacity:**
+  ~3,900 overridden jobs across 50 accounts under grouped CV leaves a
+  tuned nonlinear search with enough researcher degrees of freedom that
+  a positive result would be uninterpretable; the effort cap was fixed
+  in scope before results, and the baselines — not the model family —
+  carry the conclusion. The model is behind predict-zero, not narrowly
+  behind a tuned rival; a family upgrade does not rescue that, and if it
+  ever could, the temporal split above is where it must prove it.
+- **The nested decomposition is order-dependent by construction.**
+  Blocks enter in the fixed config order, so each CV increment reads as
+  "value added on top of everything before it", never as a variance
+  share. A reversed-order pass was scoped out (an adjudicated cut, noted
+  in `src/decomposition.py`). The two claims the app makes from the
+  table are made from the conservative positions anyway: customer enters
+  after size, run features and product, so its dominant increment is
+  what survives once those have taken their share; and for rep — where
+  entering last WOULD invite "of course it's zero, everything else
+  absorbed it" — the app ships the naive rep-alone model beside the
+  controlled one, so both ends of the ordering question are visible and
+  the claim does not rest on the sequence.
 - **The rush penalty is a pricing argument, not a selection one.** Most
   of the cost base is fixed, so an hour at a lower contribution rate
   still beats an idle hour. Declining short-notice work would only pay
@@ -212,6 +305,24 @@ joint output.
 
 ### Known limitations (kept visible in every output surface)
 
+- **Constraint analysis is litho-only, and that scope has a size:** the
+  ~2,100 jobs (about a third of the count) carrying zero press hours —
+  digital, outwork, wide format — do not compete for the presses, so
+  their margin is an unconstrained question this system deliberately
+  does not answer. The capacity headline is a claim about litho hours,
+  never about the whole book of work.
+- **Two analyses are scoped out by name, in the register, with reasons:**
+  next-order *value* forecasting (irregular rhythms and 50 accounts
+  leave no train/test headroom; the call list predicts timing and
+  reports historic worth, labelled as such) and seasonality (too few
+  whole years to separate cycle from trend honestly; regular annual
+  orderers are absorbed by the cadence rule). Both are follow-on work,
+  not oversights — an unnamed omission reads as a gap, a named one is a
+  decision.
+- No customer segmentation/RFM model, deliberately: at 50 accounts the
+  segments would be the accounts, and transparent rankings a sales team
+  can argue with beat opaque clusters. No revenue forecasting: three
+  full annual observations cannot support one.
 - `Labour` combines prepress/press/finishing, so any labour-intensity
   ratio is a proxy, labelled as such; never "measured idle time".
 - No capacity data, so load bins are relative. **No utilisation

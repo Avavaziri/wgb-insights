@@ -340,9 +340,15 @@ export default async function OverviewPage() {
         title="The workings behind each claim"
         note="Open any of these for the statistics underneath, including two results we held back and the hypotheses that failed."
       >
+        {/* The register hint states what the CODE enforces (a fixed file
+            the pipeline refuses to diverge from), not a temporal claim
+            about when it was written: git history shows the register and
+            the checks landing together, so "registered before results"
+            is a claim a reviewer could try to falsify. The enforceable
+            version is also the stronger one. */}
         <Disclosure
-          title={`All ${data.hypothesis_register.length} hypotheses we tested`}
-          hint="registered before the results were known"
+          title={`All ${data.hypothesis_register.length} hypotheses, including two we scoped out`}
+          hint="a fixed register the pipeline enforces: dropping a failed test would need a public edit"
         >
           <div className="overflow-x-auto">
             <Table>
@@ -465,10 +471,13 @@ export default async function OverviewPage() {
           hint="one BH pass, fixed family"
         >
           <p className="measure text-body leading-relaxed">
-            One Benjamini-Hochberg pass over a family of seven tests, fixed
-            before any test was run. Anything that fails loses headline status
-            automatically and drops out of the exported slides, so nobody makes
-            that call case by case.
+            One Benjamini-Hochberg pass over a family of seven tests. The
+            family lives in configuration and the code raises if the
+            implemented tests diverge from it, so quietly dropping a test
+            after seeing its result would take a visible, committed edit.
+            Anything that fails loses headline status automatically and
+            drops out of the exported slides; nobody makes that call case
+            by case.
           </p>
           <PlotlyChart
             figure={bhFig}

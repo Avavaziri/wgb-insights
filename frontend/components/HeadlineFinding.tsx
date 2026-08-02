@@ -31,6 +31,8 @@ import { gbp, pct } from "@/lib/format";
 export default function HeadlineFinding({
   share,
   crossoverHrs,
+  crossoverCi95,
+  shareRange,
   benchmark,
   rateAbove,
   lithoNote,
@@ -38,6 +40,11 @@ export default function HeadlineFinding({
   /** Proportion of constraint-hours in jobs above the crossover, 0 to 1. */
   share: number;
   crossoverHrs: number;
+  /** Bootstrap 95% CI on the crossover, from the API. A threshold is never
+      shown as a bare point (CLAUDE.md), so this rides with the figure. */
+  crossoverCi95: [number, number];
+  /** Share evaluated at both crossover CI bounds, from the API. */
+  shareRange: [number, number];
   /** The factory's own hour-weighted mean rate, GBP per press-hour. */
   benchmark: number;
   /** Pooled rate earned by the hours above the crossover, GBP per hour. */
@@ -75,25 +82,37 @@ export default function HeadlineFinding({
               <div className="bg-ink" style={{ width: pct(share, 0) }} />
             </div>
 
-            <dl className="mt-3 flex flex-wrap gap-x-10 gap-y-2 text-body">
-              <div className="flex items-baseline gap-2">
-                <dt className="font-semibold">
-                  Those hours earn
-                </dt>
+            {/* The three numbers that make the headline mean something.
+                Both derived quantities carry their bootstrap range here,
+                because the KPI strip that used to hold them was cut as
+                redundant and a bare threshold is a defect (CLAUDE.md). */}
+            <dl className="mt-3 flex flex-wrap gap-x-10 gap-y-3 text-body">
+              <div>
+                <dt className="font-semibold">Those hours earn</dt>
                 <dd className="num text-emphasis font-bold">
                   {gbp(rateAbove)}/hr
                 </dd>
               </div>
-              <div className="flex items-baseline gap-2">
+              <div>
                 <dt className="font-semibold">The factory averages</dt>
                 <dd className="num text-emphasis font-bold">
                   {gbp(benchmark)}/hr
                 </dd>
               </div>
-              <div className="flex items-baseline gap-2">
+              <div>
                 <dt className="font-semibold">Crossover job size</dt>
                 <dd className="num text-emphasis font-bold">
-                  {crossoverHrs.toFixed(1)} h
+                  {crossoverHrs.toFixed(1)} h{" "}
+                  <span className="text-caption font-medium">
+                    likely {crossoverCi95[0].toFixed(1)}&ndash;
+                    {crossoverCi95[1].toFixed(1)} h
+                  </span>
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold">Across that range the share is</dt>
+                <dd className="num text-emphasis font-bold">
+                  {pct(shareRange[0], 0)}&ndash;{pct(shareRange[1], 0)}
                 </dd>
               </div>
             </dl>

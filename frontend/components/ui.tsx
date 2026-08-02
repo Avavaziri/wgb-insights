@@ -27,7 +27,6 @@
 // stripes down the page, which is the "too busy" this redesign answers.
 // Chart panels get a hairline header row instead.
 
-import Link from "next/link";
 import type { ReactNode } from "react";
 
 /**
@@ -66,7 +65,8 @@ export type ChipTone = "solid" | "outline" | "critical" | "warning";
 
 /* ------------------------------------------------------------------ page */
 
-export function Eyebrow({ children }: { children: ReactNode }) {
+/** Used by PageHeader and Section below; not imported by any page. */
+function Eyebrow({ children }: { children: ReactNode }) {
   return <p className="eyebrow">{children}</p>;
 }
 
@@ -224,65 +224,6 @@ export function PanelHead({
       <Tag className="text-emphasis font-semibold">{children}</Tag>
       {meta && <span className="num text-caption text-muted">{meta}</span>}
     </div>
-  );
-}
-
-/* ------------------------------------------------------------------ KPIs */
-
-/**
- * The KPI cards, straight off the Tender Assistant: separate white cards
- * with a hairline border and a 2px yellow top border, uppercase grey
- * label, big bold figure. The first thing on a dashboard after the
- * controls. Every value arrives from the API already computed; a card
- * links to the surface that argues it.
- */
-export function KpiBand({
-  cols = "grid-cols-2 sm:grid-cols-3 xl:grid-cols-6",
-  children,
-}: {
-  cols?: string;
-  children: ReactNode;
-}) {
-  return <div className={`grid gap-3 ${cols}`}>{children}</div>;
-}
-
-export function Kpi({
-  label,
-  value,
-  sub,
-  href,
-}: {
-  label: string;
-  value: string;
-  /** One short qualifying line, always visible: a caption, not a caveat
-      essay. The full statistics live behind the linked surface. */
-  sub?: string;
-  href?: string;
-}) {
-  const box =
-    "border border-line border-t-2 border-t-yellow bg-white px-4 py-3";
-  const inner = (
-    <>
-      <span className="eyebrow block leading-tight">{label}</span>
-      <span className="num mt-1.5 block text-title font-bold tracking-[-0.02em]">
-        {value}
-      </span>
-      {sub && (
-        <span className="mt-1 block text-caption leading-snug text-muted">
-          {sub}
-        </span>
-      )}
-    </>
-  );
-  return href ? (
-    <Link
-      href={href}
-      className={`plain block no-underline transition-colors hover:bg-hover ${box}`}
-    >
-      {inner}
-    </Link>
-  ) : (
-    <div className={box}>{inner}</div>
   );
 }
 

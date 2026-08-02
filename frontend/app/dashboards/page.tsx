@@ -148,8 +148,9 @@ export default async function DashboardsPage() {
             <span>
               to <span className="num">{data.as_of}</span>
             </span>
-            <MetaSep />
-            <span>constraint analysis is Litho-only</span>
+            {/* "constraint analysis is Litho-only" stood here too. The
+                gauge's own footer carries it a few hundred pixels below,
+                where it sits with the figure it qualifies. */}
           </>
         }
       />

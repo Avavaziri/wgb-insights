@@ -8,8 +8,6 @@ import {
   DefList,
   Disclosure,
   Evidence,
-  Kpi,
-  KpiBand,
   MetaSep,
   NoteCard,
   Panel,
@@ -27,7 +25,6 @@ import {
   dash,
   dp,
   expo,
-  gbp,
   gbpK,
   num,
   pct,
@@ -130,6 +127,8 @@ export default async function OverviewPage() {
       <HeadlineFinding
         share={cap.share_of_constraint_hours}
         crossoverHrs={th.crossover_hrs}
+        crossoverCi95={th.crossover_ci95}
+        shareRange={th.share_range_across_crossover_ci}
         benchmark={th.benchmark_rate_gbp_per_hr}
         rateAbove={cap.pooled_rate_above}
         lithoNote={th.litho_only_note}
@@ -190,49 +189,16 @@ export default async function OverviewPage() {
         </div>
       </section>
 
-      <KpiBand>
-        <Kpi
-          label="Revenue CAGR 23→25"
-          value={pct(data.growth.revenue_cagr)}
-          sub="full years only"
-          href="/dashboards"
-        />
-        <Kpi
-          label="Value per job"
-          value={pct(data.growth.revenue_per_job_cagr)}
-          sub="growth is price and mix"
-          href="/dashboards"
-        />
-        <Kpi
-          label="Crossover size"
-          value={`${th.crossover_hrs.toFixed(1)}h`}
-          sub={`likely range ${th.crossover_ci95[0].toFixed(1)}–${th.crossover_ci95[1].toFixed(1)}h`}
-          href="/dashboards"
-        />
-        <Kpi
-          label="Hours over that size"
-          value={pct(cap.share_of_constraint_hours, 0)}
-          sub={`at ${gbp(cap.pooled_rate_above)}/hr · ${pct(th.share_range_across_crossover_ci[0], 0)}–${pct(th.share_range_across_crossover_ci[1], 0)} across the range`}
-          href="/dashboards"
-        />
-        <Kpi
-          label="Litho jobs re-priced by hand"
-          value={pct(pricing.scale.override_rate, 0)}
-          sub={`net ${gbpK(pricing.scale.net_gbp_per_year)}/yr`}
-          href="/dashboards"
-        />
-        <Kpi
-          label="Accounts to call"
-          value={num(churnAccounts)}
-          sub="own-cadence rule"
-          href="/actions"
-        />
-      </KpiBand>
-
+      {/* The six-tile KPI strip stood here. Cut: four of its six figures
+          now appear in the headline panel or on an act card, and a row of
+          equal tiles was a large part of what made the page read as
+          uniform texture. Its two bootstrap ranges moved into the headline
+          panel and its value-per-job figure moved onto the trend panel,
+          next to the claim it actually supports. */}
       <Panel>
         <PanelHead
           level="h2"
-          meta={`CAGR ${pct(data.growth.revenue_cagr)} · ${data.partial_year} partial greyed`}
+          meta={`revenue ${pct(data.growth.revenue_cagr)}/yr · value per job ${pct(data.growth.revenue_per_job_cagr)}/yr · ${data.partial_year} partial greyed`}
         >
           Revenue grew because jobs got more valuable
         </PanelHead>

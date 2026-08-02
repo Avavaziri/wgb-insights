@@ -310,10 +310,11 @@ export default function DashboardGrid({
             Compare every year
           </button>
         </div>
-        <span className="ml-auto max-w-[26rem] text-caption text-muted">
-          Each panel has its own year filter. Pick one year to slice it, or two
-          and more to compare. Python recomputes every figure from the years you
-          pick, so nothing is filtered in the browser.
+        {/* Trimmed to the one thing this line has to earn: that filtering
+            is a real recomputation in Python, not a browser-side filter.
+            The chips below already show how to use them. */}
+        <span className="ml-auto text-caption text-muted">
+          Every figure recomputes in Python, never in the browser.
         </span>
       </div>
 

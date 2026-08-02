@@ -121,7 +121,7 @@ export default async function DashboardsPage() {
       title: "Rep effect before and after controls",
       note: `rep adds ${rep ? (rep.cv_increment >= 0 ? "+" : "") + rep.cv_increment.toFixed(3) : dash} predictive power`,
       read: "The left bar is what a naive rep league table would show. The right bar is what rep still explains once job size, product and customer are accounted for, which is nothing at all.",
-      changes: "Don't manage reps on raw margin. The gaps come from the accounts they inherited rather than from how they sell, so the point of this panel is to prevent a bad call.",
+      changes: "Don't manage reps on raw margin. Each account has one rep, so this data cannot separate a rep's own selling from the accounts they hold; a league table built on it would mostly reward inheritance. The panel exists to prevent that call.",
       figure: fRep,
     },
     {

@@ -1,4 +1,4 @@
-"""stats_core is the contract everything else builds on — tested first (§11 step 2)."""
+"""stats_core is the contract everything else builds on, tested first (§11 step 2)."""
 
 from __future__ import annotations
 
@@ -50,7 +50,9 @@ class TestDataclassContracts:
             EffectReport(name="x", coef=1.0, p_value=0.01)  # type: ignore[call-arg]
 
     def test_effect_report_frozen(self) -> None:
-        r = EffectReport("x", 1.0, None, 0.5, 1.5, 0.01, None, 100, None, "nonrobust")
+        r = EffectReport(
+            "x", 1.0, None, 0.5, 1.5, None, None, 0.01, None, 100, None, "nonrobust"
+        )
         with pytest.raises(dataclasses.FrozenInstanceError):
             r.p_value = 0.5  # type: ignore[misc]
 
@@ -138,7 +140,7 @@ class TestCvR2:
     def test_unseen_category_does_not_crash(self) -> None:
         rng = np.random.default_rng(SEED)
         n = 100
-        # one category appears once — guaranteed unseen in some train fold
+        # one category appears once, guaranteed unseen in some train fold
         cats = ["common"] * (n - 1) + ["rare-once"]
         df = pd.DataFrame({"y": rng.normal(size=n), "cat": cats})
         val = cv_r2(df, "y", [], ["cat"], folds=5, seed=SEED)

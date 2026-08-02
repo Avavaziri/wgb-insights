@@ -1,8 +1,20 @@
 # W&G Baird Sales Analytics — Final Scope (v3, adjudicated)
 
+> **Status note (post-build).** This is the pre-build planning document,
+> kept in the repo as the record of what was decided before results were
+> known. Two things have been superseded since and are corrected inline:
+> the presentation layer shipped as a **FastAPI + Next.js** split rather
+> than the Streamlit named below (adjudication: the analysis needed a
+> typed API boundary so no number could be recomputed in the view layer,
+> and a schema'd JSON contract is what lets the same pipeline feed the
+> browser, the exported slides, and a future MIS intake; Streamlit offers
+> neither). The §9 figures were estimates from a scoping pass on the raw
+> file; the shipped values are the pipeline's — §9 is a regression
+> harness, not a target, per the rule below.
+
 **This is the complete, final specification.** Build it start to finish in this order. The only work remaining after this scope is executed is the recorded video presentation, so §12 requires the system to export every presentation asset as a file.
 
-**Deliverables:** (1) a public GitHub repo containing a dynamic Streamlit analytics system that fully refreshes when a new `.xlsx` of the same schema is uploaded; (2) exported charts, tables and a findings summary ready to paste into slides.
+**Deliverables:** (1) a public GitHub repo containing a dynamic analytics system (FastAPI + Next.js; see status note) that fully refreshes when a new `.xlsx` of the same schema is uploaded; (2) exported charts, tables and a findings summary ready to paste into slides.
 
 ## Rules of engagement
 
@@ -392,7 +404,7 @@ Human effort model: generation is fast; the gates are where the human catches si
 
 (Interactive HTML chart exports cut: the Next.js frontend is the live demo, screen-recorded directly.)
 
-All charts at 1920×1080, W&G Baird brand styling (apply the brand skill/guidelines; match the Streamlit theme in `.streamlit/config.toml` so the live demo and the slides look like one product).
+All charts at 1920×1080, W&G Baird brand styling (apply the brand skill/guidelines; match the app's brand tokens — see `frontend/app/globals.css`, superseding the Streamlit theme reference; the live demo and the slides must look like one product).
 
 ---
 

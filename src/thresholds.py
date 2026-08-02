@@ -1,10 +1,10 @@
 """Job size vs contribution per constraint-hour: curve, crossover, CI (§5.3).
 
-All functions take the constraint frame (Litho, press hrs > 0, closed —
+All functions take the constraint frame (Litho, press hrs > 0, closed; see
 clean.constraint_frame). Rates are GBP per press hour. The crossover is
 never reported as a bare point: point + window-sensitivity range +
 bootstrap CI travel together, and monotonicity_report runs BEFORE any
-banding — if new data ever shows an interior optimum, the framing
+banding, if new data ever shows an interior optimum, the framing
 changes and the verdict is displayed.
 """
 
@@ -22,7 +22,7 @@ def benchmark_rate(data: pd.DataFrame) -> float:
     """Hour-weighted mean rate: total contribution / total press hours.
 
     Weighting by hours makes this the factory's own average earning rate
-    per constraint-hour — the internal benchmark the curve is judged
+    per constraint-hour: the internal benchmark the curve is judged
     against (no external capacity data exists, §6).
     """
     return float(data["va_amount_gbp"].sum() / data["press_hrs"].sum())
@@ -69,19 +69,75 @@ def crossover_ci(
     window: int,
     step: int,
 ) -> tuple[float, float]:
-    """Bootstrap 95% CI on the crossover: resample jobs (≥500 draws, §2.5),
-    recompute benchmark + curve + crossover each draw."""
+    """Cluster bootstrap 95% CI on the crossover: resample CUSTOMERS with
+    replacement (≥500 draws, §2.5), recompute benchmark + curve +
+    crossover each draw.
+
+    The resampling unit is the customer, not the job, for the same reason
+    every regression here clusters on customer: an account's jobs share
+    negotiated prices and are not independent, so an i.i.d. job bootstrap
+    understates the interval.
+    """
     rng = np.random.default_rng(seed)
     points: list[float] = []
-    n = len(data)
+    groups = {g: df for g, df in data.groupby("customer_id")}
+    ids = np.array(sorted(groups))
     for _ in range(n_boot):
-        sample = data.iloc[rng.integers(0, n, n)]
+        draw = rng.choice(ids, size=len(ids), replace=True)
+        sample = pd.concat([groups[g] for g in draw], ignore_index=True)
         curve = rolling_rate_curve(sample, window, step)
         points.append(crossover_point(curve, benchmark_rate(sample)))
     arr = np.array(points)
     arr = arr[~np.isnan(arr)]
     lo, hi = np.percentile(arr, [2.5, 97.5])
     return float(lo), float(hi)
+
+
+def within_customer_size_effect(data: pd.DataFrame, *, seed: int) -> Any:
+    """The size gradient with the account held fixed (the composition
+    check): log rate on log size with customer and year fixed effects,
+    cluster-robust on customer.
+
+    The pooled curve confounds two stories: bigger jobs are priced at
+    lower rates WITHIN an account, and the accounts that place big jobs
+    negotiated lower rates overall. This coefficient isolates the first.
+    Both are true in the 2026-05 extract (within-account ~ -9% per
+    doubling vs ~ -14% pooled); if a future extract disagrees, the rate
+    curve's annotation reports whatever this computes.
+    """
+    from src.stats_core import effect, fit_reported
+
+    fit, _ = fit_reported(
+        "log_rate ~ np.log(press_hrs) + C(customer_id) + C(year)",
+        data,
+        cluster_on="customer_id",
+        seed=seed,
+    )
+    return effect(fit, "np.log(press_hrs)", logged_outcome=True)
+
+
+def pooled_size_effect(data: pd.DataFrame, *, seed: int) -> Any:
+    """The raw pooled size gradient, same estimator discipline as the
+    within-customer check (cluster-robust on customer), so the two
+    halves of the composition story are BOTH computed from the file:
+    pooled slope, within-account slope, gap = customer mix. Nothing
+    about the split is hand-written anywhere."""
+    from src.stats_core import effect, fit_reported
+
+    fit, _ = fit_reported(
+        "log_rate ~ np.log(press_hrs)",
+        data,
+        cluster_on="customer_id",
+        seed=seed,
+    )
+    return effect(fit, "np.log(press_hrs)", logged_outcome=True)
+
+
+def pct_per_doubling(coef: float) -> float:
+    """Board-readable form of a log-log coefficient: % change in the rate
+    when job size doubles, (2**coef - 1) * 100. Computed here so no
+    client ever re-derives it."""
+    return float((2.0**coef - 1.0) * 100.0)
 
 
 def breakpoints_grid(data: pd.DataFrame, k: int, min_group: int) -> list[float]:
@@ -99,7 +155,7 @@ def breakpoints_grid(data: pd.DataFrame, k: int, min_group: int) -> list[float]:
 
 
 def breakpoints_cart(data: pd.DataFrame, max_leaves: int, min_samples_leaf: int) -> list[float]:
-    """CART split points on log_rate ~ press_hrs — data-derived banding
+    """CART split points on log_rate ~ press_hrs, data-derived banding
     alternative to quantiles (§2.5: thresholds derived, never asserted)."""
     tree = DecisionTreeRegressor(
         max_leaf_nodes=max_leaves, min_samples_leaf=min_samples_leaf, random_state=0
@@ -116,7 +172,7 @@ def monotonicity_report(
     """Runs BEFORE any banding (§5.3). Verdict displayed in the app.
 
     interior_optimum is True only if the curve's maximum sits away from
-    the smallest-jobs end (beyond `interior_margin` of windows) — if it
+    the smallest-jobs end (beyond `interior_margin` of windows), if it
     ever flips True on new data, 'crossover' framing is wrong and the
     output says so.
     """
@@ -144,7 +200,7 @@ def monotonicity_report(
 def window_sensitivity(
     data: pd.DataFrame, windows: list[int], *, step: int
 ) -> pd.DataFrame:
-    """Crossover across window widths (§5.8 named check 2) — the range
+    """Crossover across window widths (§5.8 named check 2): the range
     that must accompany every crossover statement."""
     bench = benchmark_rate(data)
     rows = [
@@ -160,7 +216,7 @@ def window_sensitivity(
 def capacity_share_above(data: pd.DataFrame, crossover_hrs: float) -> dict[str, float]:
     """Descriptive form ONLY (§1): share of constraint-hours in jobs above
     the crossover and the pooled rate they earn vs the benchmark. No
-    counterfactual GBP figure — capacity data doesn't exist."""
+    counterfactual GBP figure, capacity data doesn't exist."""
     above = data[data["press_hrs"] > crossover_hrs]
     total_hrs = float(data["press_hrs"].sum())
     above_hrs = float(above["press_hrs"].sum())

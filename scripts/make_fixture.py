@@ -89,7 +89,7 @@ def build_frame() -> pd.DataFrame:
     paper = np.round(purchases * rng.uniform(0.3, 0.7, N_ROWS), 2)
     handling = np.round(rng.uniform(0, 150, N_ROWS), 2)
 
-    # contribution declines with size on average — gives thresholds something real to find
+    # contribution declines with size on average, so thresholds have something to find
     base_rate = np.exp(rng.normal(6.3, 0.5, N_ROWS)) / (1 + 0.15 * np.log1p(press_hrs))
     va_amount = np.round(np.where(is_digital, np.exp(rng.normal(5.8, 0.7, N_ROWS)),
                                   base_rate * np.maximum(press_hrs, 0.25)), 2)
@@ -104,7 +104,7 @@ def build_frame() -> pd.DataFrame:
     manadj = np.round(rng.normal(0, 80, N_ROWS), 2)
     manadj[rng.random(N_ROWS) < 0.35] = 0.0  # ~65% overridden, like the real data
     mupnett = np.round(labmup + manadj, 2)  # identity 2 holds exactly
-    # real export has null manadj/mupnett (64) and null Puchases (12) —
+    # real export has null manadj/mupnett (64) and null Puchases (12);
     # plant both so ingest/pricing null-handling is exercised
     null_adj = rng.choice(N_ROWS, 5, replace=False)
     manadj[null_adj] = np.nan
@@ -187,7 +187,7 @@ def main() -> None:
     df = build_frame()
     field_defs = pd.DataFrame({
         "Field": COLUMNS,
-        "Definition": ["Synthetic fixture field — see PROJECT_SCOPE.md §3"] * len(COLUMNS),
+        "Definition": ["Synthetic fixture field, see PROJECT_SCOPE.md §3"] * len(COLUMNS),
     })
     with pd.ExcelWriter(out, engine="openpyxl") as xl:
         df.to_excel(xl, sheet_name="Master Plain (Anon)", index=False)

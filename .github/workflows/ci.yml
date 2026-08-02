@@ -5,8 +5,43 @@ on:
     branches: [main]
   pull_request:
 
+# Cancel superseded runs on the same ref. A stale run blocking a merge is
+# noise, not a signal.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
-  checks:
+  # Runs first and alone: if commercially sensitive data ever reaches the
+  # repo, nothing else about the build matters. The real sales extract lives
+  # in data/raw/ and is gitignored; this is the check that proves it stayed
+  # that way, on a public repo, on every push.
+  secrets-guard:
+    name: Secrets guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fail if raw data, env files or keys are tracked
+        run: |
+          tracked=$(git ls-files \
+            'data/raw/*' '.env' '.env.*' '*.local.yaml' '*.pem' '*.pfx' 'id_rsa*')
+          if [ -n "$tracked" ]; then
+            echo "::error::Sensitive files tracked in git:"; echo "$tracked"; exit 1
+          fi
+      - name: Fail if raw data appears anywhere in history
+        run: |
+          hist=$(git log --all --full-history --oneline -- 'data/raw/*')
+          if [ -n "$hist" ]; then
+            echo "::error::data/raw touched in history:"; echo "$hist"; exit 1
+          fi
+
+  python:
+    name: Python lint, types and tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,11 +54,33 @@ jobs:
         run: ruff check src api tests scripts
       - name: Type check
         run: mypy src api
-      - name: Secrets guard — fail if raw data or env files are tracked
-        run: |
-          tracked=$(git ls-files 'data/raw/*' '.env' '.env.*' '*.local.yaml')
-          if [ -n "$tracked" ]; then
-            echo "Sensitive files tracked in git:"; echo "$tracked"; exit 1
-          fi
-      - name: Tests (synthetic fixture only — data/raw never reaches CI)
+      - name: Tests
+        # Synthetic fixture only. The real extract never reaches CI, which is
+        # also why `make verify` is a local gate and not a job here: it needs
+        # data/raw/ to compare against the expected values.
         run: pytest
+
+  frontend:
+    name: Frontend lint, types and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      # corepack ships with Node, so pnpm comes from the runner's own
+      # toolchain rather than a third-party action.
+      - name: Enable pnpm
+        run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm eslint .
+      - name: Type check
+        run: pnpm tsc --noEmit
+      - name: Build
+        # Every data route is server-rendered on demand, so the build does not
+        # need the API running.
+        run: pnpm build

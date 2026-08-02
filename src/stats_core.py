@@ -2,7 +2,7 @@
 
 Every model result crosses the codebase as a ModelReport; every tested
 effect as an EffectReport. All fields are required, so no caller can emit
-a bare R² or a bare p-value — the dataclass constructor refuses.
+a bare R² or a bare p-value: the dataclass constructor refuses.
 
 Units: monetary coefficients are in GBP after FX conversion unless a
 docstring says otherwise. Logged-outcome effects also carry a
@@ -44,9 +44,11 @@ class ModelReport:
 class EffectReport:
     """§2.2: every effect ships size, CI, p and n together.
 
-    pct_effect is the back-transformed % effect for logged outcomes,
-    None otherwise. p_value_adj is filled by the single BH pass in
-    checks.py and stays None until then.
+    pct_effect and the ci_*_pct bounds are the back-transformed % forms
+    for logged outcomes, None otherwise; they are computed HERE so that
+    no client ever re-derives them (a number recomputed in TS is a
+    defect). p_value_adj is filled by the single BH pass in checks.py
+    and stays None until then.
     """
 
     name: str
@@ -54,6 +56,8 @@ class EffectReport:
     pct_effect: float | None
     ci_low: float
     ci_high: float
+    ci_low_pct: float | None
+    ci_high_pct: float | None
     p_value: float
     p_value_adj: float | None
     n_obs: int
@@ -69,7 +73,7 @@ def _parse_formula(formula: str) -> tuple[str, str | None, list[str], list[str]]
     numeric_terms, categorical_cols) for the sklearn CV pipeline.
 
     Supported term forms: `col`, `np.log(col)`, `np.log1p(col)`, `C(col)`.
-    Anything else raises — extend deliberately rather than guess.
+    Anything else raises, extend deliberately rather than guess.
     """
     lhs, rhs = (part.strip() for part in formula.split("~", 1))
     m = _TERM_RE.match(lhs)
@@ -169,13 +173,13 @@ def fit_reported(
 ) -> tuple[Any, ModelReport]:
     """OLS via statsmodels formula API with a complete ModelReport.
 
-    cluster_on: column for cluster-robust SEs (§2.3 — customer for every
+    cluster_on: column for cluster-robust SEs (§2.3: customer for every
     job-level regression). CV R² comes from the sklearn pipeline in
     cv_r2(), parsed from the same formula, so in-sample and out-of-sample
     numbers always describe the same specification.
     """
     if seed is None:
-        raise ValueError("seed is required — reproducibility is a §8 requirement")
+        raise ValueError("seed is required: reproducibility is a §8 requirement")
     model = smf.ols(formula, data=data)
     if cluster_on is not None:
         n_clusters: int | None = int(data[cluster_on].nunique())
@@ -211,7 +215,7 @@ def effect(fit: Any, term: str, logged_outcome: bool = True) -> EffectReport:
 
     pct_effect back-transforms log-outcome coefficients to a % effect;
     it is None when the outcome is not logged. p_value_adj stays None
-    here — only the checks.py BH pass may fill it.
+    here: only the checks.py BH pass may fill it.
     """
     if term not in fit.params.index:
         raise KeyError(f"term {term!r} not in fitted model: {list(fit.params.index)}")
@@ -223,6 +227,8 @@ def effect(fit: Any, term: str, logged_outcome: bool = True) -> EffectReport:
         pct_effect=float((np.exp(coef) - 1.0) * 100.0) if logged_outcome else None,
         ci_low=float(ci[0]),
         ci_high=float(ci[1]),
+        ci_low_pct=float((np.exp(ci[0]) - 1.0) * 100.0) if logged_outcome else None,
+        ci_high_pct=float((np.exp(ci[1]) - 1.0) * 100.0) if logged_outcome else None,
         p_value=float(fit.pvalues[term]),
         p_value_adj=None,
         n_obs=int(fit.nobs),
@@ -273,6 +279,8 @@ def mannwhitney_reported(
         pct_effect=None,
         ci_low=float(lo),
         ci_high=float(hi),
+        ci_low_pct=None,
+        ci_high_pct=None,
         p_value=float(p),
         p_value_adj=None,
         n_obs=int(len(a_arr) + len(b_arr)),
@@ -285,7 +293,7 @@ def nested_f_test(restricted: Any, full: Any) -> tuple[float, float]:
     """F-test of a restricted model against its superset. Returns (F, p).
 
     The classic F compares residual sums of squares, which is invalid on
-    cluster-robust results objects — so both models are refit nonrobust
+    cluster-robust results objects, so both models are refit nonrobust
     here for the block test. Cluster-robust SEs still govern effect
     inference (§2.3); this F only asks whether a block moves the fit.
 
@@ -296,7 +304,7 @@ def nested_f_test(restricted: Any, full: Any) -> tuple[float, float]:
     full_ols = full.model.fit()
     if full_ols.df_model <= restricted_ols.df_model:
         # added block is collinear with what's already in the model
-        # (e.g. a rep owning exactly one customer) — nothing to test
+        # (e.g. a rep owning exactly one customer): nothing to test
         return 0.0, 1.0
     f_stat, p_value, _ = full_ols.compare_f_test(restricted_ols)
     return float(f_stat), float(p_value)

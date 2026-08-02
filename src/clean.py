@@ -1,9 +1,9 @@
 """Cleaning: FX to GBP, canonicalisation, quarantine, derived fields.
 
 Output frame is snake_case with `Puchases` renamed to `purchases` (only
-here — ingest reads the misspelling as-is). Money columns get `_gbp`
+here, ingest reads the misspelling as-is). Money columns get `_gbp`
 twins; analysis uses only the `_gbp` columns. FX keys off `Currency`,
-never `Region` — Ireland has Stg jobs and NI has Euro jobs (§3.3 trap 1).
+never `Region`: Ireland has Stg jobs and NI has Euro jobs (§3.3 trap 1).
 
 Conversion: gbp = home_amount / eur_per_gbp for Euro rows (monthly rate
 from config, default otherwise); Stg rows pass through unchanged.
@@ -41,7 +41,7 @@ RENAME = {
 
 @dataclass(frozen=True)
 class CleanReport:
-    """Counts for every §3.3 trap handled — nothing dropped silently."""
+    """Counts for every §3.3 trap handled: nothing dropped silently."""
 
     n_clean_rows: int
     n_quarantined_credits: int  # Sell Price <= 0, kept in a separate frame
@@ -52,12 +52,12 @@ class CleanReport:
     n_product_collapsed: int  # rows whose raw product label was canonicalised
     n_partial_period: int  # rows in the incomplete final year
     partial_year: int | None
-    as_of: str  # max(SalesIn), ISO — never datetime.now() (§10)
+    as_of: str  # max(SalesIn), ISO: never datetime.now() (§10)
 
 
 @dataclass(frozen=True)
 class CleanResult:
-    jobs: pd.DataFrame  # cleaned, GBP, closed and open — filter per module rule
+    jobs: pd.DataFrame  # cleaned, GBP, closed and open, filter per module rule
     credits: pd.DataFrame  # quarantined Sell Price <= 0 rows, same schema
     report: CleanReport
 
@@ -65,7 +65,7 @@ class CleanResult:
 def constraint_frame(jobs: pd.DataFrame, config: dict[str, Any]) -> pd.DataFrame:
     """Rows valid for contribution-per-constraint-hour analysis: Litho with
     press hours, closed jobs only (§3.3 traps 7-8). Adds log_rate, the
-    §5.2 target: log(rate) clipped at the config floor — clipping keeps
+    §5.2 target: log(rate) clipped at the config floor, clipping keeps
     negative-contribution jobs in the frame instead of dropping them.
 
     Digital/Outwork/Wide Format carry no press hours; constraint analysis
@@ -99,11 +99,11 @@ def clean(raw: pd.DataFrame, config: dict[str, Any]) -> CleanResult:
     df["va_pct"] = pd.to_numeric(df["va_pct"], errors="coerce")
     n_va_coerced = int(before - df["va_pct"].notna().sum())
 
-    # Binding: null means outsourced — recode to explicit category, never impute
+    # Binding: null means outsourced, recode to explicit category, never impute
     n_binding = int(df["binding_type"].isna().sum())
     df["binding_type"] = df["binding_type"].fillna(OUTSOURCED_BINDING)
 
-    # Product canonicalisation (§3.4) — canonical kept in data, raw preserved.
+    # Product canonicalisation (§3.4), canonical kept in data, raw preserved.
     # Null product (1 row in real export) becomes an explicit category.
     pmap: dict[str, str] = config["product_type_map"]
     df["product_type"] = (
@@ -113,7 +113,7 @@ def clean(raw: pd.DataFrame, config: dict[str, Any]) -> CleanResult:
         (df["product_type"] != df["product_type_raw"].fillna("Unspecified")).sum()
     )
 
-    # FX — keyed off currency, never region (§3.3 trap 1)
+    # FX, keyed off currency, never region (§3.3 trap 1)
     is_euro = df["currency"] == "Euro"
     month_key = df["sales_in"].dt.strftime("%Y-%m")
     rate = _fx_rate(month_key, config["fx"])
@@ -140,7 +140,7 @@ def clean(raw: pd.DataFrame, config: dict[str, Any]) -> CleanResult:
     df["is_partial_period"] = df["year"] == partial_year if partial_year else False
     n_partial = int(df["is_partial_period"].sum())
 
-    # Quarantine credits (Sell Price <= 0) — separate frame, never dropped silently
+    # Quarantine credits (Sell Price <= 0), separate frame, never dropped silently
     credit_mask = df["sell_price"] <= 0
     credits = df[credit_mask].copy()
     jobs = df[~credit_mask].copy()

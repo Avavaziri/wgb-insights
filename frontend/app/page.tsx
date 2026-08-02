@@ -1,153 +1,771 @@
+import Link from "next/link";
 import PlotlyChart from "@/components/PlotlyChart";
-import UploadZone from "@/components/UploadZone";
 import { ApiDown } from "@/components/ApiGuard";
-import { StatTile } from "@/components/banners";
+import HeadlineFinding from "@/components/HeadlineFinding";
+import UploadZone from "@/components/UploadZone";
+import {
+  Chip,
+  DefList,
+  Disclosure,
+  Evidence,
+  MetaSep,
+  NoteCard,
+  Panel,
+  PanelHead,
+  Readout,
+  Section,
+  Table,
+  TableFrame,
+  Td,
+  Th,
+  Tr,
+} from "@/components/ui";
+import {
+  ciPct,
+  dash,
+  dp,
+  expo,
+  gbpK,
+  num,
+  pct,
+  pctPoints,
+  pval,
+  seLabel,
+} from "@/lib/format";
 import { API_BASE, ApiDownError, getChart, getJson } from "@/lib/api";
-import type { Overview } from "@/lib/types";
+import type {
+  Churn,
+  Decomposition,
+  Overview,
+  Pricing,
+  Rush,
+  Thresholds,
+} from "@/lib/types";
 
+// The overview is the brief's page one: upload, summary information,
+// validation and gap reports, the trend chart, the scale caveat. Everything
+// methodological folds into the evidence section at the bottom, one click
+// away, so a board reads a summary and an interviewer can still open every
+// proof without leaving the page.
 export default async function OverviewPage() {
   let data: Overview;
+  let th: Thresholds;
+  let dec: Decomposition;
+  let pricing: Pricing;
+  let rush: Rush;
+  let churn: Churn;
   let trendFig: unknown;
+  let bhFig: unknown;
   try {
-    [data, trendFig] = await Promise.all([
+    [data, th, dec, pricing, rush, churn, trendFig, bhFig] = await Promise.all([
       getJson<Overview>("/overview"),
-      getChart("trend_context"),
+      getJson<Thresholds>("/thresholds"),
+      getJson<Decomposition>("/decomposition"),
+      getJson<Pricing>("/pricing"),
+      getJson<Rush>("/rush"),
+      getJson<Churn>("/churn"),
+      getChart("trend_context", { compact: true }),
+      getChart("bh_family"),
     ]);
   } catch (e) {
     if (e instanceof ApiDownError) return <ApiDown message={e.message} />;
     throw e;
   }
+
   const v = data.validation;
   const c = data.clean_report;
+  const cap = th.capacity_share;
+  const me = rush.main_effect;
+  const oe = pricing.override_effect.effect;
+  const m = pricing.model;
+  const rp = dec.rep_pair;
+  const churnAccounts = churn.comparison.n_personalised;
+
+  // The story spine: three acts, one card each, in argument order. Where
+  // the margin goes, why prices end up where they do, who to keep. The
+  // number on each card carries the act; the proof lives one click away.
+  // Numbered eyebrows are earned here: the acts ARE a sequence, and the
+  // video walks the app in exactly this order.
+  const findings = [
+    {
+      area: "Act 1 · Where the margin leaks",
+      claim: "The press is filled by the work that pays it least",
+      // The headline panel above already carries the 65%; this card leads
+      // on the threshold instead, which is the number an estimator can
+      // actually act on at the quote screen.
+      figure: `${th.crossover_hrs.toFixed(1)}h`,
+      // The bootstrap interval rides with the threshold, here rather than
+      // in the headline panel: one threshold, one place, never bare.
+      figureLabel: `is where a job starts earning less than the factory average, likely ${th.crossover_ci95[0].toFixed(1)}–${th.crossover_ci95[1].toFixed(1)}h`,
+      support: `The same pattern holds inside individual accounts (${th.within_customer_statement}), so it is about how work gets priced rather than which customers we happen to have. Big runs still carry the factory's fixed costs, so the point is to price them knowingly, not to turn them away.`,
+      href: "/dashboards",
+      link: "Capacity panels",
+    },
+    {
+      area: "Act 2 · What governs pricing",
+      claim: "Prices are set by people, and their judgement isn't written down anywhere",
+      figure: pct(pricing.scale.override_rate, 0),
+      figureLabel: `of litho jobs are re-priced by hand, net ${gbpK(pricing.scale.net_gbp_per_year)}/yr`,
+      support: `Margin tracks the account far more than the product or the rep. A fairly tested model still can't reproduce what the estimators do to a price for an account it has never seen, which puts that knowledge in their heads and nowhere else. Starting Monday: record the reason behind each override so it can be captured.`,
+      href: "#evidence",
+      link: "See the model evidence",
+    },
+    {
+      area: "Act 3 · Which customers to keep",
+      claim: "Only accounts with a real rhythm get a predicted date",
+      figure: num(churnAccounts),
+      figureLabel: "accounts silent beyond their own cadence",
+      support:
+        "Accounts that order to a steady rhythm get a predicted next order. The rest get a risk band and the reason for it, and no date is invented for them.",
+      href: "/actions",
+      link: "Open the call list",
+    },
+  ];
 
   return (
     <>
-      <section className="space-y-3">
-        <h1 className="text-4xl font-black tracking-tight">
-          Print-job analytics.{" "}
-          <span className="bg-[#FFE600] px-2">Judged, not just charted.</span>
-        </h1>
-        <p className="max-w-3xl text-neutral-700">
-          {data.source_name} · data to {data.as_of} (derived from the data, never
-          the clock) · seeds {JSON.stringify(data.seeds)} — every number
-          reproduces. {data.scale_caveat}
-        </p>
-      </section>
+      {/* The thesis, before anything else. The upload row used to sit here
+          and it is plumbing, not the finding, so it now follows. */}
+      <HeadlineFinding
+        share={cap.share_of_constraint_hours}
+        crossoverHrs={th.crossover_hrs}
+        shareRange={th.share_range_across_crossover_ci}
+        benchmark={th.benchmark_rate_gbp_per_hr}
+        rateAbove={cap.pooled_rate_above}
+        lithoNote={th.litho_only_note}
+      />
+
+      {/* What the figures were computed from. Was an h1 block of its own;
+          the headline panel owns the h1 now, so this is a quiet strip. */}
+      <p className="flex flex-wrap items-center gap-x-1 gap-y-1 text-caption text-muted">
+        <span className="font-mono">{data.source_name}</span>
+        <MetaSep />
+        <span>
+          {num(Number(v.n_rows))} jobs · {v.n_customers} customers ·{" "}
+          {v.n_reps} reps
+        </span>
+        <MetaSep />
+        <span>
+          to <span className="num">{data.as_of}</span>
+        </span>
+        <MetaSep />
+        <span>~{pct(data.sample_share_of_turnover, 0)} of turnover</span>
+      </p>
 
       <UploadZone />
 
-      <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatTile
-          label="Revenue CAGR 23→25"
-          value={`${(data.growth.revenue_cagr * 100).toFixed(1)}%`}
-          detail={`value/job ${(data.growth.revenue_per_job_cagr * 100).toFixed(1)}% · jobs ${(data.growth.jobs_cagr * 100).toFixed(1)}%`}
-        />
-        <StatTile
-          label="Rows / customers / reps"
-          value={`${v.n_rows}`}
-          detail={`${v.n_customers} customers · ${v.n_reps} reps`}
-        />
-        <StatTile
-          label="Quarantined credits"
-          value={`${c.n_quarantined_credits}`}
-          detail="Sell Price ≤ 0 — separated, counted, never dropped silently"
-        />
-        <StatTile
-          label="Sample share of turnover"
-          value={`${(data.sample_share_of_turnover * 100).toFixed(0)}%`}
-          detail="computed from config — no extrapolation anywhere"
-        />
-      </section>
-
-      <section>
-        <PlotlyChart figure={trendFig} />
-      </section>
-
-      <section className="grid gap-6 md:grid-cols-2">
-        <div className="border border-neutral-300 p-4">
-          <h2 className="font-black uppercase tracking-wide">Validation report</h2>
-          <ul className="mt-2 space-y-1 text-sm text-neutral-700">
-            <li>
-              Identity VA/24 = VA/(hrs)·24 max err:{" "}
-              {Number(v.identity1_max_err).toExponential(1)}
-            </li>
-            <li>
-              Identity mupnett = labmup + manadj max err:{" "}
-              {Number(v.identity2_max_err).toExponential(1)} on{" "}
-              {v.n_identity2_checked} complete rows
-              {v.identity2_ok ? "" : " — BROKEN: pricing module refuses to report"}
-            </li>
-            <li>
-              #DIV/0! error cells in VA% (counted via openpyxl): {v.va_pct_error_cells}
-            </li>
-            <li>Null manadj (excluded from override analysis): {v.n_null_manadj}</li>
-            <li>
-              Null Binding Type (recoded to outsourced — data, not absence):{" "}
-              {v.n_null_binding}
-            </li>
-            <li>
-              Press hrs = 0 (constraint analysis is Litho-only): {v.n_press_hrs_zero}
-            </li>
-          </ul>
+      {/* The three acts, in argument order, at full width. They were a
+          cramped third-column beside the chart, which is part of why the
+          page read as uniform texture. The thick ink rule gives each one
+          weight without leaving the flat, radius-0 house style. */}
+      <section aria-labelledby="acts">
+        <h2 id="acts" className="sr-only">
+          The three findings
+        </h2>
+        <div className="grid gap-3 lg:grid-cols-3">
+          {findings.map((f) => (
+            <Link
+              key={f.claim}
+              href={f.href}
+              className="plain group flex flex-col border border-line border-t-[3px] border-t-ink bg-surface px-4 py-4 no-underline transition-colors hover:bg-hover"
+            >
+              <span className="eyebrow block">{f.area}</span>
+              <span className="mt-2 block text-emphasis font-semibold leading-snug">
+                {f.claim}
+              </span>
+              <span className="num mt-3 block text-title font-extrabold leading-none tracking-[-0.02em]">
+                {f.figure}
+              </span>
+              <span className="mt-1.5 block text-body leading-snug text-muted">
+                {f.figureLabel}
+              </span>
+              <span className="mt-2 block text-body leading-snug text-muted">
+                {f.support}
+              </span>
+              {/* mt-auto pins the link to the bottom of every card, so the
+                  row reads as one band. The three supports are different
+                  lengths and without it Act 3's link floated halfway up. */}
+              <span className="mt-auto block pt-3 text-caption font-semibold underline underline-offset-2">
+                {f.link}
+              </span>
+            </Link>
+          ))}
         </div>
-        <div className="border border-neutral-300 p-4">
-          <h2 className="font-black uppercase tracking-wide">
-            Data gaps — the investment ask
-          </h2>
-          <ul className="mt-2 space-y-2 text-sm text-neutral-700">
+      </section>
+
+      {/* The six-tile KPI strip stood here. Cut: four of its six figures
+          now appear in the headline panel or on an act card, and a row of
+          equal tiles was a large part of what made the page read as
+          uniform texture. Its two bootstrap ranges moved into the headline
+          panel and its value-per-job figure moved onto the trend panel,
+          next to the claim it actually supports. */}
+      {/* Chart two-thirds, gaps one-third. Full width turned four bars into
+          slabs at a 4:1 aspect, and the pairing earns its keep: growth is
+          healthy, and here is what the data still cannot tell you. The
+          gaps panel used to sit in Data health below, which buried the
+          investment ask under a table of ingest counts. */}
+      <div className="grid gap-3 xl:grid-cols-3">
+        <Panel className="xl:col-span-2">
+          <PanelHead
+            level="h2"
+            meta={`revenue ${pct(data.growth.revenue_cagr)}/yr · value per job ${pct(data.growth.revenue_per_job_cagr)}/yr · ${data.partial_year} partial greyed`}
+          >
+            Revenue grew because jobs got more valuable
+          </PanelHead>
+          <PlotlyChart
+            figure={trendFig}
+            tall
+            title={`Revenue grew because jobs got more valuable: revenue by year, GBP millions, sample. CAGR ${pct(data.growth.revenue_cagr)}, ${data.partial_year} partial and greyed.`}
+          />
+        </Panel>
+        <Panel>
+          <PanelHead level="h2" meta="the investment ask">
+            What the data cannot answer
+          </PanelHead>
+          <ul className="m-0 divide-y divide-line">
             {data.gaps.map((g) => (
-              <li key={g.gap}>
-                <span className="font-bold">{g.gap}.</span> Blocks: {g.blocks}
+              <li key={g.gap} className="px-4 py-2">
+                <p className="text-body font-semibold leading-snug">{g.gap}</p>
+                <p className="mt-0.5 text-caption leading-snug text-muted">
+                  {g.blocks}
+                </p>
               </li>
             ))}
           </ul>
-        </div>
-      </section>
+        </Panel>
+      </div>
 
-      <details className="border border-neutral-300">
-        <summary className="cursor-pointer bg-neutral-100 p-3 font-bold">
-          Hypothesis register — {data.hypothesis_register.length} hypotheses,
-          including the rejected ones
-        </summary>
-        <div className="overflow-x-auto p-4">
-          <table className="w-full text-left text-sm">
+      {/* The Data health section was a top-level block here, between the
+          findings and the KTP programme. It is methodology, not a board
+          message, so it now folds into the evidence section below with
+          every other proof: still one click from the front page, no
+          longer sitting between a director and the argument. */}
+
+      {/* The KTP arc: the data gaps above are not confessions, they are
+          the work programme. Each row names the build, the company
+          benefit, and the research substance for the university partner,
+          which is the three-way partnership on one card. Authored prose; the one
+          number in it is interpolated from the API. */}
+      <Section
+        kicker="Where this goes"
+        title="Turning the gaps into two years of work"
+        note="What this system can't see is what gets built next. Each row names the work, what the company gets from it, and the research question in it for the university partner."
+      >
+        <TableFrame caption="The order follows what depends on what. Capacity and cost data in year 1 are what make the year-2 pricing work testable against the baselines this build already ships. It would run as supervised research from operations and management science, with the temporal-split evaluation of estimator knowledge capture as the partnership's first joint output.">
+          <Table>
             <thead>
-              <tr className="border-b-2 border-black font-black uppercase">
-                <th className="py-2 pr-4">Hypothesis</th>
-                <th className="py-2 pr-4">Outcome</th>
-                <th className="py-2 pr-4">Status</th>
-                <th className="py-2">Evidence</th>
+              <tr>
+                <Th>Phase</Th>
+                <Th>The work, and what it takes</Th>
+                <Th>What the company gets</Th>
+                <Th>The research in it</Th>
               </tr>
             </thead>
             <tbody>
-              {data.hypothesis_register.map((e) => (
-                <tr key={e.id} className="border-b border-neutral-200 align-top">
-                  <td className="py-2 pr-4 font-medium">{e.hypothesis}</td>
-                  <td className="py-2 pr-4">{e.outcome}</td>
-                  <td className="py-2 pr-4">
-                    <span
-                      className={`px-1.5 py-0.5 text-xs font-black uppercase ${
-                        e.status === "headline" ? "bg-[#FFE600]" : "bg-neutral-200"
-                      }`}
-                    >
-                      {e.status}
-                    </span>
-                  </td>
-                  <td className="py-2 text-neutral-600">{e.evidence}</td>
-                </tr>
-              ))}
+              <Tr>
+                <Td className="whitespace-nowrap font-semibold">Year 1</Td>
+                <Td>
+                  Instrument press capacity: machine IDs, availability,
+                  downtime. Needs a downtime taxonomy agreed with the
+                  operators and new MIS fields, before any sensor spend
+                </Td>
+                <Td>
+                  True utilisation instead of relative load, plus the
+                  displaced-work £ figure this system currently refuses to
+                  print
+                </Td>
+                <Td muted>
+                  Capacity-constrained pricing tested on live production data
+                </Td>
+              </Tr>
+              <Tr>
+                <Td className="whitespace-nowrap font-semibold">Year 1</Td>
+                <Td>
+                  Cost-to-serve study: estimating, admin and make-ready per
+                  order. Needs a time-and-motion sample across two or three
+                  departments, and no new system
+                </Td>
+                <Td>
+                  Settles whether small jobs actually pay; today contribution
+                  flatters them
+                </Td>
+                <Td muted>
+                  Activity-based costing joined to contribution-per-
+                  constraint-hour analysis
+                </Td>
+              </Tr>
+              <Tr>
+                <Td className="whitespace-nowrap font-semibold">Year 2</Td>
+                <Td>
+                  Capture the estimators&rsquo; pricing judgement: log the why
+                  behind each override at the quote screen, then structured
+                  elicitation. Needs one new field on the quote screen from
+                  day one, and the estimators&rsquo; time later
+                </Td>
+                <Td>
+                  {gbpK(pricing.scale.net_gbp_per_year)}/yr of hand-pricing
+                  made institutional instead of personal
+                </Td>
+                <Td muted>
+                  Tacit-knowledge elicitation for human-in-the-loop pricing,
+                  evaluated against this build&rsquo;s own baselines,
+                  including the existing-customer temporal split this system
+                  names as its next test
+                </Td>
+              </Tr>
+              <Tr>
+                <Td className="whitespace-nowrap font-semibold">Year 2</Td>
+                <Td>
+                  Feed the intake from the MIS directly, by scheduled export
+                  or API. Needs an export schedule or API access, and the
+                  analysis engine itself does not change
+                </Td>
+                <Td>
+                  Dashboards move from monthly to live; churn flags arrive
+                  when they happen, not at month end
+                </Td>
+                <Td muted>
+                  A deployed, evaluated decision-support system as the
+                  partnership&rsquo;s output
+                </Td>
+              </Tr>
             </tbody>
-          </table>
-        </div>
-      </details>
+          </Table>
+        </TableFrame>
+      </Section>
 
-      <p className="text-sm text-neutral-500">
-        Typed API with every schema at{" "}
-        <a className="underline" href={`${API_BASE}/docs`}>
-          {API_BASE}/docs
-        </a>{" "}
-        — no bare R², no bare p-value can cross it.
-      </p>
+      <Section
+        id="evidence"
+        kicker="Evidence & method"
+        title="The workings behind each claim"
+        note="Open any of these for the statistics underneath, including two results we held back and the hypotheses that failed."
+      >
+        {/* The register hint states what the CODE enforces (a fixed file
+            the pipeline refuses to diverge from), not a temporal claim
+            about when it was written: git history shows the register and
+            the checks landing together, so "registered before results"
+            is a claim a reviewer could try to falsify. The enforceable
+            version is also the stronger one. */}
+        <Disclosure
+          title={`All ${data.hypothesis_register.length} hypotheses, including two we scoped out`}
+          hint="a fixed register the pipeline enforces: dropping a failed test would need a public edit"
+        >
+          <div className="overflow-x-auto">
+            <Table>
+              <thead>
+                <tr>
+                  <Th>Hypothesis</Th>
+                  <Th>Outcome</Th>
+                  <Th>Status</Th>
+                  <Th>Evidence</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.hypothesis_register.map((e) => (
+                  <Tr key={e.id}>
+                    <Td className="font-semibold">{e.hypothesis}</Td>
+                    <Td muted>{e.outcome}</Td>
+                    <Td>
+                      <Chip tone={e.status === "headline" ? "solid" : "outline"}>
+                        {e.status.replace("_", " ")}
+                      </Chip>
+                    </Td>
+                    <Td muted className="text-caption">
+                      {e.evidence}
+                    </Td>
+                  </Tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        </Disclosure>
+
+        <Disclosure
+          title="What explains margin"
+          hint="nested decomposition, block by block"
+        >
+          <TableFrame caption="CV increment is the change in out-of-sample R² when the block is added, in the fixed config order. The in-sample-only marker records a block that clears the nested F-test decisively while adding almost no predictive power, so it is statistically present but practically negligible.">
+            <Table>
+              <thead>
+                <tr>
+                  <Th align="right">Step</Th>
+                  <Th>Block (cumulative)</Th>
+                  <Th align="right">R²</Th>
+                  <Th align="right">adj R²</Th>
+                  <Th align="right">CV R²</Th>
+                  <Th align="right">CV increment</Th>
+                  <Th align="right">params</Th>
+                  <Th align="right">nested F p</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {dec.rows.map((r, i) => (
+                  <Tr key={r.block} highlight={r.block === "customer"}>
+                    <Td align="right" num muted className="w-10">
+                      {i + 1}
+                    </Td>
+                    <Td className="font-medium">
+                      <span className="text-line">+ </span>
+                      {r.block}
+                      {r.in_sample_only && (
+                        <span className="ml-2 align-middle">
+                          <Chip tone="outline">in-sample only</Chip>
+                        </span>
+                      )}
+                    </Td>
+                    <Td align="right" num muted>
+                      {dp(r.r2)}
+                    </Td>
+                    <Td align="right" num muted>
+                      {dp(r.r2_adj)}
+                    </Td>
+                    <Td align="right" num className="font-semibold">
+                      {dp(r.r2_cv)}
+                    </Td>
+                    <Td
+                      align="right"
+                      num
+                      className={
+                        Number(r.cv_increment.toFixed(3)) === 0
+                          ? "text-muted"
+                          : "font-semibold"
+                      }
+                    >
+                      {r.cv_increment >= 0 ? "+" : ""}
+                      {r.cv_increment.toFixed(3)}
+                    </Td>
+                    <Td align="right" num muted>
+                      {r.n_params}
+                    </Td>
+                    <Td align="right" num muted>
+                      {r.f_p_vs_prev === null ? dash : pval(r.f_p_vs_prev)}
+                    </Td>
+                  </Tr>
+                ))}
+              </tbody>
+            </Table>
+          </TableFrame>
+          <p className="measure text-body font-medium leading-relaxed">
+            {rp.conclusion}
+          </p>
+          <Readout
+            items={[
+              { label: "Naive rep model", value: `CV R² ${dp(rp.naive.r2_cv)}` },
+              { label: "Naive formula", value: rp.naive.formula, tone: "mono" },
+              { label: "Jobs", value: num(rp.naive.n_obs) },
+              { label: "Controlled nested F p", value: pval(rp.controlled_f_p) },
+              {
+                label: "Controlled CV gain",
+                value: `${rp.controlled_cv_increment >= 0 ? "+" : ""}${rp.controlled_cv_increment.toFixed(3)}`,
+              },
+              {
+                label: "adj R² gain",
+                value: `${rp.controlled_adj_increment >= 0 ? "+" : ""}${rp.controlled_adj_increment.toFixed(3)}`,
+              },
+            ]}
+          />
+        </Disclosure>
+
+        <Disclosure
+          title="The correction that demoted our own finding"
+          hint="one BH pass, fixed family"
+        >
+          <p className="measure text-body leading-relaxed">
+            One Benjamini-Hochberg pass over a family of seven tests. The
+            family lives in configuration and the code raises if the
+            implemented tests diverge from it, so quietly dropping a test
+            after seeing its result would take a visible, committed edit.
+            Anything that fails loses headline status automatically and
+            drops out of the exported slides; nobody makes that call case
+            by case.
+          </p>
+          <PlotlyChart
+            figure={bhFig}
+            title="The correction that demoted our own finding: one Benjamini-Hochberg pass, fixed test family, seven claims in and five surviving."
+          />
+        </Disclosure>
+
+        <Disclosure
+          title="Two results we computed but did not headline"
+          hint="the reasons matter more than the numbers"
+        >
+          <div className="grid gap-3 lg:grid-cols-2">
+            <NoteCard
+              chip="Demoted by our own correction"
+              claim={
+                <>
+                  Short-notice jobs earn less per press-hour:{" "}
+                  <span className="num">{pctPoints(me.pct_effect)}</span>
+                </>
+              }
+            >
+              Raw p = {pval(me.p_value)} becomes {pval(me.p_value_adj)} after
+              the correction, so it drops out of the headlines automatically.
+              Even if it had held, it would not be a reason to decline the
+              work. Most of the cost base is fixed, so a lower-rate hour still
+              beats an idle one. It is an argument for pricing the premium.
+            </NoteCard>
+            <NoteCard
+              chip="Excluded for selection bias"
+              claim={
+                <>
+                  Overridden jobs show a different margin:{" "}
+                  <span className="num">{pctPoints(oe.pct_effect)}</span>
+                </>
+              }
+            >
+              This one survives the correction at {pval(oe.p_value_adj)} and is
+              still excluded, because overrides only ever land on jobs somebody
+              chose to adjust. A clean p-value cannot rescue a sample selected
+              that way.
+            </NoteCard>
+          </div>
+          <Evidence
+            label="Rush effect: full statistical readout"
+            items={[
+              { label: "Effect on rate", value: pctPoints(me.pct_effect) },
+              { label: "95% CI", value: ciPct(me.ci_low_pct, me.ci_high_pct) },
+              { label: "p (raw)", value: pval(me.p_value) },
+              { label: "p (BH-adjusted)", value: pval(me.p_value_adj) },
+              { label: "Jobs", value: num(me.n_obs) },
+              { label: "Std. errors", value: seLabel(me.se_type), tone: "mono" },
+            ]}
+          />
+          <Evidence
+            label="Override effect: full statistical readout"
+            items={[
+              { label: "Effect on rate", value: pctPoints(oe.pct_effect) },
+              { label: "95% CI", value: ciPct(oe.ci_low_pct, oe.ci_high_pct) },
+              { label: "p (raw)", value: pval(oe.p_value) },
+              { label: "p (BH-adjusted)", value: pval(oe.p_value_adj) },
+              { label: "Jobs", value: num(oe.n_obs) },
+              { label: "Std. errors", value: seLabel(oe.se_type), tone: "mono" },
+            ]}
+          />
+        </Disclosure>
+
+        <Disclosure
+          title="Can the overrides be predicted?"
+          hint="a negative result, and the baselines are the proof"
+        >
+          <p className="measure text-body leading-relaxed">
+            If a model could predict the override from what is known at quote
+            time, the adjustment could be built into the price list. It cannot.
+            The setup: {m.model_family}, GroupKFold grouped on customer so no
+            account appears in both training and test data, scored against
+            zero-effort baselines.
+          </p>
+          <Readout
+            items={[
+              { label: "Model, quote-time features", value: dp(m.r2_cv_model) },
+              { label: "Baseline: predict zero", value: dp(m.r2_cv_baseline_zero) },
+              {
+                label: "Baseline: customer mean",
+                value: dp(m.r2_cv_baseline_customer_mean),
+              },
+              {
+                label: "Baseline: global mean",
+                value: dp(m.r2_cv_baseline_global_mean),
+              },
+              { label: "Direction AUC (coin flip 0.50)", value: dp(m.auc_direction, 2) },
+              { label: "Jobs / customers", value: `${num(m.n_obs)} / ${num(m.n_clusters)}` },
+            ]}
+          />
+          <p className="measure text-body font-medium leading-relaxed">
+            {m.finding}
+          </p>
+        </Disclosure>
+
+        <Disclosure
+          title="How sensitive the rush finding is"
+          hint="threshold sensitivity, and the interaction that failed"
+        >
+          <TableFrame caption="Rush is proxied by bottom-percentile dwell time within a size band, since no scheduling data exists in this extract. The sign holds at every percentile but the significance does not, which is part of why the finding was demoted.">
+            <Table>
+              <thead>
+                <tr>
+                  <Th>Flag percentile</Th>
+                  <Th align="right">Effect on rate</Th>
+                  <Th align="right">95% CI</Th>
+                  <Th align="right">raw p</Th>
+                  <Th align="right">n flagged</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {rush.percentile_sensitivity.map((r) => (
+                  <Tr key={r.percentile}>
+                    <Td num>{(r.percentile * 100).toFixed(0)}%</Td>
+                    <Td align="right" num className="font-semibold">
+                      {r.pct_effect.toFixed(1)}%
+                    </Td>
+                    <Td align="right" num muted>
+                      {ciPct(r.ci_low_pct, r.ci_high_pct)}
+                    </Td>
+                    <Td align="right" num muted>
+                      {pval(r.p_value)}
+                    </Td>
+                    <Td align="right" num muted>
+                      {num(r.n_rush)}
+                    </Td>
+                  </Tr>
+                ))}
+              </tbody>
+            </Table>
+          </TableFrame>
+          {/* Adjudicated: the descriptive load gradient may only ever appear
+              adjacent to the failed interaction test, never on its own. */}
+          <p className="measure text-body leading-relaxed">
+            {rush.interaction.inconclusive}
+          </p>
+          <Evidence
+            label="Rush × load interaction: full statistical readout"
+            items={[
+              {
+                label: "Interaction coef",
+                value: dp(rush.interaction.interaction.coef),
+              },
+              {
+                label: "95% CI",
+                value: ciPct(
+                  rush.interaction.interaction.ci_low_pct,
+                  rush.interaction.interaction.ci_high_pct,
+                ),
+              },
+              { label: "p", value: pval(rush.interaction.interaction.p_value) },
+              { label: "Jobs", value: num(rush.interaction.interaction.n_obs) },
+            ]}
+          >
+            <div className="flex flex-wrap gap-2">
+              {rush.interaction.simple_slopes.map((s) => (
+                <span
+                  key={String(s.load_bin)}
+                  className="num border border-line bg-surface px-3 py-1.5 text-caption"
+                >
+                  <span className="text-muted">
+                    load bin {String(s.load_bin)}
+                  </span>{" "}
+                  <span className="font-semibold">
+                    {Number(s.pct_effect).toFixed(1)}%
+                  </span>{" "}
+                  <span className="text-muted">
+                    {ciPct(Number(s.ci_low_pct), Number(s.ci_high_pct))} · p{" "}
+                    {pval(Number(s.p_value))} · n {String(s.n)}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </Evidence>
+        </Disclosure>
+
+        <Disclosure
+          title="What the loader checked on this file"
+          hint="ingest identities and anomaly counts"
+        >
+          <p className="measure text-body leading-relaxed">
+            If the pricing identity ever fails on an upload, the pricing
+            analysis withholds its numbers instead of guessing what a column
+            means.
+          </p>
+          <DefList
+            title="Ingest checks"
+            rows={[
+              {
+                label: (
+                  <>
+                    <code>VA/24</code> identity, max error
+                  </>
+                ),
+                value: expo(Number(v.identity1_max_err)),
+              },
+              {
+                label: (
+                  <>
+                    <code>mupnett = labmup + manadj</code>, max error (
+                    {num(Number(v.n_identity2_checked))} rows)
+                  </>
+                ),
+                // The one ingest check that can stop the pricing module
+                // reporting, so a failure is a genuine alert rather than a
+                // number. The word carries it; the colour only speeds it up.
+                value: v.identity2_ok ? (
+                  expo(Number(v.identity2_max_err))
+                ) : (
+                  <Chip tone="critical">FAILED, pricing withheld</Chip>
+                ),
+              },
+              {
+                label: (
+                  <>
+                    <code>#DIV/0!</code> cells counted before coercion
+                  </>
+                ),
+                value: num(Number(v.va_pct_error_cells)),
+              },
+              {
+                label: (
+                  <>
+                    Blank <code>manadj</code>, held out of overrides
+                  </>
+                ),
+                value: num(Number(v.n_null_manadj)),
+              },
+              {
+                label: "Blank binding means outsourced, so it is kept",
+                value: num(Number(v.n_null_binding)),
+              },
+              {
+                label: "Zero press-hours jobs (capacity is Litho-only)",
+                value: num(Number(v.n_press_hrs_zero)),
+              },
+              {
+                label: "Credits set aside for review",
+                value: num(Number(c.n_quarantined_credits)),
+              },
+            ]}
+          />
+        </Disclosure>
+
+        <Disclosure
+          title="How to reproduce and check these numbers"
+          hint="seeds, API, standards"
+        >
+          <ul className="m-0 list-none space-y-2 text-body leading-relaxed">
+            <li>
+              Every job-level model uses cluster-robust standard errors on
+              customer, and no effect is reported without its CI, p, n and
+              SE type. The result records are typed so a bare number cannot
+              be published.
+            </li>
+            <li>
+              Thresholds are derived rather than picked, and always reported
+              as a range with a bootstrap interval (crossover:{" "}
+              <span className="num">
+                {th.crossover_window_range[0].toFixed(1)}–
+                {th.crossover_window_range[1].toFixed(1)}h window range,{" "}
+                {th.crossover_ci95[0].toFixed(1)}–{th.crossover_ci95[1].toFixed(1)}h
+                95% CI
+              </span>
+              ).
+            </li>
+            <li>
+              The as-of date comes from the latest sale in the file rather
+              than the clock, so the same file gives the same answers on any
+              day.
+            </li>
+            <li>
+              Seeds are fixed (
+              {Object.entries(data.seeds)
+                .map(([k, s]) => `${k} ${s}`)
+                .join(", ")}
+              ), so a rerun reproduces exactly.
+            </li>
+            <li>
+              Machine-readable results and full field definitions:{" "}
+              <a href={`${API_BASE}/docs`}>{API_BASE}/docs</a>
+            </li>
+          </ul>
+        </Disclosure>
+      </Section>
     </>
   );
 }

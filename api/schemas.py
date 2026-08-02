@@ -1,7 +1,7 @@
 """Pydantic response models mirroring stats_core dataclasses 1:1 (§7.1).
 
 Every field is required (no defaults on report models), so no bare
-number can cross the API boundary — the server refuses to serialise it.
+number can cross the API boundary: the server refuses to serialise it.
 Findings excluded in §1 are structurally marked: `caution`,
 `inconclusive` and `not_headline` wrappers, which the frontend must
 render visibly.
@@ -35,6 +35,8 @@ class EffectReportSchema(Strict):
     pct_effect: float | None
     ci_low: float
     ci_high: float
+    ci_low_pct: float | None
+    ci_high_pct: float | None
     p_value: float
     p_value_adj: float | None
     n_obs: int
@@ -85,7 +87,7 @@ class GapSchema(Strict):
 
 
 class DatasetResponse(Strict):
-    """POST /datasets — the dynamic-system contract: a new file of the
+    """POST /datasets: the dynamic-system contract: a new file of the
     same schema refreshes every result with no code change."""
 
     dataset_hash: str
@@ -191,6 +193,18 @@ class ThresholdsResponse(Strict):
     crossover_hrs: float
     crossover_window_range: tuple[float, float]
     crossover_ci95: tuple[float, float]
+    # the composition check: size gradient with the account held fixed
+    within_customer_size: EffectReportSchema
+    within_customer_pct_per_doubling: float
+    pooled_size: EffectReportSchema
+    pooled_pct_per_doubling: float
+    # the headline share evaluated at the crossover CI bounds, ordered
+    # (low share, high share), so the 65% carries the crossover's interval
+    share_range_across_crossover_ci: tuple[float, float]
+    # board-voice sentences, composed in Python so no client strips a
+    # sign, takes an absolute value, or subtracts the two slopes
+    within_customer_statement: str
+    size_mix_statement: str
     monotonicity: dict[str, Any]
     capacity_share: dict[str, float]
     capacity_statement: str
@@ -205,7 +219,7 @@ class InconclusiveWrapped(Strict):
 
 class RushResponse(Strict):
     main_effect: EffectReportSchema
-    bh_status: str  # 'headline' or 'not_headline' — set by the BH pass alone
+    bh_status: str  # 'headline' or 'not_headline', set by the BH pass alone
     bh_note: str
     percentile_sensitivity: list[dict[str, Any]]
     interaction: InconclusiveWrapped
@@ -230,6 +244,61 @@ class ChurnResponse(Strict):
     gate: str
     rows: list[ChurnRow]
     comparison: dict[str, Any]
+    # held-out check of both rules against the accounts that actually
+    # went quiet; counts always travel with the rates (outcome n is small)
+    backtest: dict[str, Any]
+
+
+class ValueRow(Strict):
+    """One ranked row of the most-valuable view. Descriptive sums, no
+    modelling; contribution_per_press_hr is None where the entity has no
+    Litho press hours."""
+
+    name: str
+    jobs: int
+    revenue_gbp: float
+    contribution_gbp: float
+    share_of_contribution: float
+    contribution_per_press_hr: float | None
+
+
+class CustomerValueRow(ValueRow):
+    rep: str
+    industry: str
+
+
+class ValueResponse(Strict):
+    """GET /value: the brief's first example insight, most valuable
+    customers and types of work, stated plainly with its caveats."""
+
+    as_of: str
+    top_customers: list[CustomerValueRow]
+    work_types: list[ValueRow]
+    caveat: str
+    litho_note: str
+
+
+class CallListRow(Strict):
+    customer: str
+    rep: str
+    industry: str
+    last_order: str
+    days_since: float
+    own_median_interval: float | None
+    interval_cv: float | None
+    forecastable: bool
+    gap_ratio: float | None
+    historic_contribution_gbp: float
+    contribution_per_constraint_hr: float | None
+    override_rate: float
+    risk_band: str
+    reason_code: str
+    expected_next_order: str | None
+
+
+class CallListResponse(Strict):
+    as_of: str
+    rows: list[CallListRow]
 
 
 class RegisterResponse(Strict):

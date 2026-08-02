@@ -1,55 +1,118 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Image from "next/image";
+import { Inter } from "next/font/google";
+import Script from "next/script";
+import Nav from "@/components/Nav";
+import ThemeToggle from "@/components/ThemeToggle";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "wgb-insights",
-  description:
-    "Dynamic analytics over W&G Baird print-job sales data — contribution per constraint-hour, pricing governance, retention.",
-};
+// One face, weights carry the hierarchy, matching the Tender Assistant.
+// Fraunces was tried for display twice and read as editorial print both
+// times; bold Inter is what makes this read as software.
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-body-src",
+  display: "swap",
+});
 
-const NAV = [
-  { href: "/", label: "Overview" },
-  { href: "/margin", label: "Where margin lives" },
-  { href: "/pricing", label: "Pricing & overrides" },
-  { href: "/constraint", label: "Size & the constraint" },
-  { href: "/retention", label: "Retention risk" },
-];
+export const metadata: Metadata = {
+  title: "Sales Insights | W&G Baird",
+  description:
+    "Print-job sales analysis: contribution per press-hour, pricing governance and retention.",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      {/* Deliberately single-theme: the brand is flat white/black/yellow. */}
-      <body className="min-h-screen bg-white font-sans text-black antialiased">
-        <header className="border-b-4 border-[#FFE600] bg-black text-white">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-baseline gap-x-8 gap-y-2 px-6 py-4">
-            <span className="text-2xl font-black tracking-tight">
-              wgb<span className="text-[#FFE600]">-</span>insights
+    // data-theme is stamped here so the server-rendered HTML is already
+    // dark, the default. The script below upgrades it to a stored choice
+    // BEFORE hydration, so React's server snapshot ("dark") can legally
+    // disagree with the DOM it hydrates into ("light", if stored):
+    // suppressHydrationWarning covers exactly this attribute, one element
+    // deep, and nothing below it.
+    <html
+      lang="en"
+      className={inter.variable}
+      data-theme="dark"
+      suppressHydrationWarning
+    >
+      <head>
+        {/*
+          Applies a saved theme BEFORE first paint, so a light-theme user
+          never sees a dark flash. It has to be an inline blocking script:
+          anything in React runs after paint, by which point the flash has
+          already happened. Reads only its own key, writes only the
+          attribute, and swallows errors so a blocked localStorage (private
+          mode, hardened browser) falls through to the dark default rather
+          than throwing before the app mounts.
+        */}
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('wgb-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t}}catch(e){}`,
+          }}
+        />
+      </head>
+      {/* suppressHydrationWarning: browser extensions (password managers,
+          unit converters) inject attributes into <body> before React
+          hydrates, tripping a false mismatch warning in dev. Suppression
+          is one element deep only, so real mismatches in children still
+          surface. */}
+      <body className="min-h-screen" suppressHydrationWarning>
+        <a
+          href="#main"
+          className="plain sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:text-canvas"
+        >
+          Skip to content
+        </a>
+
+        {/* Masthead: the Tender Assistant lockup. Black bar (the only true
+            black on the site), yellow-tile badge, bold title over a grey
+            uppercase descriptor, heritage line right with the year in
+            yellow, and the yellow rule closing the bar. */}
+        <header className="border-b-[3px] border-yellow bg-black text-white">
+          <div className="mx-auto flex max-w-[104rem] flex-wrap items-center gap-x-5 gap-y-3 px-6 py-3">
+            <Image
+              src="/brand/badge-yellow-tile.png"
+              alt="W&G Baird"
+              width={74}
+              height={58}
+              priority
+              className="h-[50px] w-auto"
+            />
+            <span className="leading-tight">
+              <span className="block text-heading font-bold tracking-[-0.01em]">
+                Sales Insights
+              </span>
+              <span className="eyebrow block text-white/60">
+                Margin &amp; capacity workspace
+              </span>
             </span>
-            <nav className="flex flex-wrap gap-x-6 gap-y-1 text-sm font-bold uppercase tracking-wide">
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="hover:text-[#FFE600] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFE600]"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            <span className="ml-auto hidden text-xs text-neutral-400 sm:block">
-              Python is the source of truth — this UI renders JSON.
-            </span>
+            {/* ml-auto on the group, so the heritage line can drop away on
+                small screens without the toggle drifting left. */}
+            <div className="ml-auto flex items-center gap-5">
+              <span className="eyebrow hidden text-white lg:block">
+                Printing since <span className="text-yellow">1862</span>
+              </span>
+              <ThemeToggle />
+            </div>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl space-y-8 px-6 py-8">{children}</main>
-        <footer className="border-t border-neutral-200 py-6 text-center text-xs text-neutral-500">
-          Local analysis system — no deployment, no auth. API docs at{" "}
-          <a className="underline" href="http://localhost:8000/docs">
-            localhost:8000/docs
-          </a>
+
+        <Nav />
+
+        <main id="main" className="mx-auto max-w-[104rem] space-y-6 px-6 py-6">
+          {children}
+        </main>
+
+        <footer className="relative z-10 mt-4 border-t border-line py-6">
+          <div className="mx-auto max-w-[104rem] px-6 text-caption leading-relaxed text-muted">
+            W&amp;G Baird internal analysis. Figures are computed from the
+            uploaded sales extract; this sample covers part of company turnover
+            and nothing here extrapolates to company totals.
+          </div>
         </footer>
       </body>
     </html>

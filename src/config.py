@@ -1,4 +1,4 @@
-"""Config loading — every analytical parameter comes from config.yaml (§10)."""
+"""Config loading, every analytical parameter comes from config.yaml (§10)."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def load_config(path: Path | None = None) -> dict[str, Any]:
-    """Load config.yaml. Fails loudly if missing — no silent defaults."""
+    """Load config.yaml. Fails loudly if missing: no silent defaults."""
     cfg_path = path or REPO_ROOT / "config.yaml"
     with open(cfg_path, encoding="utf-8") as fh:
         cfg: dict[str, Any] = yaml.safe_load(fh)

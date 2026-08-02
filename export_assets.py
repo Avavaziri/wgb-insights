@@ -1,10 +1,10 @@
-"""`make assets` — §12 presentation asset export.
+"""`make assets`: §12 presentation asset export.
 
 Writes every slide-ready artefact to assets/ so slide-building needs no
 code. Charts render at 1920x1080 via kaleido from the SAME figures the
-app serves — the live demo and the slides are one product.
+app serves, so the live demo and the slides are one product.
 
-Adjudicated change: rush_effect.png is NOT exported — the rush effect
+Adjudicated change: rush_effect.png is NOT exported, because the rush effect
 fails the BH correction under cluster-robust SEs and the system's own
 rule (§5.8) bars BH failures from asset export. bh_family.png ships in
 its place: the correction demoting one of our own findings is the
@@ -42,7 +42,7 @@ assert set(EXPORT_CHARTS) <= set(CHARTS)
 
 
 def named_examples(pr: PipelineResult) -> list[str]:
-    """The §9 named example customers — computed, never hardcoded."""
+    """The §9 named example customers, computed and never hardcoded."""
     jobs, cf = pr.jobs, pr.constraint
     xover = pr.thresholds["crossover_hrs"]
     rev = jobs[jobs["is_closed"]].groupby("customer_id")["sell_price_gbp"].sum()
@@ -90,12 +90,12 @@ def findings_summary(pr: PipelineResult) -> str:
         / float(pr.config["company_turnover_gbp"])
     )
     lines = [
-        f"# Findings summary — {pr.source_name} (as_of {pr.clean_report.as_of})",
+        f"# Findings summary: {pr.source_name} (as_of {pr.clean_report.as_of})",
         "",
         f"Sample ~{share_turnover:.0%} of stated turnover; nothing here "
         "extrapolates. All money GBP after FX keyed on Currency. Constraint "
         "analysis is Litho-only (no press hours elsewhere). Seeds "
-        f"{pr.config['seeds']} — every number reproduces.",
+        f"{pr.config['seeds']}. Every number reproduces.",
         "",
         "## Context",
         f"- Revenue CAGR {g['revenue_cagr']:.1%} (2023->2025) with flat jobs "
@@ -103,58 +103,63 @@ def findings_summary(pr: PipelineResult) -> str:
         f"{g['customers_last']}: growth is value per job "
         f"({g['revenue_per_job_cagr']:+.1%}), margin {g['va_margin_change_pts']:+.1f}pts.",
         "",
-        "## Headline 1 — pricing governance",
+        "## Headline 1: pricing governance",
         "- Margin is an account property: customer identity adds "
         f"+{float(pr.decomposition.set_index('block').loc['customer', 'cv_increment']):.2f} "
         "cross-validated R2; product adds nothing out-of-sample (in-sample only); "
-        "rep adds nothing (the rep league table would mislead — customer mix).",
+        "rep adds nothing (the rep league table would mislead: customer mix).",
         f"- {s['override_rate']:.0%} of constraint-frame jobs are manually re-priced: "
         f"{s['n_up']:,} up vs {s['n_down']:,} down, net "
         f"{s['net_gbp_per_year'] / 1000:+,.0f}k GBP/yr of untracked human judgement.",
         f"- The override is NOT learnable at quote time (GroupKFold R2 "
         f"{m.r2_cv_model:.2f} vs best baseline; direction AUC {m.auc_direction:.2f}): "
-        "estimators use information the system doesn't capture — a data gap, "
+        "estimators use information the system doesn't capture, which is a data gap, "
         "and the case for capturing override reasons in the MIS.",
         "",
-        "## Headline 2 — the constraint",
+        "## Headline 2: the constraint",
         f"- Contribution per constraint-hour declines monotonically with size "
-        f"(Spearman {th['monotonicity']['spearman_rho']:.2f}; no interior optimum — "
+        f"(Spearman {th['monotonicity']['spearman_rho']:.2f}; no interior optimum, "
         "no 'optimal job size' exists).",
         f"- Crossover threshold {th['crossover_hrs']:.1f}h (window range "
         f"{sens.min():.1f}-{sens.max():.1f}h, bootstrap 95% CI {ci_lo:.1f}-{ci_hi:.1f}h): "
         f"work above it occupies {cs['share_of_constraint_hours']:.0%} of press "
         f"capacity at {cs['pooled_rate_above']:,.0f} GBP/hr vs the factory's own "
-        f"average {cs['benchmark']:,.0f} GBP/hr. Descriptive only — no "
+        f"average {cs['benchmark']:,.0f} GBP/hr. Descriptive only: no "
         "counterfactual GBP figure is defensible without capacity data.",
         "",
-        "## Headline 3 — retention",
+        "## Headline 3: retention",
         f"- Most reorder timing is near-random (median interval CV {med_cv:.2f}); "
         f"next-order prediction is gated to {n_fc}/{len(pr.churn_cadence)} regular "
-        "accounts — the system refuses to invent dates for the rest.",
+        "accounts. The system refuses to invent dates for the rest.",
         f"- Personalised thresholds (own median x (1 + 1.5 x own CV)) flag "
         f"{cmp_['n_personalised']} accounts vs the fixed 90-day rule's "
-        f"{cmp_['n_fixed']} — different accounts, not just different counts. "
+        f"{cmp_['n_fixed']}: different accounts, not just different counts. "
         "Ranked call list exported.",
         "",
-        "## Computed but excluded (with reasons — the register is the audit trail)",
+        "## Computed but excluded (with reasons; the register is the audit trail)",
         f"- Rush penalty {rush.pct_effect:+.1f}% (raw p {rush.p_value:.3f}): fails "
         f"the family-wise BH correction (adj p {rush.p_value_adj:.3f}) under the "
         "mandated cluster-robust SEs. Reported as suggestive; excluded from "
         "headlines and this export by the system's own rule. One spoken sentence.",
+        "  Say it as pricing, never as selection: most of the cost base is fixed, "
+        "so an hour at a lower contribution rate still beats an idle hour. "
+        "Declining short-notice work would only pay if the constraint were "
+        "binding and the rush job displaced a better-rate one, and there is no "
+        "capacity data here to establish when that happens.",
         f"- Override -> margin (+{pr.pricing_effect.pct_effect:.1f}%, adj p "
-        f"{pr.pricing_effect.p_value_adj:.3f}): survives BH but remains excluded — "
+        f"{pr.pricing_effect.p_value_adj:.3f}): survives BH but remains excluded as "
         "selection-biased (humans choose which jobs to reprice); shown in-app "
         "under a caution banner only.",
         f"- Rush x load gradient: interaction p "
-        f"{pr.rush_interaction['interaction'].p_value:.2f} — consistent with "
+        f"{pr.rush_interaction['interaction'].p_value:.2f}, consistent with "
         "queueing theory, not established by this data. Appendix only.",
         f"- Concentration: tested negative (Gini {conc['gini']:.2f}, top-1 "
-        f"{conc['top_1_share']:.0%}, top-10 {conc['top_10_share']:.0%}) — register line.",
+        f"{conc['top_1_share']:.0%}, top-10 {conc['top_10_share']:.0%}): register line.",
         "",
         "## Data gaps (the investment ask)",
     ]
     for gap in gap_report(pr.jobs, float(pr.config["company_turnover_gbp"])):
-        lines.append(f"- **{gap['gap']}** — blocks: {gap['blocks']}")
+        lines.append(f"- **{gap['gap']}**. Blocks: {gap['blocks']}")
     lines += ["", "## Named examples"]
     lines += [f"- {ex}" for ex in named_examples(pr)]
     lines += [

@@ -25,8 +25,8 @@ SEED = 42
 def synthetic_constraint_frame(
     n: int = 2000, breakpoint_hrs: float = 5.0, seed: int = SEED
 ) -> pd.DataFrame:
-    """Rate = 900 GBP/hr below the breakpoint, 500 above, small noise —
-    a step function whose crossover the estimator must recover."""
+    """Rate = 900 GBP/hr below the breakpoint, 500 above, small noise: a
+    step function whose crossover the estimator must recover."""
     rng = np.random.default_rng(seed)
     hrs = np.exp(rng.uniform(np.log(0.5), np.log(40), n))
     rate = np.where(hrs < breakpoint_hrs, 900.0, 500.0) * rng.lognormal(0, 0.08, n)
@@ -77,7 +77,7 @@ class TestCrossoverRecovery:
         curve = rolling_rate_curve(frame, window=300, step=50)
         assert crossover_point(curve, benchmark=700.0) == pytest.approx(5.0, abs=1.0)
         # against the hour-weighted benchmark (~548, dominated by long
-        # jobs) the crossover is necessarily later — but bounded
+        # jobs) the crossover is necessarily later, but bounded
         xover = crossover_point(curve, benchmark_rate(frame))
         assert 5.0 <= xover <= 9.0
 

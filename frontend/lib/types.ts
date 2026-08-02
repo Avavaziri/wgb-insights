@@ -1,4 +1,4 @@
-// Mirrors of the API schemas — types only, no logic (§4: a number
+// Mirrors of the API schemas: types only, no logic (§4: a number
 // recomputed in TS is a defect).
 
 export interface EffectReport {
@@ -7,6 +7,8 @@ export interface EffectReport {
   pct_effect: number | null;
   ci_low: number;
   ci_high: number;
+  ci_low_pct: number | null;
+  ci_high_pct: number | null;
   p_value: number;
   p_value_adj: number | null;
   n_obs: number;
@@ -122,6 +124,13 @@ export interface Thresholds {
   crossover_hrs: number;
   crossover_window_range: [number, number];
   crossover_ci95: [number, number];
+  within_customer_size: EffectReport;
+  within_customer_pct_per_doubling: number;
+  pooled_size: EffectReport;
+  pooled_pct_per_doubling: number;
+  share_range_across_crossover_ci: [number, number];
+  within_customer_statement: string;
+  size_mix_statement: string;
   monotonicity: Record<string, number | boolean>;
   capacity_share: Record<string, number>;
   capacity_statement: string;
@@ -135,6 +144,8 @@ export interface Rush {
   percentile_sensitivity: {
     percentile: number;
     pct_effect: number;
+    ci_low_pct: number | null;
+    ci_high_pct: number | null;
     p_value: number;
     n_rush: number;
   }[];
@@ -143,6 +154,51 @@ export interface Rush {
     interaction: EffectReport;
     simple_slopes: Record<string, number>[];
   };
+}
+
+export interface ValueRow {
+  name: string;
+  jobs: number;
+  revenue_gbp: number;
+  contribution_gbp: number;
+  share_of_contribution: number;
+  contribution_per_press_hr: number | null;
+}
+
+export interface CustomerValueRow extends ValueRow {
+  rep: string;
+  industry: string;
+}
+
+export interface Value {
+  as_of: string;
+  top_customers: CustomerValueRow[];
+  work_types: ValueRow[];
+  caveat: string;
+  litho_note: string;
+}
+
+export interface CallListRow {
+  customer: string;
+  rep: string;
+  industry: string;
+  last_order: string;
+  days_since: number;
+  own_median_interval: number | null;
+  interval_cv: number | null;
+  forecastable: boolean;
+  gap_ratio: number | null;
+  historic_contribution_gbp: number;
+  contribution_per_constraint_hr: number | null;
+  override_rate: number;
+  risk_band: string;
+  reason_code: string;
+  expected_next_order: string | null;
+}
+
+export interface CallList {
+  as_of: string;
+  rows: CallListRow[];
 }
 
 export interface Churn {
@@ -170,4 +226,21 @@ export interface Churn {
     both: string[];
     sets_differ: boolean;
   };
+  backtest: {
+    holdout_days: number;
+    cutoff: string;
+    fixed_days: number;
+    n_accounts: number;
+    n_went_quiet: number;
+    went_quiet: string[];
+    personalised: BacktestScore;
+    fixed: BacktestScore;
+  };
+}
+
+export interface BacktestScore {
+  n_flagged: number;
+  n_caught: number;
+  precision: number | null;
+  recall: number | null;
 }

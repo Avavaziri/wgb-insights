@@ -2,7 +2,7 @@
 
 The TestClient boots state from data/sample/sample.xlsx when data/raw is
 absent; in a checkout WITH real data present, state.active() would use
-it — so tests pin the fixture explicitly via POST /datasets first.
+it, so tests pin the fixture explicitly via POST /datasets first.
 """
 
 from __future__ import annotations
@@ -56,6 +56,24 @@ class TestDatasets:
         assert resp.status_code == 422
         assert "missing expected columns" in resp.json()["detail"]
 
+    def test_wrong_sheet_rejected_422_not_500(self, client: TestClient) -> None:
+        # Found live in review: a workbook without the expected sheet blew
+        # past the IngestError handler and 500ed. ANY unprocessable file
+        # must come back as the stable 422 JSON shape, active data intact.
+        import io
+
+        import openpyxl
+
+        wb = openpyxl.Workbook()  # default sheet name, wrong everything
+        wb.active.append(["Nonsense", "Columns"])
+        buf = io.BytesIO()
+        wb.save(buf)
+        resp = client.post("/datasets", files={"file": ("junk.xlsx", buf.getvalue(), "x")})
+        assert resp.status_code == 422
+        assert "previous dataset is still active" in resp.json()["detail"]
+        # and the app still answers from the previously active dataset
+        assert client.get("/overview").json()["validation"]["n_rows"] == 400
+
     def test_no_bare_numbers_in_effect_reports(self, client: TestClient) -> None:
         # the structural guarantee: every effect carries CI, p, n together
         body = client.get("/rush").json()
@@ -69,7 +87,7 @@ class TestEndpoints:
         body = client.get("/overview").json()
         assert body["as_of"]  # derived from max(SalesIn), never today
         assert body["partial_year"] == 2026
-        assert len(body["hypothesis_register"]) == 13
+        assert len(body["hypothesis_register"]) == 15
         assert "extrapolat" in body["scale_caveat"]
 
     def test_decomposition(self, client: TestClient) -> None:
@@ -91,6 +109,17 @@ class TestEndpoints:
         assert body["monotonicity"]["interior_optimum"] in (True, False)
         assert "Litho-only" in body["litho_only_note"]
         assert "no counterfactual" in body["capacity_statement"].lower()
+        # the composition check ships as BOTH halves, full effect reports,
+        # plus the board-readable per-doubling forms computed in Python
+        for key in ("within_customer_size", "pooled_size"):
+            e = body[key]
+            assert e["ci_low"] < e["coef"] < e["ci_high"]
+            assert "cluster-robust" in e["se_type"]
+        assert isinstance(body["within_customer_pct_per_doubling"], float)
+        assert isinstance(body["pooled_pct_per_doubling"], float)
+        assert "customer mix" in body["size_mix_statement"]
+        lo, hi = body["share_range_across_crossover_ci"]
+        assert lo <= hi  # headline share evaluated at the CI bounds
 
     def test_rush_interaction_inconclusive_wrapped(self, client: TestClient) -> None:
         body = client.get("/rush").json()
@@ -104,6 +133,24 @@ class TestEndpoints:
             if not row["forecastable"]:
                 assert row["expected_next_order"] is None
 
+    def test_churn_backtest_ships_with_counts(self, client: TestClient) -> None:
+        # the rules are scored against a held-out outcome, and the counts
+        # always travel with the rates (outcome n is small by nature)
+        bt = client.get("/churn").json()["backtest"]
+        assert bt["holdout_days"] > 0 and bt["n_accounts"] > 0
+        for rule in ("personalised", "fixed"):
+            score = bt[rule]
+            assert {"n_flagged", "n_caught", "precision", "recall"} <= set(score)
+            assert score["n_caught"] <= bt["n_went_quiet"] or bt["n_went_quiet"] == 0
+
+    def test_churn_bands_match_headline_rule(self, client: TestClient) -> None:
+        # ONE at-risk rule: the accounts wearing a non-normal band must be
+        # exactly the accounts the personalised headline count flags. A
+        # count of 13 with 12 flagged rows on screen was a real defect.
+        body = client.get("/churn").json()
+        flagged_rows = [r for r in body["rows"] if r["risk_band"] != "normal"]
+        assert len(flagged_rows) == body["comparison"]["n_personalised"]
+
     def test_call_list_csv(self, client: TestClient) -> None:
         resp = client.get("/call-list.csv")
         header = resp.text.splitlines()[0].split(",")
@@ -113,6 +160,24 @@ class TestEndpoints:
             "historic_contribution_gbp", "contribution_per_constraint_hr",
             "override_rate", "risk_band", "reason_code", "expected_next_order",
         ]
+
+    def test_value_rankings(self, client: TestClient) -> None:
+        body = client.get("/value").json()
+        assert body["top_customers"] and body["work_types"]
+        tops = [r["contribution_gbp"] for r in body["top_customers"]]
+        assert tops == sorted(tops, reverse=True)
+        assert "cost-to-serve" in body["caveat"]
+        for r in body["work_types"]:
+            # no bare share without its base counts
+            assert {"jobs", "revenue_gbp", "share_of_contribution"} <= set(r)
+
+    def test_call_list_json_matches_csv(self, client: TestClient) -> None:
+        rows = client.get("/call-list").json()["rows"]
+        csv_lines = client.get("/call-list.csv").text.strip().splitlines()
+        assert len(rows) == len(csv_lines) - 1  # same builder, same rows
+        for row in rows:
+            if not row["forecastable"]:
+                assert row["expected_next_order"] is None
 
     def test_register(self, client: TestClient) -> None:
         body = client.get("/register").json()
@@ -126,3 +191,82 @@ class TestEndpoints:
         fig = json.loads(client.get("/charts/rate_curve").text)
         assert "data" in fig and "layout" in fig
         assert client.get("/charts/nonsense").status_code == 404
+
+    def test_chart_fills_stay_monochrome(self, client: TestClient) -> None:
+        # Tender Assistant treatment: yellow is the uniform brand OUTLINE
+        # and the CI band, never a data fill, so removing it changes no
+        # reading. Category identity must live in the charcoal/grey fills.
+        for name in client.get("/charts").json():
+            fig = json.loads(client.get(f"/charts/{name}").text)
+            for trace in fig["data"]:
+                marker = trace.get("marker") or {}
+                fill = marker.get("color")
+                fills = fill if isinstance(fill, list) else [fill]
+                for c in fills:
+                    if isinstance(c, str):
+                        assert c.upper() != "#FFE600", f"{name}: yellow fill"
+
+    def test_chart_year_slice(self, client: TestClient) -> None:
+        sliced = json.loads(client.get("/charts/override_scale?year=2024").text)
+        title = sliced["layout"]["title"]["text"]
+        assert "2024" in title  # the slice names its scope in the figure
+        assert "GBP/yr" in title  # a full year is annualised as normal
+        # the curve slices too, but never re-estimates its threshold: the
+        # crossover annotation stays the full-period one and says so
+        curve = json.loads(client.get("/charts/rate_curve?year=2024").text)
+        blob = json.dumps(curve["layout"])
+        assert "2024" in blob and "full period" in blob
+        # model-backed charts refuse a slice rather than faking one
+        assert client.get("/charts/rep_confounding?year=2024").status_code == 404
+        assert client.get("/charts/churn_comparison?year=2024").status_code == 404
+        assert client.get("/charts/override_scale?year=1999").status_code == 404
+
+    def test_chart_year_comparison(self, client: TestClient) -> None:
+        # Power BI-style multi-select: several years drawn together, all
+        # recomputed in Python. Every compared year must name itself.
+        fig = json.loads(
+            client.get("/charts/override_scale?years=2024,2025").text
+        )
+        blob = json.dumps(fig)
+        assert "2024" in blob and "2025" in blob
+        assert len(fig["data"]) == 2  # one trace per compared year
+        # the curve compares as one line per year
+        curves = json.loads(client.get("/charts/rate_curve?years=2023,2024").text)
+        assert len([t for t in curves["data"] if t.get("mode") == "lines"]) == 2
+        # a comparison TILE keeps its legend: several named lines with no
+        # key would be unreadable, and the tile header cannot name them
+        tile = json.loads(
+            client.get("/charts/rate_curve?years=2023,2024&compact=true").text
+        )
+        assert tile["layout"]["showlegend"] is True
+        single = json.loads(
+            client.get("/charts/rate_curve?compact=true").text
+        )
+        assert single["layout"]["showlegend"] is False
+        # model-backed panels refuse comparison too, not just single slices
+        assert client.get("/charts/rep_confounding?years=2023,2024").status_code == 404
+        assert client.get("/charts/override_scale?years=1999,2000").status_code == 404
+        assert client.get("/charts/override_scale?years=notayear").status_code == 400
+
+    def test_partial_year_slice_never_annualised(self, client: TestClient) -> None:
+        # Slicing to the incomplete final year must show the observed net
+        # with an explicit partial label: annualising five months by ~x2.6
+        # would be exactly the extrapolation the scope bans.
+        partial = json.loads(client.get("/charts/override_scale?year=2026").text)
+        title = partial["layout"]["title"]["text"]
+        assert "observed" in title and "GBP/yr" not in title
+        assert "partial" in title
+        shares = json.loads(client.get("/charts/capacity_share?year=2026").text)
+        assert "partial" in shares["layout"]["title"]["text"]
+
+    def test_effect_cis_ship_on_pct_scale(self, client: TestClient) -> None:
+        # No client may transform a bound: the API ships CI bounds already
+        # back-transformed to the % scale, everywhere an effect appears.
+        rush = client.get("/rush").json()
+        me = rush["main_effect"]
+        assert me["ci_low_pct"] is not None and me["ci_high_pct"] is not None
+        assert me["ci_low_pct"] < me["pct_effect"] < me["ci_high_pct"]
+        for row in rush["percentile_sensitivity"]:
+            assert "ci_low_pct" in row and "ci_high_pct" in row
+        for slope in rush["interaction"]["simple_slopes"]:
+            assert "ci_low_pct" in slope and "ci_high_pct" in slope

@@ -1,7 +1,7 @@
 """Named robustness checks, the single BH pass, register I/O (§5.8).
 
 The BH correction is applied ONCE, here, over the fixed headline family
-from config — nowhere else may set p_value_adj. Anything failing is
+from config, nowhere else may set p_value_adj. Anything failing is
 automatically flagged not_headline and barred from asset export. Raw and
 adjusted p-values are both kept (§2.7).
 """
@@ -24,7 +24,7 @@ REGISTER_PATH = Path(__file__).resolve().parents[1] / "register.yaml"
 
 def currency_replication(cf: pd.DataFrame) -> dict[str, Any]:
     """Named check 1: the size-rate ordering must hold within each
-    currency separately — otherwise it could be an FX artifact."""
+    currency separately, otherwise it could be an FX artifact."""
     out: dict[str, Any] = {}
     for ccy, grp in cf.groupby("currency"):
         rho, p = scipy.stats.spearmanr(grp["press_hrs"], grp["rate_gbp_per_hr"])
@@ -160,7 +160,7 @@ def attach_register(
             "outcome": "rejected",
             "status": "register_only",
             "evidence": f"nested F p = {block('rep')['f_p']:.2f}, CV increment "
-                        f"{block('rep')['cv_increment']:+.3f} — nothing survives controls",
+                        f"{block('rep')['cv_increment']:+.3f}; nothing survives controls",
         },
         "margin_by_size": {
             "outcome": "supported",
@@ -185,7 +185,7 @@ def attach_register(
             "evidence": (
                 f"raw p = {bh.loc['override_effect', 'p_raw']:.3f}, BH-adjusted "
                 f"p = {bh.loc['override_effect', 'p_adj']:.3f} "
-                f"({'passes' if bh.loc['override_effect', 'passes_bh'] else 'fails'} BH) — "
+                f"({'passes' if bh.loc['override_effect', 'passes_bh'] else 'fails'} BH), "
                 "but overrides are applied to selected jobs; correlational either way. "
                 "Shown under caution banner only, never exported."
             ),
@@ -200,7 +200,7 @@ def attach_register(
                 f"{pricing_model.r2_cv_baseline_zero:.3f} / customer-mean "
                 f"{pricing_model.r2_cv_baseline_customer_mean:.3f} / global "
                 f"{pricing_model.r2_cv_baseline_global_mean:.3f}; direction AUC "
-                f"{pricing_model.auc_direction:.2f} — "
+                f"{pricing_model.auc_direction:.2f}: "
                 + (
                     "learnable from quote-time features"
                     if pricing_model.beats_all_baselines
@@ -225,7 +225,7 @@ def attach_register(
             "outcome": "inconclusive",
             "status": "appendix_only",
             "evidence": (
-                f"interaction p = {interaction_report.p_value:.2f} — consistent with "
+                f"interaction p = {interaction_report.p_value:.2f}, consistent with "
                 "queueing theory (Kingman/VUT), not established by this data"
             ),
         },
@@ -233,9 +233,10 @@ def attach_register(
             "outcome": "rejected",
             "status": "register_only",
             "evidence": (
-                f"Gini = {concentration_stats['gini']:.2f}, top-1 "
+                f"Gini = {concentration_stats['gini']:.2f} (0 = revenue "
+                f"evenly spread, 1 = one customer is everything), top-1 "
                 f"{concentration_stats['top_1_share']:.0%}, top-10 "
-                f"{concentration_stats['top_10_share']:.0%} — not a material risk"
+                f"{concentration_stats['top_10_share']:.0%}; not a material risk"
             ),
         },
         "reorder_forecastable": {
@@ -243,7 +244,7 @@ def attach_register(
             "status": "headline",
             "evidence": (
                 f"median interval CV = {median_cv:.2f}; {n_forecastable}/"
-                f"{len(cadence)} accounts below the {churn_config['cv_max']} gate — "
+                f"{len(cadence)} accounts below the {churn_config['cv_max']} gate; "
                 "prediction restricted to those; the rest get risk bands with reasons"
             ),
         },
@@ -253,15 +254,39 @@ def attach_register(
             "evidence": (
                 f"revenue CAGR {growth['revenue_cagr']:.1%} = jobs "
                 f"{growth['jobs_cagr']:+.1%} x value-per-job "
-                f"{growth['revenue_per_job_cagr']:+.1%} — growth is value per job"
+                f"{growth['revenue_per_job_cagr']:+.1%}; growth is value per job"
             ),
         },
         "optimal_job_size_exists": {
             "outcome": "rejected",
             "status": "headline",  # the rejection itself is the headline
             "evidence": (
-                "monotonic decline (see margin_by_size) — no interior optimum; "
+                "monotonic decline (see margin_by_size); no interior optimum, "
                 "'crossover threshold' is the only defensible framing"
+            ),
+        },
+        # Scoped-out entries: not tested, and the reason is the record.
+        # The evidence field carries the live numbers that motivated the
+        # boundary, so the reason updates with the data like everything
+        # else in the register.
+        "reorder_value_forecastable": {
+            "outcome": "scoped_out",
+            "status": "register_only",
+            "evidence": (
+                f"not attempted: median interval CV {median_cv:.2f} across "
+                f"{len(cadence)} accounts leaves no headroom for a "
+                "next-order value model; the call list reports historic "
+                "contribution, labelled as such, and predicts timing only"
+            ),
+        },
+        "seasonal_cycle": {
+            "outcome": "scoped_out",
+            "status": "register_only",
+            "evidence": (
+                "not attempted: too few whole years to separate seasonality "
+                "from trend honestly; regular annual orderers are absorbed "
+                "by the cadence rule by construction; follow-on work once "
+                "more periods accumulate"
             ),
         },
     }

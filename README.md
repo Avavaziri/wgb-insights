@@ -7,7 +7,7 @@ list, hypothesis register) recomputes.
 ## Executive summary
 
 **The problem.** The business sees margin per invoice, never per hour of
-press time: The one resource a factory cannot stretch.Churn is watched
+press time, the one resource a factory cannot stretch. Churn is watched
 by gut feel; the pricing judgement of the estimators is recorded nowhere.
 
 **The findings.** 65% of litho press hours are sold below the factory's
@@ -91,7 +91,7 @@ data trap planted.
 make api      # FastAPI on :8000; /docs is a deliverable, keep it open
 make web      # Next.js on :3000 (needs the API)
 make verify   # THE QA GATE, see below
-make test     # pytest (98 tests, fixture only, no real data needed)
+make test     # pytest (107 tests, fixture only, no real data needed)
 make lint     # ruff + mypy
 make assets   # writes assets/: every §12 presentation artefact
 make fixture  # regenerate the synthetic fixture
@@ -178,8 +178,8 @@ person quarterly; adoption — a call list nobody rings is a report, not
 a system; key-person dependency — the build is currently understood by
 one person, which the README's style is meant to mitigate;
 local-only scope — no auth and no deployment hardening, so putting this
-on a network as-is would be a defect, not a feature. 
-AUTH WOULD BE NECESSARY AFTER HOSTING THIS LOCALLY OR ON THE CLOUD.
+on a network as-is would be a defect, not a feature; authentication is a
+prerequisite to hosting it anywhere, on-premises or cloud.
 
 **Threats to validity, and where each is handled:** selection (the
 override→margin effect is computed and excluded — overridden jobs are
@@ -352,7 +352,7 @@ learnability (no), rush×load interaction (unproven), rush main effect
 ```
 data/{raw (gitignored), sample}/   src/          analysis modules + pipeline
 api/                               frontend/     FastAPI · Next.js
-tests/ (98)                        assets/       exported presentation artefacts
+tests/ (107)                       assets/       exported presentation artefacts
 verify.py · export_assets.py · register.yaml · config.yaml · Makefile
 ```
 
